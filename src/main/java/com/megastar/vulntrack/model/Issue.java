@@ -1,25 +1,25 @@
 package com.megastar.vulntrack.model;
 
 public class Issue {
-    private long id;
+    private Long id;
     private String title;
     private String description;
-    private long ownerId;
+    private Long ownerId;
 
     public Issue() {}
 
-    public Issue(long id, String title, String description, long ownerId) {
+    public Issue(Long id, String title, String description, Long ownerId) {
         this.id = id;
         this.title = title;
         this.description = description;
         this.ownerId = ownerId;
     }
 
-    public long getId() {
+    public Long getId() {
         return id;
     }
 
-    public void setId(long id) {
+    public void setId(Long id) {
         this.id = id;
     }
 
