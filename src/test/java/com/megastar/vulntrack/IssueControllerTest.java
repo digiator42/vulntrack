@@ -64,4 +64,14 @@ public class IssueControllerTest {
                 .andExpect(jsonPath("$.id").value(id));
 
     }
+
+    @Test
+    public void createIssue_withoutTitle_shouldReturn400() throws Exception {
+        Issue issue = new Issue(null, null, "Description", 2L);
+
+        mockMvc.perform(post("/issues")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(issue)))
+                .andExpect(status().isBadRequest());
+    }
 }

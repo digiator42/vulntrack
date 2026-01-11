@@ -44,4 +44,14 @@ public class Issue {
     public void setOwnerId(long ownerId) {
         this.ownerId = ownerId;
     }
+
+    @Override
+    public String toString() {
+        return "Issue{" +
+                "id=" + id +
+                ", title='" + title + '\'' +
+                ", description='" + description + '\'' +
+                ", ownerId=" + ownerId +
+                '}';
+    }
 }

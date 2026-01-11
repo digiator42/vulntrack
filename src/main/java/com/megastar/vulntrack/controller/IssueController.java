@@ -17,6 +17,7 @@ public class IssueController {
 
     @PostMapping
     public Issue create(@RequestBody Issue issue) {
+        System.out.println(issue.toString());
         return service.create(issue);
     }
 
