@@ -13,13 +13,14 @@ import org.springframework.util.PathMatcher;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
 @AutoConfigureMockMvc
 public class IssueControllerTest {
-    Issue issue = new Issue(null, "Test Issue", "Test Description", 1L);
+    Issue issue = new Issue(null, "Test Issue", "Test Description",2,1L);
 
     @Autowired
     private MockMvc mockMvc;
@@ -48,7 +49,7 @@ public class IssueControllerTest {
 
     @Test
     public void getIssueId_shouldReturnIssueId() throws Exception {
-        Issue issue = new Issue(null, "Test2 Issue", "Description", 2L);
+        Issue issue = new Issue(null, "Test2 Issue", "Description",3,2L);
 
         String response = mockMvc.perform(post("/issues")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -67,11 +68,24 @@ public class IssueControllerTest {
 
     @Test
     public void createIssue_withoutTitle_shouldReturn400() throws Exception {
-        Issue issue = new Issue(null, null, "Description", 2L);
+        Issue issue = new Issue(null, null, "Description", 4, 2L);
 
         mockMvc.perform(post("/issues")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(issue)))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    public void createIssue_withoutSeverity_shouldReturn400() throws Exception {
+        Issue issue = new Issue(null, "Not null", "Description", null, 2L);
+
+        mockMvc.perform(post("/issues")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(issue)))
+                .andDo(print())
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors[0].defaultMessage")
+                .value("Severity is required"));
     }
 }
