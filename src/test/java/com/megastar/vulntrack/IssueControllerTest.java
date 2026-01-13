@@ -12,6 +12,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.util.PathMatcher;
 
 import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.not;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
@@ -21,17 +22,16 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 public class IssueControllerTest {
-    Issue issue = new Issue(null, "Test Issue", "Test Description",2,1L);
-
     @Autowired
     private MockMvc mockMvc;
-
     @Autowired
     private ObjectMapper objectMapper;
     @Autowired
     private PathMatcher pathMatcher;
+
     @Test
     public void createIssue_shouldReturnCreatedIssue() throws Exception {
+        Issue issue = new Issue(null, "Test Issue", "Test Description",2,1L);
         mockMvc.perform(post("/issues")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(issue)))
@@ -103,4 +103,44 @@ public class IssueControllerTest {
                 .andExpect(jsonPath("$.errors[*].field",
                         containsInAnyOrder("title", "severity")));
     }
+
+    @Test
+    public void createIssue_withDuplicateTitles_shouldReturnConflict409() throws Exception {
+        Issue issue = new Issue(null, "Same Title", "Description", 2, 2L);
+
+        mockMvc.perform(post("/issues")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(issue)))
+                .andDo(print())
+                .andExpect(status().isOk());
+
+        mockMvc.perform(post("/issues")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(issue)))
+                .andDo(print())
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message")
+                        .value("Issue with this title already exists"));
+    }
+
+    @Test
+    public void CreateIssue_withInjectedId_shouldReject() throws Exception {
+        Issue issue = new Issue(999L, "Injected ID", "Test", 3, 4L);
+
+        String payload = """
+                {
+                      "id": 999,
+                      "title": "Injected ID",
+                      "description": "Test",
+                      "severity": 3,
+                      "ownerId": 2
+                }
+                """;
+        mockMvc.perform(post("/issues")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(issue)))
+                .andDo(print())
+                .andExpect(status().isBadRequest());
+    }
+
 }

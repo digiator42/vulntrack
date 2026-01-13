@@ -1,6 +1,7 @@
 package com.megastar.vulntrack.service;
 
 
+import com.megastar.vulntrack.exception.DuplicateIssueException;
 import com.megastar.vulntrack.model.Issue;
 import com.megastar.vulntrack.repository.IssueRepository;
 import org.springframework.stereotype.Service;
@@ -12,6 +13,12 @@ public class IssueService {
     private final IssueRepository issueRepository = new IssueRepository();
 
     public Issue create(Issue issue) {
+        boolean exists = issueRepository.existsByTitle(issue.getTitle());
+        if (exists) {
+            throw new DuplicateIssueException(
+                    "Issue with this title already exists"
+            );
+        }
         return issueRepository.save(issue);
     }
 

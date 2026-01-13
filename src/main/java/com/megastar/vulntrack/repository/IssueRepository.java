@@ -14,11 +14,16 @@ public class IssueRepository {
     public Issue save(Issue issue) {
         issue.setId(counter++);
         store.put(issue.getId(), issue);
+        System.out.println(issue.toString());
         return issue;
     }
 
     public Optional<Issue> findById(long id) {
         return Optional.ofNullable(store.get(id));
+    }
+
+    public boolean existsByTitle(String title) {
+        return store.values().stream().anyMatch(issue -> issue.getTitle().equals(title));
     }
 
     public List<Issue> findAll() {

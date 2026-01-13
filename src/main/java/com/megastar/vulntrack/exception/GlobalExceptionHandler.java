@@ -1,5 +1,6 @@
 package com.megastar.vulntrack.exception;
 
+import com.megastar.vulntrack.dto.ErrorResponse;
 import com.megastar.vulntrack.dto.ValidationError;
 import com.megastar.vulntrack.dto.ValidationErrorResponse;
 import org.springframework.http.HttpStatus;
@@ -24,5 +25,11 @@ public class GlobalExceptionHandler extends RuntimeException {
                         error.getDefaultMessage()
                 )).toList();
         return new ValidationErrorResponse(errors);
+    }
+
+    @ExceptionHandler(DuplicateIssueException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ErrorResponse errorResponse(DuplicateIssueException ex) {
+        return new ErrorResponse(ex.getMessage());
     }
 }
