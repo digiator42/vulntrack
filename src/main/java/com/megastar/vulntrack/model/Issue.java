@@ -5,10 +5,8 @@ import jakarta.validation.constraints.NotNull;
 
 public class Issue {
     private Long id;
-    @NotBlank(message = "Title is required")
     private String title;
     private String description;
-    @NotNull(message = "Severity is required")
     private Integer severity;
     private Long ownerId;
 

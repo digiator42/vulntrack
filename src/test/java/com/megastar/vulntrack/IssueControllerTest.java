@@ -1,18 +1,14 @@
 package com.megastar.vulntrack;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.megastar.vulntrack.model.Issue;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.util.PathMatcher;
 
 import static org.hamcrest.Matchers.containsInAnyOrder;
-import static org.hamcrest.Matchers.not;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
@@ -26,18 +22,24 @@ public class IssueControllerTest {
     private MockMvc mockMvc;
     @Autowired
     private ObjectMapper objectMapper;
-    @Autowired
-    private PathMatcher pathMatcher;
 
     @Test
     public void createIssue_shouldReturnCreatedIssue() throws Exception {
-        Issue issue = new Issue(null, "Test Issue", "Test Description",2,1L);
+
+        String payload = """
+        {
+          "title": "Valid title",
+          "description": "Desc",
+          "severity": 3
+        }
+        """;
+
         mockMvc.perform(post("/issues")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(issue)))
+                .content(payload))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").exists())
-                .andExpect(jsonPath("$.title").value(issue.getTitle()));
+                .andExpect(jsonPath("$.title").value("Valid title"));
     }
 
     @Test
@@ -47,14 +49,20 @@ public class IssueControllerTest {
                 .andExpect(jsonPath("$").isArray());
     }
 
-
     @Test
     public void getIssueId_shouldReturnIssueId() throws Exception {
-        Issue issue = new Issue(null, "Test2 Issue", "Description",3,2L);
+
+        String payload = """
+        {
+          "title": "Test Issue ID",
+          "description": "Desc",
+          "severity": 3
+        }
+        """;
 
         String response = mockMvc.perform(post("/issues")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(issue)))
+                .content(payload))
                 .andReturn()
                 .getResponse()
                 .getContentAsString();
@@ -69,21 +77,35 @@ public class IssueControllerTest {
 
     @Test
     public void createIssue_withoutTitle_shouldReturn400() throws Exception {
-        Issue issue = new Issue(null, null, "Description", 4, 2L);
+
+        String payload = """
+        {
+          "title": null,
+          "description": "Desc",
+          "severity": 4
+        }
+        """;
 
         mockMvc.perform(post("/issues")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(issue)))
+                .content(objectMapper.writeValueAsString(payload)))
                 .andExpect(status().isBadRequest());
     }
 
     @Test
     public void createIssue_withoutSeverity_shouldReturn400() throws Exception {
-        Issue issue = new Issue(null, "Not null", "Description", null, 2L);
+
+        String payload = """
+        {
+          "title": "Not null",
+          "description": "Desc",
+          "severity": null
+        }
+        """;
 
         mockMvc.perform(post("/issues")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(issue)))
+                .content(objectMapper.writeValueAsString(payload)))
                 .andDo(print())
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errors[0].defaultMessage")
@@ -92,10 +114,17 @@ public class IssueControllerTest {
 
     @Test
     public void createIssue_withoutMultipleFields_shouldReturnAllFieldsError() throws Exception {
-        Issue issue = new Issue(null, null, "Not null", null, 4L);
+        String payload = """
+        {
+          "title": null,
+          "description": "Desc",
+          "severity": null
+        }
+        """;
+
         mockMvc.perform(post("/issues")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(issue)))
+                .content(objectMapper.writeValueAsString(payload)))
                 .andDo(print())
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errors").isArray())
@@ -106,17 +135,25 @@ public class IssueControllerTest {
 
     @Test
     public void createIssue_withDuplicateTitles_shouldReturnConflict409() throws Exception {
-        Issue issue = new Issue(null, "Same Title", "Description", 2, 2L);
+
+        String payload = """
+        {
+          "title": "Duplicate Title",
+          "description": "Desc",
+          "severity": 3
+        }
+        """;
+
 
         mockMvc.perform(post("/issues")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(issue)))
+                .content(objectMapper.writeValueAsString(payload)))
                 .andDo(print())
                 .andExpect(status().isOk());
 
         mockMvc.perform(post("/issues")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(issue)))
+                .content(objectMapper.writeValueAsString(payload)))
                 .andDo(print())
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.message")
@@ -125,20 +162,19 @@ public class IssueControllerTest {
 
     @Test
     public void CreateIssue_withInjectedId_shouldReject() throws Exception {
-        Issue issue = new Issue(999L, "Injected ID", "Test", 3, 4L);
 
         String payload = """
-                {
-                      "id": 999,
-                      "title": "Injected ID",
-                      "description": "Test",
-                      "severity": 3,
-                      "ownerId": 2
-                }
-                """;
+        {
+              "id": 999,
+              "title": "Injected ID",
+              "description": "Test",
+              "severity": 3,
+              "ownerId": 2
+        }
+        """;
         mockMvc.perform(post("/issues")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(issue)))
+                .content(objectMapper.writeValueAsString(payload)))
                 .andDo(print())
                 .andExpect(status().isBadRequest());
     }

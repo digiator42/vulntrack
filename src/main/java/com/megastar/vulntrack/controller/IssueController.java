@@ -1,5 +1,6 @@
 package com.megastar.vulntrack.controller;
 
+import com.megastar.vulntrack.dto.CreateIssueRequest;
 import com.megastar.vulntrack.model.Issue;
 import com.megastar.vulntrack.service.IssueService;
 import jakarta.validation.Valid;
@@ -17,7 +18,14 @@ public class IssueController {
     }
 
     @PostMapping
-    public Issue createIssue(@Valid @RequestBody Issue issue) {
+    public Issue createIssue(@Valid @RequestBody CreateIssueRequest issueRequest) {
+        Issue issue = new Issue(
+                null,
+                issueRequest.title(),
+                issueRequest.description(),
+                issueRequest.severity(),
+                1L
+        );
         return service.create(issue);
     }
 
