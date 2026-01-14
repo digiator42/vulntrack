@@ -88,7 +88,7 @@ public class IssueControllerTest {
 
         mockMvc.perform(post("/issues")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(payload)))
+                .content(payload))
                 .andExpect(status().isBadRequest());
     }
 
@@ -105,7 +105,7 @@ public class IssueControllerTest {
 
         mockMvc.perform(post("/issues")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(payload)))
+                .content(payload))
                 .andDo(print())
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errors[0].defaultMessage")
@@ -124,7 +124,7 @@ public class IssueControllerTest {
 
         mockMvc.perform(post("/issues")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(payload)))
+                .content(payload))
                 .andDo(print())
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errors").isArray())
@@ -144,16 +144,15 @@ public class IssueControllerTest {
         }
         """;
 
-
         mockMvc.perform(post("/issues")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(payload)))
+                .content(payload))
                 .andDo(print())
                 .andExpect(status().isOk());
 
         mockMvc.perform(post("/issues")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(payload)))
+                .content(payload))
                 .andDo(print())
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.message")
@@ -172,9 +171,10 @@ public class IssueControllerTest {
               "ownerId": 2
         }
         """;
+
         mockMvc.perform(post("/issues")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(payload)))
+                .content(payload))
                 .andDo(print())
                 .andExpect(status().isBadRequest());
     }
