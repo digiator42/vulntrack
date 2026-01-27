@@ -19,7 +19,6 @@ public class IssueService {
                     "Issue with this title already exists"
             );
         }
-        issue.setOwnerId(userId);
         return issueRepository.save(issue);
     }
 

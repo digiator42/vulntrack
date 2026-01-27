@@ -218,4 +218,25 @@ public class IssueControllerTest {
         .andExpect(status().isForbidden());
   }
 
+  @Test
+  public void createIssue_withInjectedOwnerId_shouldReject() throws Exception {
+    // injecting the id after X-USER-ID
+    
+    String payload = """
+        {
+          "title": "Injected Owner ID",
+          "description": "secret",
+          "severity": 3,
+          "ownerId": 999
+        }
+        """;
+
+    mockMvc.perform(post("/issues")
+        .contentType(MediaType.APPLICATION_JSON)
+        .header("X-USER-ID", 1)
+        .content(payload))
+        .andDo(print())
+        .andExpect(status().isBadRequest());
+  }
+
 }

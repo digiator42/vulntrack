@@ -30,7 +30,7 @@ public class IssueController {
                 issueRequest.title(),
                 issueRequest.description(),
                 issueRequest.severity(),
-                null);
+                userId);
         return service.create(issue, userId);
     }
 

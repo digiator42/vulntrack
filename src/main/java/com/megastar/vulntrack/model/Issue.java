@@ -5,9 +5,7 @@ public class Issue {
     private String title;
     private String description;
     private Integer severity;
-    private Long ownerId;
-
-    public Issue() {}
+    private final Long ownerId;
 
     public Issue(Long id, String title, String description, Integer severity, Long ownerId) {
         this.id = id;
@@ -51,10 +49,6 @@ public class Issue {
 
     public Long getOwnerId() {
         return ownerId;
-    }
-
-    public void setOwnerId(long ownerId) {
-        this.ownerId = ownerId;
     }
 
     @Override
