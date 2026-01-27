@@ -1,6 +1,7 @@
 package com.megastar.vulntrack;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -18,15 +19,15 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 public class IssueControllerTest {
-    @Autowired
-    private MockMvc mockMvc;
-    @Autowired
-    private ObjectMapper objectMapper;
+  @Autowired
+  private MockMvc mockMvc;
+  @Autowired
+  private ObjectMapper objectMapper;
 
-    @Test
-    public void createIssue_shouldReturnCreatedIssue() throws Exception {
+  @Test
+  public void createIssue_shouldReturnCreatedIssue() throws Exception {
 
-        String payload = """
+    String payload = """
         {
           "title": "Valid title",
           "description": "Desc",
@@ -34,25 +35,26 @@ public class IssueControllerTest {
         }
         """;
 
-        mockMvc.perform(post("/issues")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(payload))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").exists())
-                .andExpect(jsonPath("$.title").value("Valid title"));
-    }
+    mockMvc.perform(post("/issues")
+        .contentType(MediaType.APPLICATION_JSON)
+        .header("X-USER-ID", 2)
+        .content(payload))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.id").exists())
+        .andExpect(jsonPath("$.title").value("Valid title"));
+  }
 
-    @Test
-    public void getAllIssues_shouldReturnAllIssues() throws Exception {
-        mockMvc.perform(get("/issues"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$").isArray());
-    }
+  @Test
+  public void getAllIssues_shouldReturnAllIssues() throws Exception {
+    mockMvc.perform(get("/issues"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$").isArray());
+  }
 
-    @Test
-    public void getIssueId_shouldReturnIssueId() throws Exception {
+  @Test
+  public void getIssueId_shouldReturnIssueId() throws Exception {
 
-        String payload = """
+    String payload = """
         {
           "title": "Test Issue ID",
           "description": "Desc",
@@ -60,25 +62,29 @@ public class IssueControllerTest {
         }
         """;
 
-        String response = mockMvc.perform(post("/issues")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(payload))
-                .andReturn()
-                .getResponse()
-                .getContentAsString();
+    String response = mockMvc.perform(post("/issues")
+        .contentType(MediaType.APPLICATION_JSON)
+        .header("X-USER-ID", 1)
+        .content(payload))
+        .andDo(print())
+        .andReturn()
+        .getResponse()
+        .getContentAsString();
 
-        Long id = objectMapper.readTree(response).get("id").asLong();
+    Long id = objectMapper.readTree(response).get("id").asLong();
 
-        mockMvc.perform(get("/issues/" + id))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(id));
+    mockMvc.perform(get("/issues/" + id)
+        .header("X-USER-ID", 1))
+        .andExpect(status().isOk())
+        .andDo(print())
+        .andExpect(jsonPath("$.id").value(id));
 
-    }
+  }
 
-    @Test
-    public void createIssue_withoutTitle_shouldReturn400() throws Exception {
+  @Test
+  public void createIssue_withoutTitle_shouldReturn400() throws Exception {
 
-        String payload = """
+    String payload = """
         {
           "title": null,
           "description": "Desc",
@@ -86,16 +92,16 @@ public class IssueControllerTest {
         }
         """;
 
-        mockMvc.perform(post("/issues")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(payload))
-                .andExpect(status().isBadRequest());
-    }
+    mockMvc.perform(post("/issues")
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(payload))
+        .andExpect(status().isBadRequest());
+  }
 
-    @Test
-    public void createIssue_withoutSeverity_shouldReturn400() throws Exception {
+  @Test
+  public void createIssue_withoutSeverity_shouldReturn400() throws Exception {
 
-        String payload = """
+    String payload = """
         {
           "title": "Not null",
           "description": "Desc",
@@ -103,18 +109,19 @@ public class IssueControllerTest {
         }
         """;
 
-        mockMvc.perform(post("/issues")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(payload))
-                .andDo(print())
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors[0].defaultMessage")
-                .value("Severity is required"));
-    }
+    mockMvc.perform(post("/issues")
+        .contentType(MediaType.APPLICATION_JSON)
+        .header("X-USER-ID", 2)
+        .content(payload))
+        .andDo(print())
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.errors[0].defaultMessage")
+            .value("Severity is required"));
+  }
 
-    @Test
-    public void createIssue_withoutMultipleFields_shouldReturnAllFieldsError() throws Exception {
-        String payload = """
+  @Test
+  public void createIssue_withoutMultipleFields_shouldReturnAllFieldsError() throws Exception {
+    String payload = """
         {
           "title": null,
           "description": "Desc",
@@ -122,21 +129,22 @@ public class IssueControllerTest {
         }
         """;
 
-        mockMvc.perform(post("/issues")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(payload))
-                .andDo(print())
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors").isArray())
-                .andExpect(jsonPath("$.errors.length()").value(2))
-                .andExpect(jsonPath("$.errors[*].field",
-                        containsInAnyOrder("title", "severity")));
-    }
+    mockMvc.perform(post("/issues")
+        .contentType(MediaType.APPLICATION_JSON)
+        .header("X-USER-ID", 2)
+        .content(payload))
+        .andDo(print())
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.errors").isArray())
+        .andExpect(jsonPath("$.errors.length()").value(2))
+        .andExpect(jsonPath("$.errors[*].field",
+            containsInAnyOrder("title", "severity")));
+  }
 
-    @Test
-    public void createIssue_withDuplicateTitles_shouldReturnConflict409() throws Exception {
+  @Test
+  public void createIssue_withDuplicateTitles_shouldReturnConflict409() throws Exception {
 
-        String payload = """
+    String payload = """
         {
           "title": "Duplicate Title",
           "description": "Desc",
@@ -144,25 +152,27 @@ public class IssueControllerTest {
         }
         """;
 
-        mockMvc.perform(post("/issues")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(payload))
-                .andDo(print())
-                .andExpect(status().isOk());
+    mockMvc.perform(post("/issues")
+        .contentType(MediaType.APPLICATION_JSON)
+        .header("X-USER-ID", 2)
+        .content(payload))
+        .andDo(print())
+        .andExpect(status().isOk());
 
-        mockMvc.perform(post("/issues")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(payload))
-                .andDo(print())
-                .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.message")
-                        .value("Issue with this title already exists"));
-    }
+    mockMvc.perform(post("/issues")
+        .contentType(MediaType.APPLICATION_JSON)
+        .header("X-USER-ID", 2)
+        .content(payload))
+        .andDo(print())
+        .andExpect(status().isConflict())
+        .andExpect(jsonPath("$.message")
+            .value("Issue with this title already exists"));
+  }
 
-    @Test
-    public void CreateIssue_withInjectedId_shouldReject() throws Exception {
+  @Test
+  public void createIssue_withInjectedId_shouldReject() throws Exception {
 
-        String payload = """
+    String payload = """
         {
               "id": 999,
               "title": "Injected ID",
@@ -172,11 +182,40 @@ public class IssueControllerTest {
         }
         """;
 
-        mockMvc.perform(post("/issues")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(payload))
-                .andDo(print())
-                .andExpect(status().isBadRequest());
-    }
+    mockMvc.perform(post("/issues")
+        .contentType(MediaType.APPLICATION_JSON)
+        .header("X-USER-ID", 2)
+        .content(payload))
+        .andDo(print())
+        .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  public void getIssue_withDifferentOwner_shouldReturn403() throws Exception {
+
+    String payload = """
+        {
+          "title": "Private issue",
+          "description": "secret",
+          "severity": 3
+        }
+        """;
+
+    String response = mockMvc.perform(post("/issues")
+        .contentType(MediaType.APPLICATION_JSON)
+        .header("X-USER-ID", 2)
+        .content(payload))
+        .andDo(print())
+        .andExpect(status().isOk())
+        .andReturn()
+        .getResponse()
+        .getContentAsString();
+
+    Long issueId = objectMapper.readTree(response).get("id").asLong();
+
+    mockMvc.perform(get("/issues/" + issueId)
+        .header("X-USER-ID", "3"))
+        .andExpect(status().isForbidden());
+  }
 
 }

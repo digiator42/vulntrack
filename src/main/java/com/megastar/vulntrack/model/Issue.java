@@ -1,8 +1,5 @@
 package com.megastar.vulntrack.model;
 
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-
 public class Issue {
     private Long id;
     private String title;
@@ -10,12 +7,8 @@ public class Issue {
     private Integer severity;
     private Long ownerId;
 
-    public void setOwnerId(Long ownerId) {
-        this.ownerId = ownerId;
-    }
-
-
     public Issue() {}
+
     public Issue(Long id, String title, String description, Integer severity, Long ownerId) {
         this.id = id;
         this.title = title;
@@ -47,14 +40,16 @@ public class Issue {
     public void setDescription(String description) {
         this.description = description;
     }
+
     public Integer getSeverity() {
         return severity;
     }
+
     public void setSeverity(Integer severity) {
         this.severity = severity;
     }
 
-    public long getOwnerId() {
+    public Long getOwnerId() {
         return ownerId;
     }
 

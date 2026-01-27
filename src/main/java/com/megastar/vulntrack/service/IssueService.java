@@ -12,13 +12,14 @@ import java.util.List;
 public class IssueService {
     private final IssueRepository issueRepository = new IssueRepository();
 
-    public Issue create(Issue issue) {
+    public Issue create(Issue issue, Long userId) {
         boolean exists = issueRepository.existsByTitle(issue.getTitle());
         if (exists) {
             throw new DuplicateIssueException(
                     "Issue with this title already exists"
             );
         }
+        issue.setOwnerId(userId);
         return issueRepository.save(issue);
     }
 
