@@ -18,7 +18,7 @@ public class IssueRepository {
         return issue;
     }
 
-    public Optional<Issue> findById(long id) {
+    public Optional<Issue> findById(Long id) {
         return Optional.ofNullable(store.get(id));
     }
 

@@ -12,6 +12,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -23,6 +24,8 @@ public class IssueControllerTest {
   private MockMvc mockMvc;
   @Autowired
   private ObjectMapper objectMapper;
+
+  final String userId = "X-USER-ID";
 
   @Test
   public void createIssue_shouldReturnCreatedIssue() throws Exception {
@@ -277,6 +280,84 @@ public class IssueControllerTest {
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.length()").value(2))
         .andExpect(jsonPath("$[0].title").value("Owner 1"));
+  }
+
+  @Test
+  public void updateIssue_ownerCanUpdate() throws Exception {
+    String payload = """
+        {
+          "title": "Create Me",
+          "description": "secret description",
+          "severity": 3
+        }
+        """;
+
+    String updatedPayload = """
+        {
+          "title": "Update Me",
+          "description": "secret description...",
+          "severity": 3
+        }
+        """;
+
+    String response = mockMvc.perform(post("/issues")
+        .header(userId, 4)
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(payload))
+        .andDo(print())
+        .andExpect(status().isOk())
+        .andReturn()
+        .getResponse()
+        .getContentAsString();
+
+    Long id = objectMapper.readTree(response).get("id").asLong();
+
+    mockMvc.perform(put("/issues/" + id)
+        .header(userId, 4)
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(updatedPayload))
+        .andDo(print())
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.title").value("Update Me"));
+  }
+
+  @Test
+  public void updateIssue_withDifferentOwner_shouldReturn403() throws Exception {
+    String payload = """
+        {
+          "title": "Create Me again",
+          "description": "secret description",
+          "severity": 3
+        }
+        """;
+
+    String updatedPayload = """
+        {
+          "title": "Update Me again",
+          "description": "secret description...",
+          "severity": 3
+        }
+        """;
+
+    String response = mockMvc.perform(post("/issues")
+        .header(userId, 5)
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(payload))
+        .andDo(print())
+        .andExpect(status().isOk())
+        .andReturn()
+        .getResponse()
+        .getContentAsString();
+
+    Long id = objectMapper.readTree(response).get("id").asLong();
+
+    mockMvc.perform(put("/issues/" + id)
+        .header(userId, 6)
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(updatedPayload))
+        .andDo(print())
+        .andExpect(status().isForbidden());
+
   }
 
 }

@@ -1,9 +1,14 @@
 package com.megastar.vulntrack.service;
 
-
+import com.megastar.vulntrack.dto.UpdateIssueRequest;
+import com.megastar.vulntrack.exception.AccessDeniedException;
 import com.megastar.vulntrack.exception.DuplicateIssueException;
+import com.megastar.vulntrack.exception.IssueNotFoundException;
 import com.megastar.vulntrack.model.Issue;
 import com.megastar.vulntrack.repository.IssueRepository;
+
+import jakarta.validation.Valid;
+
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -16,8 +21,7 @@ public class IssueService {
         boolean exists = issueRepository.existsByTitle(issue.getTitle());
         if (exists) {
             throw new DuplicateIssueException(
-                    "Issue with this title already exists"
-            );
+                    "Issue with this title already exists");
         }
         return issueRepository.save(issue);
     }
@@ -32,5 +36,23 @@ public class IssueService {
 
     public List<Issue> getAllByOwnerId(Long ownerId) {
         return issueRepository.findAllByOwnerId(ownerId);
+    }
+
+    public Issue updateIssue(Long id, Long userId, UpdateIssueRequest request) {
+        Issue currentIssue = this.getById(id);
+        
+        if (currentIssue == null) {
+            throw new IssueNotFoundException(id);
+        }
+
+        if (!currentIssue.getOwnerId().equals(userId)) {
+            throw new AccessDeniedException(request.title());
+        }
+
+        currentIssue.setId(id);
+        currentIssue.setTitle(request.title());
+        currentIssue.setDescription(request.description());
+        
+        return currentIssue;
     }
 }
