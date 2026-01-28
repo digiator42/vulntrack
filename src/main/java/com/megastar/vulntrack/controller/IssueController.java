@@ -22,8 +22,7 @@ public class IssueController {
     @PostMapping
     public Issue createIssue(
             @RequestHeader("X-USER-ID") Long userId,
-            @Valid @RequestBody CreateIssueRequest issueRequest
-        ) {
+            @Valid @RequestBody CreateIssueRequest issueRequest) {
 
         Issue issue = new Issue(
                 null,
@@ -31,12 +30,12 @@ public class IssueController {
                 issueRequest.description(),
                 issueRequest.severity(),
                 userId);
-        return service.create(issue, userId);
+        return this.service.create(issue, userId);
     }
 
     @GetMapping()
-    public List<Issue> getAllIssues() {
-        return service.getAll();
+    public List<Issue> getAllIssues(@RequestHeader("X-USER-ID") Long userId) {
+        return this.service.getAllByOwnerId(userId);
     }
 
     @GetMapping("/{id}")
@@ -52,4 +51,5 @@ public class IssueController {
         }
         return issue;
     }
+
 }

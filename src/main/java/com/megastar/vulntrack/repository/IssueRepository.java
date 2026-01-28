@@ -23,10 +23,19 @@ public class IssueRepository {
     }
 
     public boolean existsByTitle(String title) {
-        return store.values().stream().anyMatch(issue -> issue.getTitle().equals(title));
+        return store.values()
+                .stream()
+                .anyMatch(issue -> issue.getTitle().equals(title));
     }
 
     public List<Issue> findAll() {
         return store.values().stream().toList();
+    }
+
+    public List<Issue> findAllByOwnerId(Long ownerId) {
+        return store.values()
+                .stream()
+                .filter(issue -> issue.getOwnerId().equals(ownerId))
+                .toList();
     }
 }

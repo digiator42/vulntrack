@@ -46,7 +46,8 @@ public class IssueControllerTest {
 
   @Test
   public void getAllIssues_shouldReturnAllIssues() throws Exception {
-    mockMvc.perform(get("/issues"))
+    mockMvc.perform(get("/issues")
+        .header("X-USER-ID", 1))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$").isArray());
   }
@@ -221,7 +222,7 @@ public class IssueControllerTest {
   @Test
   public void createIssue_withInjectedOwnerId_shouldReject() throws Exception {
     // injecting the id after X-USER-ID
-    
+
     String payload = """
         {
           "title": "Injected Owner ID",
@@ -237,6 +238,45 @@ public class IssueControllerTest {
         .content(payload))
         .andDo(print())
         .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  public void getIssue_shouldReturnOnlyUserIssues() throws Exception {
+    String payload = """
+        {
+          "title": "Owner 1",
+          "description": "secret",
+          "severity": 3
+        }
+        """;
+
+    String payload2 = """
+        {
+          "title": "Owner 1/2",
+          "description": "secret",
+          "severity": 3
+        }
+        """;
+
+    mockMvc.perform(post("/issues")
+        .header("X-USER-ID", 3)
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(payload))
+        .andDo(print())
+        .andExpect(status().isOk());
+
+    mockMvc.perform(post("/issues")
+        .header("X-USER-ID", 3)
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(payload2))
+        .andDo(print())
+        .andExpect(status().isOk());
+
+    mockMvc.perform(get("/issues")
+        .header("X-USER-ID", 3))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.length()").value(2))
+        .andExpect(jsonPath("$[0].title").value("Owner 1"));
   }
 
 }

@@ -29,4 +29,8 @@ public class IssueService {
     public Issue getById(long id) {
         return issueRepository.findById(id).orElse(null);
     }
+
+    public List<Issue> getAllByOwnerId(Long ownerId) {
+        return issueRepository.findAllByOwnerId(ownerId);
+    }
 }
