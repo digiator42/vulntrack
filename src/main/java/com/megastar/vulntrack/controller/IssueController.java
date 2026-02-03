@@ -2,10 +2,13 @@ package com.megastar.vulntrack.controller;
 
 import com.megastar.vulntrack.config.UserContext;
 import com.megastar.vulntrack.dto.CreateIssueRequest;
+import com.megastar.vulntrack.dto.IssuePatchRequest;
+import com.megastar.vulntrack.dto.IssueResponse;
 import com.megastar.vulntrack.dto.UpdateIssueRequest;
 import com.megastar.vulntrack.exception.AccessDeniedException;
 import com.megastar.vulntrack.exception.IssueNotFoundException;
 import com.megastar.vulntrack.model.Issue;
+import com.megastar.vulntrack.repository.IssueRepository;
 import com.megastar.vulntrack.service.IssueService;
 import jakarta.validation.Valid;
 
@@ -28,7 +31,7 @@ public class IssueController {
     @PostMapping
     public Issue createIssue(@Valid @RequestBody CreateIssueRequest issueRequest) {
         Long userId = userContext.getUserId();
-        
+
         Issue issue = new Issue(
                 null,
                 issueRequest.title(),
@@ -64,10 +67,17 @@ public class IssueController {
         return this.service.updateIssue(id, userContext.getUserId(), request);
     }
 
-    @PatchMapping("/{id}")
+    @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteIssue(@PathVariable Long id) {
         this.service.deleteIssue(id, userContext.getUserId());
+    }
+
+    @PatchMapping("/{id}")
+    public IssueResponse patchIssue(
+            @PathVariable Long id,
+            @Valid @RequestBody IssuePatchRequest request) throws Exception {
+        return this.service.patchIssue(id, request);
     }
 
 }

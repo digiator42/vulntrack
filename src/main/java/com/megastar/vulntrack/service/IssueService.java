@@ -1,5 +1,7 @@
 package com.megastar.vulntrack.service;
 
+import com.megastar.vulntrack.dto.IssuePatchRequest;
+import com.megastar.vulntrack.dto.IssueResponse;
 import com.megastar.vulntrack.dto.UpdateIssueRequest;
 import com.megastar.vulntrack.exception.AccessDeniedException;
 import com.megastar.vulntrack.exception.DuplicateIssueException;
@@ -7,6 +9,7 @@ import com.megastar.vulntrack.exception.IssueNotFoundException;
 import com.megastar.vulntrack.model.Issue;
 import com.megastar.vulntrack.repository.IssueRepository;
 
+import org.apache.coyote.BadRequestException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -29,7 +32,7 @@ public class IssueService {
     }
 
     public Issue getById(long id) {
-        return issueRepository.findById(id).orElse(null);
+        return issueRepository.findById(id).orElseThrow(() -> new IssueNotFoundException(id));
     }
 
     public List<Issue> getAllByOwnerId(Long ownerId) {
@@ -38,33 +41,52 @@ public class IssueService {
 
     public Issue updateIssue(Long id, Long userId, UpdateIssueRequest request) {
         Issue currentIssue = this.getById(id);
-        
-        if (currentIssue == null) {
-            throw new IssueNotFoundException(id);
-        }
 
         if (!currentIssue.getOwnerId().equals(userId)) {
             throw new AccessDeniedException(request.title());
         }
-        
+
         currentIssue.setId(id);
         currentIssue.setTitle(request.title());
         currentIssue.setDescription(request.description());
-        
+
         return currentIssue;
     }
 
     public void deleteIssue(Long id, Long userId) {
         Issue currentIssue = this.getById(id);
 
-        if (currentIssue == null) {
-            throw new IssueNotFoundException(id);
-        }
-        
         if (!currentIssue.getOwnerId().equals(userId)) {
             throw new AccessDeniedException(currentIssue.getTitle());
         }
 
         issueRepository.delete(id);
+    }
+
+    public IssueResponse patchIssue(Long id, IssuePatchRequest req) throws Exception {
+        Issue issue = this.getById(id);
+
+        boolean updated = false;
+
+        if (req.title() != null) {
+            issue.setTitle(req.title());
+            updated = true;
+        }
+
+        if (req.description() != null) {
+            issue.setDescription(req.description());
+            updated = true;
+        }
+
+        if (req.status() != null) {
+            issue.setStatus(req.status());
+            updated = true;
+        }
+
+        if (!updated) {
+            throw new BadRequestException("No fields provided for update");
+        }
+
+        return IssueResponse.from(issue);
     }
 }
