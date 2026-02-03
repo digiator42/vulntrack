@@ -9,6 +9,7 @@ import com.megastar.vulntrack.service.IssueService;
 import jakarta.validation.Valid;
 import scala.annotation.unused;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -62,9 +63,16 @@ public class IssueController {
     public Issue updateIssue(
             @PathVariable Long id,
             @RequestHeader("X-USER-ID") Long userId,
-            @Valid @RequestBody UpdateIssueRequest request
-        ) {
+            @Valid @RequestBody UpdateIssueRequest request) {
         return this.service.updateIssue(id, userId, request);
+    }
+
+    @PatchMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteIssue(
+            @PathVariable Long id,
+            @RequestHeader("X-USER-ID") Long userId) {
+        this.service.deleteIssue(id, userId);
     }
 
 }

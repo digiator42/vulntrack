@@ -7,8 +7,6 @@ import com.megastar.vulntrack.exception.IssueNotFoundException;
 import com.megastar.vulntrack.model.Issue;
 import com.megastar.vulntrack.repository.IssueRepository;
 
-import jakarta.validation.Valid;
-
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -48,11 +46,25 @@ public class IssueService {
         if (!currentIssue.getOwnerId().equals(userId)) {
             throw new AccessDeniedException(request.title());
         }
-
+        
         currentIssue.setId(id);
         currentIssue.setTitle(request.title());
         currentIssue.setDescription(request.description());
         
         return currentIssue;
+    }
+
+    public void deleteIssue(Long id, Long userId) {
+        Issue currentIssue = this.getById(id);
+
+        if (currentIssue == null) {
+            throw new IssueNotFoundException(id);
+        }
+        
+        if (!currentIssue.getOwnerId().equals(userId)) {
+            throw new AccessDeniedException(currentIssue.getTitle());
+        }
+
+        issueRepository.delete(id);
     }
 }

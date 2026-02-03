@@ -11,6 +11,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
@@ -360,4 +361,60 @@ public class IssueControllerTest {
 
   }
 
+  @Test
+  public void deleteIssue_ownerCanDelete() throws Exception {
+
+    String payload = """
+        {
+          "title": "owner can delete",
+          "description": "description",
+          "severity": 3
+        }
+        """;
+
+    String response = mockMvc.perform(post("/issues")
+        .header("X-USER-ID", 1)
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(payload))
+        .andDo(print())
+        .andExpect(status().isOk())
+        .andReturn()
+        .getResponse()
+        .getContentAsString();
+
+    Long id = objectMapper.readTree(response).get("id").asLong();
+
+    mockMvc.perform(patch("/issues/" + id)
+        .header("X-USER-ID", 1))
+        .andDo(print())
+        .andExpect(status().isNoContent());
+  }
+
+  @Test
+  public void deleteIssue_withDifferentOwner_shouldReturn403() throws Exception {
+    String payload = """
+        {
+          "title": "different owner can not delete",
+          "description": "description",
+          "severity": 3
+        }
+        """;
+
+    String response = mockMvc.perform(post("/issues")
+        .header("X-USER-ID", 1)
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(payload))
+        .andDo(print())
+        .andExpect(status().isOk())
+        .andReturn()
+        .getResponse()
+        .getContentAsString();
+
+    Long id = objectMapper.readTree(response).get("id").asLong();
+
+    mockMvc.perform(patch("/issues/" + id)
+        .header("X-USER-ID", 2))
+        .andDo(print())
+        .andExpect(status().isForbidden());
+  }
 }

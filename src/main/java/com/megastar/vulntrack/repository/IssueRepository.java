@@ -1,5 +1,6 @@
 package com.megastar.vulntrack.repository;
 
+import com.megastar.vulntrack.exception.IssueNotFoundException;
 import com.megastar.vulntrack.model.Issue;
 
 import java.util.HashMap;
@@ -37,5 +38,9 @@ public class IssueRepository {
                 .stream()
                 .filter(issue -> issue.getOwnerId().equals(ownerId))
                 .toList();
+    }
+
+    public void delete(Long id) {
+        store.remove(id);
     }
 }
