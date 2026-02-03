@@ -29,6 +29,22 @@ public class IssueControllerTest {
   final String userId = "X-USER-ID";
 
   @Test
+  public void request_withoutUserHeader_shouldReturn401() throws Exception {
+
+    mockMvc.perform(post("/issues"))
+        .andDo(print())
+        .andExpect(status().isUnauthorized());
+  }
+
+  @Test
+  void request_withInvalidUserHeader_shouldReturn401() throws Exception {
+
+    mockMvc.perform(get("/issues")
+        .header("X-USER-ID", "abc"))
+        .andExpect(status().isUnauthorized());
+  }
+
+  @Test
   public void createIssue_shouldReturnCreatedIssue() throws Exception {
 
     String payload = """
@@ -98,6 +114,7 @@ public class IssueControllerTest {
         """;
 
     mockMvc.perform(post("/issues")
+        .header("X-USER-ID", 1)
         .contentType(MediaType.APPLICATION_JSON)
         .content(payload))
         .andExpect(status().isBadRequest());

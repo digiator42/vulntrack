@@ -1,6 +1,7 @@
 package com.megastar.vulntrack.exception;
 
 import com.megastar.vulntrack.dto.ErrorResponse;
+import com.megastar.vulntrack.dto.UnauthorizedError;
 import com.megastar.vulntrack.dto.ValidationError;
 import com.megastar.vulntrack.dto.ValidationErrorResponse;
 import org.springframework.http.HttpStatus;
@@ -24,6 +25,12 @@ import java.util.List;
  */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    @ExceptionHandler(UnauthorizedException.class)
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    public UnauthorizedError handleUnauthorized(UnauthorizedException ex) {
+        return new UnauthorizedError(ex.getMessage());
+    }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
