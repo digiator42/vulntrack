@@ -51,7 +51,7 @@ public class IssueRepository {
         };
 
         if (direction.equals("desc")) {
-            comparator.reversed();
+            comparator = comparator.reversed();
         }
 
         return store.values()

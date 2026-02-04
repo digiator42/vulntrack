@@ -2,6 +2,7 @@ package com.megastar.vulntrack.controller;
 
 import com.megastar.vulntrack.config.UserContext;
 import com.megastar.vulntrack.dto.CreateIssueRequest;
+import com.megastar.vulntrack.dto.IssuePageRequest;
 import com.megastar.vulntrack.dto.IssuePatchRequest;
 import com.megastar.vulntrack.dto.IssueResponse;
 import com.megastar.vulntrack.dto.UpdateIssueRequest;
@@ -16,7 +17,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 
 @RestController
 @RequestMapping("/issues")
@@ -81,12 +81,9 @@ public class IssueController {
         return this.service.patchIssue(id, userContext.getUserId(), request);
     }
 
-    @GetMapping()
-    public List<Issue> listIssues(
-            @RequestParam int page,
-            @RequestParam int size,
-            @RequestParam String sort) throws Exception {
-        return this.service.getSortedListIssues(page, size, sort, userContext.getUserId());
+    @GetMapping("/sort")
+    public List<Issue> listIssues(@Valid IssuePageRequest req) throws Exception {
+        return this.service.getSortedListIssues(req, userContext.getUserId());
     }
 
 }

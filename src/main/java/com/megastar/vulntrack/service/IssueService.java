@@ -1,6 +1,6 @@
 package com.megastar.vulntrack.service;
 
-import com.megastar.vulntrack.config.UserContext;
+import com.megastar.vulntrack.dto.IssuePageRequest;
 import com.megastar.vulntrack.dto.IssuePatchRequest;
 import com.megastar.vulntrack.dto.IssueResponse;
 import com.megastar.vulntrack.dto.UpdateIssueRequest;
@@ -100,14 +100,14 @@ public class IssueService {
         return IssueResponse.from(issue);
     }
 
-    public List<Issue> getSortedListIssues(int page, int size, String sort, Long ownerId) throws Exception {
+    public List<Issue> getSortedListIssues(IssuePageRequest req, Long ownerId) throws Exception {
         // /issues?page=1&size=20&sort=severity,asc
 
-        if (size > 50) {
+        if (req.size() > 50) {
             throw new BadRequestException("Size is invalid");
         }
 
-        String[] sortFields = sort.split(",");
+        String[] sortFields = req.sort().split(",");
         String field = sortFields[0];
         String direction = sortFields.length > 1 ? sortFields[1] : "asc";
         
@@ -116,8 +116,8 @@ public class IssueService {
         }
 
         return issueRepository.listIssuesByOwnerId (
-            page,
-            size,
+            req.page(),
+            req.size(),
             field,
             direction,
             ownerId
