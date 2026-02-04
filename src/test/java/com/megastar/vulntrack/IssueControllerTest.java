@@ -10,6 +10,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -27,6 +28,37 @@ public class IssueControllerTest {
   private ObjectMapper objectMapper;
 
   final String userId = "X-USER-ID";
+
+  public Long createInitialIssue(int userId, String payload) throws Exception {
+
+    if (payload == null) {
+
+      String title = "Random Title " + userId;
+      payload = """
+          {
+            "title": "{title}",
+            "description": "description",
+            "severity": 3
+          }
+          """.replaceFirst("\\{title\\}", title);
+    }
+
+    System.out.println("------------->>> " + payload);
+
+    String response = mockMvc.perform(post("/issues")
+        .header("X-USER-ID", 7)
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(payload))
+        .andDo(print())
+        .andExpect(status().isOk())
+        .andReturn()
+        .getResponse()
+        .getContentAsString();
+
+    Long id = objectMapper.readTree(response).get("id").asLong();
+
+    return id;
+  }
 
   @Test
   public void request_withoutUserHeader_shouldReturn401() throws Exception {
@@ -401,7 +433,7 @@ public class IssueControllerTest {
 
     Long id = objectMapper.readTree(response).get("id").asLong();
 
-    mockMvc.perform(patch("/issues/" + id)
+    mockMvc.perform(delete("/issues/" + id)
         .header("X-USER-ID", 1))
         .andDo(print())
         .andExpect(status().isNoContent());
@@ -429,9 +461,168 @@ public class IssueControllerTest {
 
     Long id = objectMapper.readTree(response).get("id").asLong();
 
-    mockMvc.perform(patch("/issues/" + id)
+    mockMvc.perform(delete("/issues/" + id)
         .header("X-USER-ID", 2))
         .andDo(print())
         .andExpect(status().isForbidden());
   }
+
+  @Test
+  public void patchIssue_ownerCanPatch() throws Exception {
+
+    String payload = """
+        {
+          "title": "owner can patch",
+          "description": "description",
+          "severity": 3
+        }
+        """;
+
+    String updatedPayload = """
+        {
+          "title": "Updated Title"
+        }
+        """;
+
+    String response = mockMvc.perform(post("/issues")
+        .header("X-USER-ID", 5)
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(payload))
+        .andDo(print())
+        .andExpect(status().isOk())
+        .andReturn()
+        .getResponse()
+        .getContentAsString();
+
+    Long id = objectMapper.readTree(response).get("id").asLong();
+
+    mockMvc.perform(patch("/issues/" + id)
+        .header("X-USER-ID", 5)
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(updatedPayload))
+        .andDo(print())
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.title").value("Updated Title"));
+
+  }
+
+  @Test
+  public void patchIssue_withDifferentOwner_shouldReturn403() throws Exception {
+
+    String payload = """
+        {
+          "title": "owner can patch403",
+          "description": "description",
+          "severity": 3
+        }
+        """;
+
+    String injectedPayload = """
+        {
+          "title": "Hacked"
+        }
+        """;
+
+    String response = mockMvc.perform(post("/issues")
+        .header("X-USER-ID", 55)
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(payload))
+        .andDo(print())
+        .andExpect(status().isOk())
+        .andReturn()
+        .getResponse()
+        .getContentAsString();
+
+    Long id = objectMapper.readTree(response).get("id").asLong();
+
+    mockMvc.perform(patch("/issues/" + id)
+        .header("X-USER-ID", 56)
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(injectedPayload))
+        .andDo(print())
+        .andExpect(status().isForbidden());
+  }
+
+  @Test
+  public void patchIssue_nonExisting_shouldReturn404() throws Exception {
+
+    String payload = """
+        {
+          "title": "Does not matter"
+        }
+        """;
+
+    mockMvc.perform(patch("/issues/99")
+        .header("X-USER-ID", 5)
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(payload))
+        .andDo(print())
+        .andExpect(status().isNotFound());
+  }
+
+  @Test
+  void patchIssue_emptyBody_shouldReturn400() throws Exception {
+
+    String payload = """
+        {
+          "title": "owner can patch400",
+          "description": "description",
+          "severity": 3
+        }
+        """;
+
+    String response = mockMvc.perform(post("/issues")
+        .header("X-USER-ID", 7)
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(payload))
+        .andDo(print())
+        .andExpect(status().isOk())
+        .andReturn()
+        .getResponse()
+        .getContentAsString();
+
+    Long id = objectMapper.readTree(response).get("id").asLong();
+
+    mockMvc.perform(patch("/issues/" + id)
+        .header("X-USER-ID", 7)
+        .contentType(MediaType.APPLICATION_JSON)
+        .content("{}"))
+        .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  void patchIssue_attemptToChangeOwner_shouldReturn400() throws Exception {
+
+    Long id = createInitialIssue(7, null);
+
+    String payload = """
+        {
+          "ownerId": 999
+        }
+        """;
+
+    mockMvc.perform(patch("/issues/" + id)
+        .header("X-USER-ID", 7)
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(payload))
+        .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  void patchIssue_invalidField_shouldReturn400() throws Exception {
+    String payload = """
+        {
+          "title": ""
+        }
+        """;
+
+    Long id = createInitialIssue(1, null);
+
+    mockMvc.perform(patch("/issues/" + id)
+        .header("X-USER-ID", 1)
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(payload))
+        .andExpect(status().isBadRequest());
+  }
+
 }

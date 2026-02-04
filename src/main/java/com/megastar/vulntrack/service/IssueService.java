@@ -1,5 +1,6 @@
 package com.megastar.vulntrack.service;
 
+import com.megastar.vulntrack.config.UserContext;
 import com.megastar.vulntrack.dto.IssuePatchRequest;
 import com.megastar.vulntrack.dto.IssueResponse;
 import com.megastar.vulntrack.dto.UpdateIssueRequest;
@@ -63,8 +64,16 @@ public class IssueService {
         issueRepository.delete(id);
     }
 
-    public IssueResponse patchIssue(Long id, IssuePatchRequest req) throws Exception {
+    public IssueResponse patchIssue(
+            Long id,
+            Long userId,
+            IssuePatchRequest req) throws Exception {
+
         Issue issue = this.getById(id);
+
+        if (!issue.getOwnerId().equals(userId)) {
+            throw new AccessDeniedException(issue.getTitle());
+        }
 
         boolean updated = false;
 

@@ -4,6 +4,8 @@ import com.megastar.vulntrack.dto.ErrorResponse;
 import com.megastar.vulntrack.dto.UnauthorizedError;
 import com.megastar.vulntrack.dto.ValidationError;
 import com.megastar.vulntrack.dto.ValidationErrorResponse;
+
+import org.apache.coyote.BadRequestException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -15,13 +17,13 @@ import java.util.List;
 
 /**
  * JSON parsing
- *  HttpMessageNotReadableException → 400 (Invalid payload)
+ * HttpMessageNotReadableException → 400 (Invalid payload)
  *
  * Bean validation
- *  MethodArgumentNotValidException → 400 (errors[])
+ * MethodArgumentNotValidException → 400 (errors[])
  *
  * Business rules
- *  DuplicateIssueException → 409
+ * DuplicateIssueException → 409
  */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -40,8 +42,8 @@ public class GlobalExceptionHandler {
                 .stream()
                 .map(error -> new ValidationError(
                         error.getField(),
-                        error.getDefaultMessage()
-                )).toList();
+                        error.getDefaultMessage()))
+                .toList();
         return new ValidationErrorResponse(errors);
     }
 
@@ -55,6 +57,18 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ErrorResponse handleInvalidJson(HttpMessageNotReadableException ex) {
         return new ErrorResponse("Invalid request payload -> " + ex.getMessage());
+    }
+
+    @ExceptionHandler(IssueNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ErrorResponse handleIssueNotFound(IssueNotFoundException ex) {
+        return new ErrorResponse(ex.getMessage());
+    }
+
+    @ExceptionHandler(BadRequestException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handleEmptyBodyPatch(BadRequestException ex) {
+        return new ErrorResponse(ex.getMessage());
     }
 
 }

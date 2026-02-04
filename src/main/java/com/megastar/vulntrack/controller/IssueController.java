@@ -77,7 +77,7 @@ public class IssueController {
     public IssueResponse patchIssue(
             @PathVariable Long id,
             @Valid @RequestBody IssuePatchRequest request) throws Exception {
-        return this.service.patchIssue(id, request);
+        return this.service.patchIssue(id, userContext.getUserId(), request);
     }
 
 }
