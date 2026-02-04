@@ -3,6 +3,7 @@ package com.megastar.vulntrack.repository;
 import com.megastar.vulntrack.exception.IssueNotFoundException;
 import com.megastar.vulntrack.model.Issue;
 
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,6 +38,28 @@ public class IssueRepository {
         return store.values()
                 .stream()
                 .filter(issue -> issue.getOwnerId().equals(ownerId))
+                .toList();
+    }
+
+    public List<Issue> listIssuesByOwnerId(int page, int size, String field, String direction, Long ownerId) {
+        // /issues?page=1&size=20&sort=severity,asc
+
+        Comparator<Issue> comparator = switch (field) {
+            case "severity" -> Comparator.comparing(Issue::getSeverity);
+            case "title" -> Comparator.comparing(Issue::getTitle);
+            default -> Comparator.comparing(Issue::getStatus);
+        };
+
+        if (direction.equals("desc")) {
+            comparator.reversed();
+        }
+
+        return store.values()
+                .stream()
+                .filter(v -> v.getOwnerId() == ownerId)
+                .sorted(comparator)
+                .skip(page*size)
+                .limit(size)
                 .toList();
     }
 

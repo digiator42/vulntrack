@@ -8,6 +8,7 @@ import com.megastar.vulntrack.exception.AccessDeniedException;
 import com.megastar.vulntrack.exception.DuplicateIssueException;
 import com.megastar.vulntrack.exception.IssueNotFoundException;
 import com.megastar.vulntrack.model.Issue;
+import com.megastar.vulntrack.model.IssueSortFields;
 import com.megastar.vulntrack.repository.IssueRepository;
 
 import org.apache.coyote.BadRequestException;
@@ -97,5 +98,30 @@ public class IssueService {
         }
 
         return IssueResponse.from(issue);
+    }
+
+    public List<Issue> getSortedListIssues(int page, int size, String sort, Long ownerId) throws Exception {
+        // /issues?page=1&size=20&sort=severity,asc
+
+        if (size > 50) {
+            throw new BadRequestException("Size is invalid");
+        }
+
+        String[] sortFields = sort.split(",");
+        String field = sortFields[0];
+        String direction = sortFields.length > 1 ? sortFields[1] : "asc";
+        
+        if (!IssueSortFields.isValid(field)) {
+            throw new BadRequestException("Sort is invalid");
+        }
+
+        return issueRepository.listIssuesByOwnerId (
+            page,
+            size,
+            field,
+            direction,
+            ownerId
+        );
+
     }
 }

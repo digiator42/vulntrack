@@ -8,7 +8,6 @@ import com.megastar.vulntrack.dto.UpdateIssueRequest;
 import com.megastar.vulntrack.exception.AccessDeniedException;
 import com.megastar.vulntrack.exception.IssueNotFoundException;
 import com.megastar.vulntrack.model.Issue;
-import com.megastar.vulntrack.repository.IssueRepository;
 import com.megastar.vulntrack.service.IssueService;
 import jakarta.validation.Valid;
 
@@ -16,6 +15,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 @RestController
 @RequestMapping("/issues")
@@ -78,6 +79,14 @@ public class IssueController {
             @PathVariable Long id,
             @Valid @RequestBody IssuePatchRequest request) throws Exception {
         return this.service.patchIssue(id, userContext.getUserId(), request);
+    }
+
+    @GetMapping()
+    public List<Issue> listIssues(
+            @RequestParam int page,
+            @RequestParam int size,
+            @RequestParam String sort) throws Exception {
+        return this.service.getSortedListIssues(page, size, sort, userContext.getUserId());
     }
 
 }
