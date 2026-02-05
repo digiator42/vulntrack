@@ -7,6 +7,7 @@ public class Issue {
     private Integer severity;
     private final Long ownerId;
     private IssueStatus status;
+    private boolean isUpdated;
 
     public Issue(Long id, String title, String description, Integer severity, Long ownerId) {
         this.id = id;
@@ -30,34 +31,46 @@ public class Issue {
 
     public void setTitle(String title) {
         this.title = title;
+        this.setUpdated(true);
     }
-
+    
     public String getDescription() {
         return description;
     }
-
+    
     public void setDescription(String description) {
         this.description = description;
+        this.setUpdated(true);
     }
-
+    
     public Integer getSeverity() {
         return severity;
     }
 
     public void setSeverity(Integer severity) {
         this.severity = severity;
+        this.setUpdated(true);
     }
 
     public Long getOwnerId() {
         return ownerId;
     }
-
+    
     public IssueStatus getStatus() {
         return status;
     }
-
+    
     public void setStatus(IssueStatus status) {
         this.status = status;
+        this.setUpdated(true);
+    }
+
+    public boolean isUpdated() {
+        return isUpdated;
+    }
+
+    public void setUpdated(boolean isUpdated) {
+        this.isUpdated = isUpdated;
     }
 
     @Override

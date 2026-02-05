@@ -76,24 +76,19 @@ public class IssueService {
             throw new AccessDeniedException(issue.getTitle());
         }
 
-        boolean updated = false;
-
         if (req.title() != null) {
             issue.setTitle(req.title());
-            updated = true;
         }
 
         if (req.description() != null) {
             issue.setDescription(req.description());
-            updated = true;
         }
 
         if (req.status() != null) {
             issue.setStatus(req.status());
-            updated = true;
         }
 
-        if (!updated) {
+        if (!issue.isUpdated()) {
             throw new BadRequestException("No fields provided for update");
         }
 
