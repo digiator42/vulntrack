@@ -5,7 +5,8 @@ import java.util.Arrays;
 public enum IssueSortFields {
     CREATED_AT("createdAt"),
     SEVERITY("severity"),
-    TITLE("title");
+    TITLE("title"),
+    STATUS("status");
 
     private final String field;
 

@@ -1,9 +1,14 @@
 package com.megastar.vulntrack.config;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Random;
+
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 import com.megastar.vulntrack.model.Issue;
+import com.megastar.vulntrack.model.IssueStatus;
 import com.megastar.vulntrack.service.IssueService;
 
 @Component
@@ -17,9 +22,19 @@ public class DataInitializer {
 
     @EventListener(ApplicationReadyEvent.class)
     public void init() {
+        Random rand = new Random();
+        
+        Map<Integer, IssueStatus> statusTypes = new HashMap<>();
+        statusTypes.put(0, IssueStatus.OPEN);
+        statusTypes.put(1, IssueStatus.IN_PROGRESS);
+        statusTypes.put(2, IssueStatus.RESOLVED);
+        statusTypes.put(3, IssueStatus.CLOSED);
+        
         for (int i = 1; i <= 25; i++) {
-            issueService.create(
-                    new Issue(Long.valueOf(i), "Walid title " + i, "Desc", i, 1L), 1L);
+            int r = rand.nextInt(4);
+            Issue issue = new Issue(Long.valueOf(i), "Valid title " + i, "Desc", i, 1L);
+            issue.setStatus(statusTypes.get(r));
+            issueService.create(issue, 1L);
         }
     }
 }
