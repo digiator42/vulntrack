@@ -47,7 +47,7 @@ public class IssueRepository {
         Comparator<Issue> comparator = switch (field) {
             case "severity" -> Comparator.comparing(Issue::getSeverity);
             case "title" -> Comparator.comparing(Issue::getTitle);
-            default -> Comparator.comparing(Issue::getStatus);
+            default -> Comparator.comparing(Issue::getCreatedAt);
         };
 
         if (direction.equals("desc")) {

@@ -1,7 +1,10 @@
 package com.megastar.vulntrack.model;
 
+import java.time.LocalDate;
+
 public class Issue {
     private Long id;
+    private String createdAt;
     private String title;
     private String description;
     private Integer severity;
@@ -11,6 +14,7 @@ public class Issue {
 
     public Issue(Long id, String title, String description, Integer severity, Long ownerId) {
         this.id = id;
+        this.createdAt = String.valueOf(LocalDate.now());
         this.title = title;
         this.description = description;
         this.severity = severity;
@@ -25,6 +29,14 @@ public class Issue {
         this.id = id;
     }
 
+    public String getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(String createdAt) {
+        this.createdAt = createdAt;
+    }
+
     public String getTitle() {
         return title;
     }
@@ -33,16 +45,16 @@ public class Issue {
         this.title = title;
         this.setUpdated(true);
     }
-    
+
     public String getDescription() {
         return description;
     }
-    
+
     public void setDescription(String description) {
         this.description = description;
         this.setUpdated(true);
     }
-    
+
     public Integer getSeverity() {
         return severity;
     }
@@ -55,11 +67,11 @@ public class Issue {
     public Long getOwnerId() {
         return ownerId;
     }
-    
+
     public IssueStatus getStatus() {
         return status;
     }
-    
+
     public void setStatus(IssueStatus status) {
         this.status = status;
         this.setUpdated(true);
@@ -75,11 +87,8 @@ public class Issue {
 
     @Override
     public String toString() {
-        return "Issue{" +
-                "id=" + id +
-                ", title='" + title + '\'' +
-                ", description='" + description + '\'' +
-                ", ownerId=" + ownerId +
-                '}';
+        return "Issue [id=" + id + ", createdAt=" + createdAt + ", title=" + title + ", description=" + description
+                + ", severity=" + severity + ", ownerId=" + ownerId + ", status=" + status + ", isUpdated=" + isUpdated
+                + ", getId()=" + getId() + "]";
     }
 }

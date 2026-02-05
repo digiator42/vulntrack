@@ -42,11 +42,6 @@ public class IssueController {
         return this.service.create(issue, userId);
     }
 
-    @GetMapping()
-    public List<Issue> getAllIssues() {
-        return this.service.getAllByOwnerId(userContext.getUserId());
-    }
-
     @GetMapping("/{id}")
     public Issue findById(@PathVariable long id) {
         Issue issue = service.getById(id);
@@ -81,7 +76,7 @@ public class IssueController {
         return this.service.patchIssue(id, userContext.getUserId(), request);
     }
 
-    @GetMapping("/sort")
+    @GetMapping()
     public List<Issue> listIssues(@Valid IssuePageRequest req) throws Exception {
         return this.service.getSortedListIssues(req, userContext.getUserId());
     }

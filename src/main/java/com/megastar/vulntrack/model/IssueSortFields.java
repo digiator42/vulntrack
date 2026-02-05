@@ -3,7 +3,7 @@ package com.megastar.vulntrack.model;
 import java.util.Arrays;
 
 public enum IssueSortFields {
-    CREATED_AT("createdAt"),
+    CREATED_AT("created_at"),
     SEVERITY("severity"),
     TITLE("title"),
     STATUS("status");
@@ -15,6 +15,9 @@ public enum IssueSortFields {
     }
 
     public static boolean isValid(String value) {
-        return Arrays.stream(values()).anyMatch(v -> v.field.equals(value));
+        return Arrays.stream(values()).anyMatch(v -> {
+            System.out.println(value);
+            return v.field.equalsIgnoreCase(value);
+        });
     }
 }
