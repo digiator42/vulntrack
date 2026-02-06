@@ -13,6 +13,6 @@ public record IssuePageRequest(
     public IssuePageRequest {
         page = (page == null) ? 0 : page;
         size = (size == null) ? 10 : size;
-        sort = (sort == null) ? String.valueOf(IssueSortFields.CREATED_AT) : sort;
+        sort = (sort == null) ? IssueSortFields.CREATED_AT.name() : sort;
     }
 }

@@ -51,15 +51,13 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             }
 
             String userId = claims.getSubject();
-            Object claimsObj = claims.get("role");
+            String role = claims.get("role", String.class);
 
-            if (userId == null || claimsObj == null) {
+            if (userId == null || role == null) {
                 SecurityContextHolder.clearContext();
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                 return;
             }
-
-            String role = claimsObj.toString();
 
             java.lang.System.out.println("=========>> " + token);
             java.lang.System.out.println("=========>> " + userId);

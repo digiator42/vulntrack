@@ -76,7 +76,7 @@ public class IssueControllerTest {
 
     mockMvc.perform(post("/issues"))
         .andDo(print())
-        .andExpect(status().isForbidden());
+        .andExpect(status().isUnauthorized());
   }
 
   @Test
@@ -84,7 +84,7 @@ public class IssueControllerTest {
 
     mockMvc.perform(get("/issues")
         .header(authorization, "abc"))
-        .andExpect(status().isForbidden());
+        .andExpect(status().isUnauthorized());
   }
 
   @Test
@@ -321,9 +321,9 @@ public class IssueControllerTest {
         .andDo(print())
         .andExpect(status().isOk());
 
-      String userToken = jwtService.generateToken(1L, payload2);
+    String userToken = jwtService.generateToken(1L, payload2);
 
-        mockMvc.perform(post("/issues")
+    mockMvc.perform(post("/issues")
         .header(authorization, adminToken)
         .contentType(MediaType.APPLICATION_JSON)
         .content(payload2))
@@ -406,8 +406,10 @@ public class IssueControllerTest {
 
     Long id = objectMapper.readTree(response).get("id").asLong();
 
+    String otherUserToken = jwtService.generateToken(999L, "USER");
+
     mockMvc.perform(put("/issues/" + id)
-        .header(authorization, adminToken + "1")
+        .header(authorization, otherUserToken)
         .contentType(MediaType.APPLICATION_JSON)
         .content(updatedPayload))
         .andDo(print())
@@ -540,8 +542,10 @@ public class IssueControllerTest {
 
     Long id = objectMapper.readTree(response).get("id").asLong();
 
+    String otherUserToken = jwtService.generateToken(999L, "USER");
+
     mockMvc.perform(patch("/issues/" + id)
-        .header(authorization, adminToken + "1")
+        .header(authorization, otherUserToken)
         .contentType(MediaType.APPLICATION_JSON)
         .content(injectedPayload))
         .andDo(print())
@@ -653,13 +657,57 @@ public class IssueControllerTest {
   @Test
   public void sortIssues_withDefaultSort_shouldReturnTenIssues() throws Exception {
 
-    adminToken = jwtService.generateToken(10L, "USER");
+    String userToken = jwtService.generateToken(10L, "USER");
     mockMvc.perform(get("/issues")
-        .header(authorization, adminToken))
+        .header(authorization, userToken))
         .andDo(print())
         .andExpect(status().isOk())
         .andExpect(jsonPath("$").isArray())
         .andExpect(jsonPath("$.length()").value(10));
+  }
+
+  @Test
+  void sortIssues_withInvalidDirection_shouldReturn400() throws Exception {
+    mockMvc.perform(get("/issues?page=0&size=10&sort=severity,sideways")
+        .header(authorization, adminToken))
+        .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  void sortIssues_withInvalidDirectionAndNoSize_shouldReturn400() throws Exception {
+    mockMvc.perform(get("/issues?sort=severity,sideways")
+        .header(authorization, adminToken))
+        .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  void sortIssues_withTooManySortParts_shouldReturn400() throws Exception {
+    mockMvc.perform(get("/issues?sort=severity,asc,extra")
+        .header(authorization, adminToken))
+        .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  void sortIssues_withNegativePage_shouldReturn400() throws Exception {
+    mockMvc.perform(get("/issues?page=-1&size=10")
+        .header(authorization, adminToken))
+        .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  void sortIssues_withZeroSize_shouldReturn400() throws Exception {
+    mockMvc.perform(get("/issues?page=0&size=0")
+        .header(authorization, adminToken))
+        .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  void request_withTokenMissingRole_shouldReturn401() throws Exception {
+    String badToken = jwtService.generateToken(1L, null);
+
+    mockMvc.perform(get("/issues")
+        .header(authorization, "Bearer " + badToken))
+        .andExpect(status().isUnauthorized());
   }
 
 }
