@@ -13,10 +13,11 @@ import com.megastar.vulntrack.service.IssueService;
 import jakarta.validation.Valid;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import org.springframework.web.bind.annotation.GetMapping;
 
 @RestController
 @RequestMapping("/issues")
@@ -27,6 +28,11 @@ public class IssueController {
     public IssueController(IssueService issueService, UserContext userContext) {
         this.service = issueService;
         this.userContext = userContext;
+    }
+
+    @GetMapping("/me")
+    public String getCurrentUser(@AuthenticationPrincipal UserDetails userDetails) {
+        return "Logged in as: " + userDetails.getUsername();
     }
 
     @PostMapping
