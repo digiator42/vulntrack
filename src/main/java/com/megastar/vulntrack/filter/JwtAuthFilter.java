@@ -13,6 +13,7 @@ import com.megastar.vulntrack.config.UserContext;
 import com.megastar.vulntrack.security.JwtService;
 
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -39,10 +40,26 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
         if (header != null && header.startsWith("Bearer ")) {
             String token = header.substring(7);
-            Claims claims = jwt.parse(token);
+
+            Claims claims;
+            try {
+                claims = jwt.parse(token);
+            } catch (JwtException | IllegalArgumentException ex) {
+                SecurityContextHolder.clearContext();
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                return;
+            }
 
             String userId = claims.getSubject();
-            String role = claims.get("role").toString();
+            Object claimsObj = claims.get("role");
+
+            if (userId == null || claimsObj == null) {
+                SecurityContextHolder.clearContext();
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                return;
+            }
+
+            String role = claimsObj.toString();
 
             java.lang.System.out.println("=========>> " + token);
             java.lang.System.out.println("=========>> " + userId);
@@ -54,8 +71,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                     userId,
                     null,
-                    List.of(new SimpleGrantedAuthority("ROLE_" + role))
-                );
+                    List.of(new SimpleGrantedAuthority("ROLE_" + role)));
             SecurityContextHolder.getContext().setAuthentication(authToken);
         }
 

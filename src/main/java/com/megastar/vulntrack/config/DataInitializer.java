@@ -9,15 +9,18 @@ import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 import com.megastar.vulntrack.model.Issue;
 import com.megastar.vulntrack.model.IssueStatus;
+import com.megastar.vulntrack.security.JwtService;
 import com.megastar.vulntrack.service.IssueService;
 
 @Component
 public class DataInitializer {
 
     private final IssueService issueService;
+    private final JwtService jwtService;
 
-    public DataInitializer(IssueService issueService) {
+    public DataInitializer(IssueService issueService, JwtService jwtService) {
         this.issueService = issueService;
+        this.jwtService = jwtService;
     }
 
     @EventListener(ApplicationReadyEvent.class)
@@ -32,7 +35,7 @@ public class DataInitializer {
         
         for (int i = 1; i <= 25; i++) {
             int r = rand.nextInt(4);
-            Issue issue = new Issue(Long.valueOf(i), "Valid title " + i, "Desc", i, 1L);
+            Issue issue = new Issue(Long.valueOf(i), "Valid title " + i, "Desc", i, 10L);
             issue.setStatus(statusTypes.get(r));
             issueService.create(issue, 1L);
         }

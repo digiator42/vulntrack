@@ -1,7 +1,9 @@
 package com.megastar.vulntrack;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.megastar.vulntrack.security.JwtService;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -26,8 +28,17 @@ public class IssueControllerTest {
   private MockMvc mockMvc;
   @Autowired
   private ObjectMapper objectMapper;
+  @Autowired
+  private JwtService jwtService;
 
-  final String userId = "X-USER-ID";
+  private final String authorization = "Authorization";
+
+  private String adminToken;
+
+  @BeforeEach
+  void setUp() {
+    adminToken = "Bearer " + jwtService.generateToken(1L, "USER");
+  }
 
   public Long createInitialIssue(int userId, String payload) throws Exception {
 
@@ -46,7 +57,7 @@ public class IssueControllerTest {
     System.out.println("------------->>> " + payload);
 
     String response = mockMvc.perform(post("/issues")
-        .header("X-USER-ID", 7)
+        .header(authorization, adminToken)
         .contentType(MediaType.APPLICATION_JSON)
         .content(payload))
         .andDo(print())
@@ -65,15 +76,15 @@ public class IssueControllerTest {
 
     mockMvc.perform(post("/issues"))
         .andDo(print())
-        .andExpect(status().isUnauthorized());
+        .andExpect(status().isForbidden());
   }
 
   @Test
   void request_withInvalidUserHeader_shouldReturn401() throws Exception {
 
     mockMvc.perform(get("/issues")
-        .header("X-USER-ID", "abc"))
-        .andExpect(status().isUnauthorized());
+        .header(authorization, "abc"))
+        .andExpect(status().isForbidden());
   }
 
   @Test
@@ -89,7 +100,7 @@ public class IssueControllerTest {
 
     mockMvc.perform(post("/issues")
         .contentType(MediaType.APPLICATION_JSON)
-        .header("X-USER-ID", 2)
+        .header(authorization, adminToken)
         .content(payload))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.id").exists())
@@ -109,7 +120,7 @@ public class IssueControllerTest {
 
     String response = mockMvc.perform(post("/issues")
         .contentType(MediaType.APPLICATION_JSON)
-        .header("X-USER-ID", 1)
+        .header(authorization, adminToken)
         .content(payload))
         .andDo(print())
         .andReturn()
@@ -119,7 +130,7 @@ public class IssueControllerTest {
     Long id = objectMapper.readTree(response).get("id").asLong();
 
     mockMvc.perform(get("/issues/" + id)
-        .header("X-USER-ID", 1))
+        .header(authorization, adminToken))
         .andExpect(status().isOk())
         .andDo(print())
         .andExpect(jsonPath("$.id").value(id));
@@ -138,7 +149,7 @@ public class IssueControllerTest {
         """;
 
     mockMvc.perform(post("/issues")
-        .header("X-USER-ID", 1)
+        .header(authorization, adminToken)
         .contentType(MediaType.APPLICATION_JSON)
         .content(payload))
         .andExpect(status().isBadRequest());
@@ -157,7 +168,7 @@ public class IssueControllerTest {
 
     mockMvc.perform(post("/issues")
         .contentType(MediaType.APPLICATION_JSON)
-        .header("X-USER-ID", 2)
+        .header(authorization, adminToken)
         .content(payload))
         .andDo(print())
         .andExpect(status().isBadRequest())
@@ -177,7 +188,7 @@ public class IssueControllerTest {
 
     mockMvc.perform(post("/issues")
         .contentType(MediaType.APPLICATION_JSON)
-        .header("X-USER-ID", 2)
+        .header(authorization, adminToken)
         .content(payload))
         .andDo(print())
         .andExpect(status().isBadRequest())
@@ -200,14 +211,14 @@ public class IssueControllerTest {
 
     mockMvc.perform(post("/issues")
         .contentType(MediaType.APPLICATION_JSON)
-        .header("X-USER-ID", 2)
+        .header(authorization, adminToken)
         .content(payload))
         .andDo(print())
         .andExpect(status().isOk());
 
     mockMvc.perform(post("/issues")
         .contentType(MediaType.APPLICATION_JSON)
-        .header("X-USER-ID", 2)
+        .header(authorization, adminToken)
         .content(payload))
         .andDo(print())
         .andExpect(status().isConflict())
@@ -230,7 +241,7 @@ public class IssueControllerTest {
 
     mockMvc.perform(post("/issues")
         .contentType(MediaType.APPLICATION_JSON)
-        .header("X-USER-ID", 2)
+        .header(authorization, adminToken)
         .content(payload))
         .andDo(print())
         .andExpect(status().isBadRequest());
@@ -249,7 +260,7 @@ public class IssueControllerTest {
 
     String response = mockMvc.perform(post("/issues")
         .contentType(MediaType.APPLICATION_JSON)
-        .header("X-USER-ID", 2)
+        .header(authorization, adminToken)
         .content(payload))
         .andDo(print())
         .andExpect(status().isOk())
@@ -260,7 +271,7 @@ public class IssueControllerTest {
     Long issueId = objectMapper.readTree(response).get("id").asLong();
 
     mockMvc.perform(get("/issues/" + issueId)
-        .header("X-USER-ID", "3"))
+        .header(authorization, "3"))
         .andExpect(status().isForbidden());
   }
 
@@ -279,7 +290,7 @@ public class IssueControllerTest {
 
     mockMvc.perform(post("/issues")
         .contentType(MediaType.APPLICATION_JSON)
-        .header("X-USER-ID", 1)
+        .header(authorization, adminToken)
         .content(payload))
         .andDo(print())
         .andExpect(status().isBadRequest());
@@ -304,21 +315,23 @@ public class IssueControllerTest {
         """;
 
     mockMvc.perform(post("/issues")
-        .header("X-USER-ID", 3)
+        .header(authorization, adminToken)
         .contentType(MediaType.APPLICATION_JSON)
         .content(payload))
         .andDo(print())
         .andExpect(status().isOk());
 
-    mockMvc.perform(post("/issues")
-        .header("X-USER-ID", 3)
+      String userToken = jwtService.generateToken(1L, payload2);
+
+        mockMvc.perform(post("/issues")
+        .header(authorization, adminToken)
         .contentType(MediaType.APPLICATION_JSON)
         .content(payload2))
         .andDo(print())
         .andExpect(status().isOk());
 
     mockMvc.perform(get("/issues")
-        .header("X-USER-ID", 3))
+        .header(authorization, adminToken))
         .andExpect(status().isOk())
         // .andExpect(jsonPath("$.length()").value(2))
         .andExpect(jsonPath("$[0].title").value("Owner 1"));
@@ -343,7 +356,7 @@ public class IssueControllerTest {
         """;
 
     String response = mockMvc.perform(post("/issues")
-        .header(userId, 4)
+        .header(authorization, adminToken)
         .contentType(MediaType.APPLICATION_JSON)
         .content(payload))
         .andDo(print())
@@ -355,7 +368,7 @@ public class IssueControllerTest {
     Long id = objectMapper.readTree(response).get("id").asLong();
 
     mockMvc.perform(put("/issues/" + id)
-        .header(userId, 4)
+        .header(authorization, adminToken)
         .contentType(MediaType.APPLICATION_JSON)
         .content(updatedPayload))
         .andDo(print())
@@ -382,7 +395,7 @@ public class IssueControllerTest {
         """;
 
     String response = mockMvc.perform(post("/issues")
-        .header(userId, 5)
+        .header(authorization, adminToken)
         .contentType(MediaType.APPLICATION_JSON)
         .content(payload))
         .andDo(print())
@@ -394,7 +407,7 @@ public class IssueControllerTest {
     Long id = objectMapper.readTree(response).get("id").asLong();
 
     mockMvc.perform(put("/issues/" + id)
-        .header(userId, 6)
+        .header(authorization, adminToken + "1")
         .contentType(MediaType.APPLICATION_JSON)
         .content(updatedPayload))
         .andDo(print())
@@ -403,18 +416,18 @@ public class IssueControllerTest {
   }
 
   @Test
-  public void deleteIssue_ownerCanDelete() throws Exception {
+  public void deleteIssue_onlyAdminCanDelete() throws Exception {
 
     String payload = """
         {
-          "title": "owner can delete",
+          "title": "owner can not delete",
           "description": "description",
           "severity": 3
         }
         """;
 
     String response = mockMvc.perform(post("/issues")
-        .header("X-USER-ID", 1)
+        .header(authorization, adminToken)
         .contentType(MediaType.APPLICATION_JSON)
         .content(payload))
         .andDo(print())
@@ -426,9 +439,9 @@ public class IssueControllerTest {
     Long id = objectMapper.readTree(response).get("id").asLong();
 
     mockMvc.perform(delete("/issues/" + id)
-        .header("X-USER-ID", 1))
+        .header(authorization, adminToken))
         .andDo(print())
-        .andExpect(status().isNoContent());
+        .andExpect(status().isForbidden());
   }
 
   @Test
@@ -442,7 +455,7 @@ public class IssueControllerTest {
         """;
 
     String response = mockMvc.perform(post("/issues")
-        .header("X-USER-ID", 1)
+        .header(authorization, adminToken)
         .contentType(MediaType.APPLICATION_JSON)
         .content(payload))
         .andDo(print())
@@ -454,7 +467,7 @@ public class IssueControllerTest {
     Long id = objectMapper.readTree(response).get("id").asLong();
 
     mockMvc.perform(delete("/issues/" + id)
-        .header("X-USER-ID", 2))
+        .header(authorization, adminToken))
         .andDo(print())
         .andExpect(status().isForbidden());
   }
@@ -477,7 +490,7 @@ public class IssueControllerTest {
         """;
 
     String response = mockMvc.perform(post("/issues")
-        .header("X-USER-ID", 5)
+        .header(authorization, adminToken)
         .contentType(MediaType.APPLICATION_JSON)
         .content(payload))
         .andDo(print())
@@ -489,7 +502,7 @@ public class IssueControllerTest {
     Long id = objectMapper.readTree(response).get("id").asLong();
 
     mockMvc.perform(patch("/issues/" + id)
-        .header("X-USER-ID", 5)
+        .header(authorization, adminToken)
         .contentType(MediaType.APPLICATION_JSON)
         .content(updatedPayload))
         .andDo(print())
@@ -516,7 +529,7 @@ public class IssueControllerTest {
         """;
 
     String response = mockMvc.perform(post("/issues")
-        .header("X-USER-ID", 55)
+        .header(authorization, adminToken)
         .contentType(MediaType.APPLICATION_JSON)
         .content(payload))
         .andDo(print())
@@ -528,7 +541,7 @@ public class IssueControllerTest {
     Long id = objectMapper.readTree(response).get("id").asLong();
 
     mockMvc.perform(patch("/issues/" + id)
-        .header("X-USER-ID", 56)
+        .header(authorization, adminToken + "1")
         .contentType(MediaType.APPLICATION_JSON)
         .content(injectedPayload))
         .andDo(print())
@@ -545,7 +558,7 @@ public class IssueControllerTest {
         """;
 
     mockMvc.perform(patch("/issues/99")
-        .header("X-USER-ID", 5)
+        .header(authorization, adminToken)
         .contentType(MediaType.APPLICATION_JSON)
         .content(payload))
         .andDo(print())
@@ -564,7 +577,7 @@ public class IssueControllerTest {
         """;
 
     String response = mockMvc.perform(post("/issues")
-        .header("X-USER-ID", 7)
+        .header(authorization, adminToken)
         .contentType(MediaType.APPLICATION_JSON)
         .content(payload))
         .andDo(print())
@@ -576,7 +589,7 @@ public class IssueControllerTest {
     Long id = objectMapper.readTree(response).get("id").asLong();
 
     mockMvc.perform(patch("/issues/" + id)
-        .header("X-USER-ID", 7)
+        .header(authorization, adminToken)
         .contentType(MediaType.APPLICATION_JSON)
         .content("{}"))
         .andExpect(status().isBadRequest());
@@ -594,7 +607,7 @@ public class IssueControllerTest {
         """;
 
     mockMvc.perform(patch("/issues/" + id)
-        .header("X-USER-ID", 7)
+        .header(authorization, adminToken)
         .contentType(MediaType.APPLICATION_JSON)
         .content(payload))
         .andExpect(status().isBadRequest());
@@ -611,7 +624,7 @@ public class IssueControllerTest {
     Long id = createInitialIssue(1, null);
 
     mockMvc.perform(patch("/issues/" + id)
-        .header("X-USER-ID", 1)
+        .header(authorization, adminToken)
         .contentType(MediaType.APPLICATION_JSON)
         .content(payload))
         .andExpect(status().isBadRequest());
@@ -622,7 +635,7 @@ public class IssueControllerTest {
     // /issues?page=1&size=20&sort=severity,asc
 
     mockMvc.perform(get("/issues?page=0&size=500&sort=severity,asc")
-        .header(userId, 1))
+        .header(authorization, adminToken))
         .andDo(print())
         .andExpect(status().isBadRequest());
   }
@@ -632,7 +645,7 @@ public class IssueControllerTest {
     // /issues?page=1&size=20&sort=severity,asc
 
     mockMvc.perform(get("/issues?page=0&size=50&sort=ownerId,asc")
-        .header(userId, 1))
+        .header(authorization, adminToken))
         .andDo(print())
         .andExpect(status().isBadRequest());
   }
@@ -640,8 +653,9 @@ public class IssueControllerTest {
   @Test
   public void sortIssues_withDefaultSort_shouldReturnTenIssues() throws Exception {
 
+    adminToken = jwtService.generateToken(10L, "USER");
     mockMvc.perform(get("/issues")
-        .header(userId, 1))
+        .header(authorization, adminToken))
         .andDo(print())
         .andExpect(status().isOk())
         .andExpect(jsonPath("$").isArray())

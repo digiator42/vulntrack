@@ -34,6 +34,12 @@ public class GlobalExceptionHandler {
         return new UnauthorizedError(ex.getMessage());
     }
 
+    @ExceptionHandler(ForbiddenException.class)
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    public UnauthorizedError handleForbidden(ForbiddenException ex) {
+        return new UnauthorizedError(ex.getMessage());
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ValidationErrorResponse validationErrorsResponse(MethodArgumentNotValidException ex) {
