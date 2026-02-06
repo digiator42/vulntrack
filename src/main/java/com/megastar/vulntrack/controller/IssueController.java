@@ -12,6 +12,9 @@ import com.megastar.vulntrack.model.Issue;
 import com.megastar.vulntrack.service.IssueService;
 import jakarta.validation.Valid;
 
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -83,8 +86,10 @@ public class IssueController {
     }
 
     @GetMapping()
-    public List<Issue> listIssues(@Valid IssuePageRequest req) throws Exception {
-        return this.service.getSortedListIssues(req, userContext.getUserId());
+    public List<Issue> listIssues(
+            @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC, size = 20) Pageable pageable)
+            throws Exception {
+        return this.service.getSortedListIssues(userContext.getUserId(), pageable).getContent();
     }
 
 }

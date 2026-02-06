@@ -1,69 +1,27 @@
 package com.megastar.vulntrack.repository;
 
-import com.megastar.vulntrack.exception.IssueNotFoundException;
-import com.megastar.vulntrack.model.Issue;
-
-import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 
-public class IssueRepository {
-    private final Map<Long, Issue> store = new HashMap<>();
-    private long counter;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 
-    public Issue save(Issue issue) {
-        issue.setId(counter++);
-        store.put(issue.getId(), issue);
-        System.out.println(issue.toString());
-        return issue;
-    }
+import com.megastar.vulntrack.model.Issue;
+import com.megastar.vulntrack.model.User;
 
-    public Optional<Issue> findById(Long id) {
-        return Optional.ofNullable(store.get(id));
-    }
+@Repository
+public interface IssueRepository extends JpaRepository<Issue, Long> {
 
-    public boolean existsByTitle(String title) {
-        return store.values()
-                .stream()
-                .anyMatch(issue -> issue.getTitle().equals(title));
-    }
+    boolean existsByTitle(String title);
 
-    public List<Issue> findAll() {
-        return store.values().stream().toList();
-    }
+    List<Issue> findByCreatedBy(User user);
 
-    public List<Issue> findAllByOwnerId(Long ownerId) {
-        return store.values()
-                .stream()
-                .filter(issue -> issue.getOwnerId().equals(ownerId))
-                .toList();
-    }
+    List<Issue> findByAdminCreated(boolean adminCreated);
 
-    public List<Issue> listIssuesByOwnerId(int page, int size, String field, String direction, Long ownerId) {
-        // /issues?page=1&size=20&sort=severity,asc
+    List<Issue> findAllByOwnerId(Long ownerId);
 
-        Comparator<Issue> comparator = switch (field) {
-            case "severity" -> Comparator.comparing(Issue::getSeverity);
-            case "title" -> Comparator.comparing(Issue::getTitle);
-            default -> Comparator.comparing(Issue::getCreatedAt);
-        };
+    Page<Issue> findByDescriptionContainingIgnoreCase(String keyword, Pageable pageable);
 
-        if (direction.equals("desc")) {
-            comparator = comparator.reversed();
-        }
-
-        return store.values()
-                .stream()
-                .filter(v -> v.getOwnerId() == ownerId)
-                .sorted(comparator)
-                .skip(page*size)
-                .limit(size)
-                .toList();
-    }
-
-    public void delete(Long id) {
-        store.remove(id);
-    }
+    Page<Issue> findAllByOwnerId(Long ownerId, Pageable pageable);
 }

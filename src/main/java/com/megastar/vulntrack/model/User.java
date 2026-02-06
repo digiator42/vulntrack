@@ -6,9 +6,11 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import jakarta.persistence.Column;
 
 @Entity
+@Table(name = "users")
 public class User {
 
     @Id
@@ -22,7 +24,11 @@ public class User {
     private String password;
 
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private Role role;
+
+    public User() {
+    }
 
     public User(String username, String password, Role role) {
         this.username = username;

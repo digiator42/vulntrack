@@ -3,7 +3,7 @@ package com.megastar.vulntrack.model;
 import java.util.Arrays;
 
 public enum IssueSortFields {
-    CREATED_AT("created_at"),
+    CREATED_AT("createdAt"),
     SEVERITY("severity"),
     TITLE("title"),
     STATUS("status");

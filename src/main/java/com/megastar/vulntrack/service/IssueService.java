@@ -1,6 +1,5 @@
 package com.megastar.vulntrack.service;
 
-import com.megastar.vulntrack.dto.IssuePageRequest;
 import com.megastar.vulntrack.dto.IssuePatchRequest;
 import com.megastar.vulntrack.dto.IssueResponse;
 import com.megastar.vulntrack.dto.UpdateIssueRequest;
@@ -13,12 +12,17 @@ import com.megastar.vulntrack.repository.IssueRepository;
 
 import org.apache.coyote.BadRequestException;
 import org.springframework.stereotype.Service;
-
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Page;
 import java.util.List;
 
 @Service
 public class IssueService {
-    private final IssueRepository issueRepository = new IssueRepository();
+    private final IssueRepository issueRepository;
+
+    public IssueService(IssueRepository issueRepository) {
+        this.issueRepository = issueRepository;
+    }
 
     public Issue create(Issue issue, Long userId) {
         boolean exists = issueRepository.existsByTitle(issue.getTitle());
@@ -56,13 +60,14 @@ public class IssueService {
     }
 
     public void deleteIssue(Long id, Long userId) {
+
         Issue currentIssue = this.getById(id);
 
         if (!currentIssue.getOwnerId().equals(userId)) {
-            throw new AccessDeniedException(currentIssue.getTitle());
+            throw new AccessDeniedException("You do not own this issue");
         }
 
-        issueRepository.delete(id);
+        issueRepository.delete(currentIssue);
     }
 
     public IssueResponse patchIssue(
@@ -95,28 +100,36 @@ public class IssueService {
         return IssueResponse.from(issue);
     }
 
-    public List<Issue> getSortedListIssues(IssuePageRequest req, Long ownerId) throws Exception {
-        // /issues?page=1&size=20&sort=severity,asc
+    // public List<Issue> getSortedListIssues(IssuePageRequest req, Long ownerId) {
 
-        if (req.size() > 50) {
-            throw new BadRequestException("Size is invalid");
-        }
+    // String[] sortParts = req.sort().split(",");
+    // String field = sortParts[0];
 
-        String[] sortFields = req.sort().split(",");
-        String field = sortFields[0];
-        String direction = sortFields.length > 1 ? sortFields[1] : "asc";
-        
-        if (!IssueSortFields.isValid(field)) {
-            throw new BadRequestException("Sort is invalid");
-        }
+    // if (!IssueSortFields.isValid(field)) {
+    // throw new BadRequestException("Sort field is invalid: " + field);
+    // }
 
-        return issueRepository.listIssuesByOwnerId (
-            req.page(),
-            req.size(),
-            field,
-            direction,
-            ownerId
-        );
+    // Sort.Direction direction = (sortParts.length > 1 &&
+    // sortParts[1].equalsIgnoreCase("desc"))
+    // ? Sort.Direction.DESC
+    // : Sort.Direction.ASC;
 
+    // // Note: 'field' must match the variable name in your Issue.java entity
+    // Pageable pageable = PageRequest.of(req.page(), req.size(), Sort.by(direction,
+    // field));
+
+    // // 5. Call Repository
+    // return issueRepository.findAllByOwnerId(ownerId, pageable).getContent();
+    // }
+
+    public Page<Issue> getSortedListIssues(Long ownerId, Pageable pageable) {
+        // Validate sort fields against your Enum
+        pageable.getSort().forEach(order -> {
+            if (!IssueSortFields.isValid(order.getProperty())) {
+                return;
+            }
+        });
+
+        return issueRepository.findAllByOwnerId(ownerId, pageable);
     }
 }

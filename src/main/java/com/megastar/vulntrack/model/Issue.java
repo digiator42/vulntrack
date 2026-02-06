@@ -1,6 +1,6 @@
 package com.megastar.vulntrack.model;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -15,12 +15,12 @@ public class Issue {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String createdAt;
+    private LocalDateTime createdAt;
 
     private String title;
     private String description;
     private Integer severity;
-    private final Long ownerId;
+    private Long ownerId;
 
     @ManyToOne
     private User createdBy;
@@ -30,9 +30,18 @@ public class Issue {
     private boolean isUpdated;
     private boolean adminCreated;
 
+
+    
+    public Issue() {
+    }
+
+    public Issue(Long ownerId) {
+        this.ownerId = ownerId;
+    }
+
     public Issue(Long id, String title, String description, Integer severity, Long ownerId) {
         this.id = id;
-        this.createdAt = String.valueOf(LocalDate.now());
+        this.createdAt = LocalDateTime.now();
         this.title = title;
         this.description = description;
         this.severity = severity;
@@ -47,11 +56,11 @@ public class Issue {
         this.id = id;
     }
 
-    public String getCreatedAt() {
+    public LocalDateTime getCreatedAt() {
         return createdAt;
     }
 
-    public void setCreatedAt(String createdAt) {
+    public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
     }
 

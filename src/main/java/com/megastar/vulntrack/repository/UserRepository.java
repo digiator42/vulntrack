@@ -1,5 +1,18 @@
 package com.megastar.vulntrack.repository;
 
-public class UserRepository {
+import java.util.List;
+import java.util.Optional;
 
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import com.megastar.vulntrack.model.Role;
+import com.megastar.vulntrack.model.User;
+
+@Repository
+public interface UserRepository extends JpaRepository<User, Long>, UserRepositoryCustom {
+
+    Optional<User> findByUsername(String username);
+
+    List<User> findByRole(Role role);
 }
