@@ -107,6 +107,7 @@ public class IssueService {
         }
 
         for (var order : pageable.getSort()) {
+            System.out.println("---->> " + order.getProperty());
             if (!IssueSortFields.isValid(order.getProperty())) {
                 throw new BadErrorRequestException("Invalid sort field: " + order.getProperty());
             }

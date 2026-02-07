@@ -85,10 +85,8 @@ public class IssueController {
     }
 
     @GetMapping()
-    public Page<IssueResponse> listIssues(
-            @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC, size = 20) Pageable pageable)
-            throws Exception {
-        return this.service.getSortedListIssues(userContext.getUserId(), pageable);
+    public Page<IssueResponse> listIssues(@Valid IssuePageRequest request) throws Exception {
+        return this.service.getSortedListIssues(userContext.getUserId(), request.toPeagable());
     }
 
 }

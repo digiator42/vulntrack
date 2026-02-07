@@ -14,6 +14,10 @@ public enum IssueSortFields {
         this.field = field;
     }
 
+    public String getField() {
+        return field;
+    }
+
     public static boolean isValid(String value) {
         return Arrays.stream(values()).anyMatch(v -> {
             System.out.println(value);
