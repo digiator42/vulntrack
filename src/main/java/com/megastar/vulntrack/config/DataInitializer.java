@@ -33,11 +33,11 @@ public class DataInitializer {
         statusTypes.put(2, IssueStatus.RESOLVED);
         statusTypes.put(3, IssueStatus.CLOSED);
         
-        for (int i = 1; i <= 25; i++) {
-            int r = rand.nextInt(4);
-            Issue issue = new Issue(Long.valueOf(i), "Valid title " + i, "Desc", i, 10L);
-            issue.setStatus(statusTypes.get(r));
-            issueService.create(issue, 1L);
-        }
+        // for (int i = 1; i <= 25; i++) {
+        //     int r = rand.nextInt(4);
+        //     Issue issue = new Issue(Long.valueOf(i), "Valid title " + i, "Desc", i, 10L);
+        //     issue.setStatus(statusTypes.get(r));
+        //     issueService.create(issue, 1L);
+        // }
     }
 }

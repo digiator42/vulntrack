@@ -7,6 +7,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import com.megastar.vulntrack.dto.IssueResponse;
 import com.megastar.vulntrack.model.Issue;
 import com.megastar.vulntrack.model.User;
 
@@ -23,5 +24,5 @@ public interface IssueRepository extends JpaRepository<Issue, Long> {
 
     Page<Issue> findByDescriptionContainingIgnoreCase(String keyword, Pageable pageable);
 
-    Page<Issue> findAllByOwnerId(Long ownerId, Pageable pageable);
+    Page<IssueResponse> findAllByOwnerId(Long ownerId, Pageable pageable);
 }

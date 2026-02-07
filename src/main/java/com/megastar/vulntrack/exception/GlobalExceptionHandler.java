@@ -5,7 +5,6 @@ import com.megastar.vulntrack.dto.UnauthorizedError;
 import com.megastar.vulntrack.dto.ValidationError;
 import com.megastar.vulntrack.dto.ValidationErrorResponse;
 
-import org.apache.coyote.BadRequestException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -48,7 +47,13 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(IllegalArgumentException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ErrorResponse badRequest(IllegalArgumentException ex) {
+    public ErrorResponse handleIllegalArgument(IllegalArgumentException ex) {
+        return new ErrorResponse(ex.getMessage());
+    }
+
+    @ExceptionHandler(BadErrorRequestException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handleBadRequest(BadErrorRequestException ex) {
         return new ErrorResponse(ex.getMessage());
     }
 
@@ -82,11 +87,4 @@ public class GlobalExceptionHandler {
     public ErrorResponse handleIssueNotFound(IssueNotFoundException ex) {
         return new ErrorResponse(ex.getMessage());
     }
-
-    @ExceptionHandler(BadRequestException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ErrorResponse handleEmptyBodyPatch(BadRequestException ex) {
-        return new ErrorResponse(ex.getMessage());
-    }
-
 }

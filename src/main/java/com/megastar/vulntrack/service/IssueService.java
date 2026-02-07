@@ -5,12 +5,12 @@ import com.megastar.vulntrack.dto.IssueResponse;
 import com.megastar.vulntrack.dto.UpdateIssueRequest;
 import com.megastar.vulntrack.exception.AccessDeniedException;
 import com.megastar.vulntrack.exception.DuplicateIssueException;
+import com.megastar.vulntrack.exception.BadErrorRequestException;
 import com.megastar.vulntrack.exception.IssueNotFoundException;
 import com.megastar.vulntrack.model.Issue;
 import com.megastar.vulntrack.model.IssueSortFields;
 import com.megastar.vulntrack.repository.IssueRepository;
 
-import org.apache.coyote.BadRequestException;
 import org.springframework.stereotype.Service;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Page;
@@ -94,41 +94,23 @@ public class IssueService {
         }
 
         if (!issue.isUpdated()) {
-            throw new BadRequestException("No fields provided for update");
+            throw new BadErrorRequestException("No fields provided for update");
         }
 
         return IssueResponse.from(issue);
     }
 
-    // public List<Issue> getSortedListIssues(IssuePageRequest req, Long ownerId) {
+    public Page<IssueResponse> getSortedListIssues(Long ownerId, Pageable pageable) {
 
-    // String[] sortParts = req.sort().split(",");
-    // String field = sortParts[0];
+        if (pageable.getPageSize() > 50) {
+            throw new BadErrorRequestException("Page size too large");
+        }
 
-    // if (!IssueSortFields.isValid(field)) {
-    // throw new BadRequestException("Sort field is invalid: " + field);
-    // }
-
-    // Sort.Direction direction = (sortParts.length > 1 &&
-    // sortParts[1].equalsIgnoreCase("desc"))
-    // ? Sort.Direction.DESC
-    // : Sort.Direction.ASC;
-
-    // // Note: 'field' must match the variable name in your Issue.java entity
-    // Pageable pageable = PageRequest.of(req.page(), req.size(), Sort.by(direction,
-    // field));
-
-    // // 5. Call Repository
-    // return issueRepository.findAllByOwnerId(ownerId, pageable).getContent();
-    // }
-
-    public Page<Issue> getSortedListIssues(Long ownerId, Pageable pageable) {
-        // Validate sort fields against your Enum
-        pageable.getSort().forEach(order -> {
+        for (var order : pageable.getSort()) {
             if (!IssueSortFields.isValid(order.getProperty())) {
-                return;
+                throw new BadErrorRequestException("Invalid sort field: " + order.getProperty());
             }
-        });
+        }
 
         return issueRepository.findAllByOwnerId(ownerId, pageable);
     }
