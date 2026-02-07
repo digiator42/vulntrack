@@ -8,17 +8,13 @@ public record IssueResponse(
         String title,
         String description,
         Integer severity,
-        Long ownerId,
-        IssueStatus status
-) {
+        IssueStatus status) {
     public static IssueResponse from(Issue issue) {
         return new IssueResponse(
-            issue.getId(),
-            issue.getTitle(),
-            issue.getDescription(),
-            issue.getSeverity(),
-            issue.getOwnerId(),
-            issue.getStatus()
-        );
+                issue.getId(),
+                issue.getTitle(),
+                issue.getDescription(),
+                issue.getSeverity(),
+                issue.getStatus());
     }
 }

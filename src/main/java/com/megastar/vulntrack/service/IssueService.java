@@ -13,6 +13,7 @@ import com.megastar.vulntrack.repository.IssueRepository;
 
 import org.springframework.stereotype.Service;
 import org.springframework.data.domain.Pageable;
+import org.apache.coyote.BadRequestException;
 import org.springframework.data.domain.Page;
 import java.util.List;
 
@@ -104,6 +105,12 @@ public class IssueService {
 
         if (pageable.getPageSize() > 50) {
             throw new BadErrorRequestException("Page size too large");
+        }
+
+        System.out.println("sort count ===>> " + pageable.getSort().stream().count());
+
+        if (pageable.getSort().stream().count() > 1) {
+            throw new BadErrorRequestException("Only one sort field allowed");
         }
 
         for (var order : pageable.getSort()) {
