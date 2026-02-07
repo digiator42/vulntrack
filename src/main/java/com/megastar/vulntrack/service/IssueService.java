@@ -15,7 +15,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.data.domain.Pageable;
 import org.apache.coyote.BadRequestException;
 import org.springframework.data.domain.Page;
+
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class IssueService {
@@ -44,6 +47,15 @@ public class IssueService {
 
     public List<Issue> getAllByOwnerId(Long ownerId) {
         return issueRepository.findAllByOwnerId(ownerId);
+    }
+
+    public Map<String, Object> getStats() {
+        List<Issue> issues = this.getAll();
+        Map<String, Object> stats = new HashMap<>();
+        stats.put("totalIssues", issues.size());
+        stats.put("lowIssues", issues.stream().filter(i -> i.getSeverity().equals(1)).count());
+        stats.put("criticalIssues", issues.stream().filter(i -> i.getSeverity().equals(4)).count());
+        return stats;
     }
 
     public Issue updateIssue(Long id, Long userId, UpdateIssueRequest request) {

@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: mainLayout(~{::div})}">
+<div>
+    <h2 class="text-3xl font-bold mb-6 text-gray-800">System Issues</h2>
+    <div class="bg-white shadow-lg rounded-xl overflow-hidden">
+        <table class="w-full text-left">
+            <thead class="bg-gray-50 border-b border-gray-100">
+                <tr>
+                    <th class="p-4 font-semibold text-gray-600">ID</th>
+                    <th class="p-4 font-semibold text-gray-600">Title</th>
+                    <th class="p-4 font-semibold text-gray-600">Severity</th>
+                    <th class="p-4 font-semibold text-gray-600">Status</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+                <tr th:each="issue : ${issues}" class="hover:bg-blue-50/50 transition border-b">
+                    <td class="p-4 font-mono text-sm text-gray-500" th:text="${issue.id}">0</td>
+                    <td class="p-4 font-medium" th:text="${issue.title}">Title</td>
+                    <td class="p-4">
+                        <span th:text="${issue.severity}"
+                            th:classappend="${issue.severity == 'HIGH' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'}"
+                            class="px-2 py-1 rounded text-xs font-bold uppercase">
+                        </span>
+                    </td>
+                    <td class="p-4 text-sm text-gray-600" th:text="${issue.status ?: 'OPEN'}">OPEN</td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(issues)}">
+                    <td colspan="4" class="p-12 text-center text-gray-400">No issues found.</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <div class="mt-4 flex justify-between items-center text-sm text-gray-500">
+        <p>
+            Page <span th:text="${currentPage + 1}">1</span>
+            (Size: <span th:text="${pageSize}">10</span>)
+        </p>
+
+        <div class="flex gap-2">
+            <a th:href="@{/web/issues(page=${currentPage - 1})}" th:if="${currentPage > 0}"
+                class="px-3 py-1 bg-white border rounded hover:bg-gray-50">Previous</a>
+
+            <a th:href="@{/web/issues(page=${currentPage + 1})}"
+                class="px-3 py-1 bg-white border rounded hover:bg-gray-50">Next</a>
+        </div>
+    </div>
+</div>
+
+</html>

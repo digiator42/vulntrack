@@ -12,10 +12,7 @@ import com.megastar.vulntrack.model.Issue;
 import com.megastar.vulntrack.service.IssueService;
 import jakarta.validation.Valid;
 
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
