@@ -1,23 +1,19 @@
 package com.megastar.vulntrack.exception;
 
-import com.megastar.vulntrack.dto.ErrorResponse;
+import com.megastar.vulntrack.dto.ModelViewResponse;
 import com.megastar.vulntrack.dto.UnauthorizedError;
+import com.megastar.vulntrack.dto.UnifiedErrorResponse;
 import com.megastar.vulntrack.dto.ValidationError;
-import com.megastar.vulntrack.dto.ValidationErrorResponse;
 
 import jakarta.servlet.http.HttpServletRequest;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.servlet.ModelAndView;
 
-import java.net.http.HttpRequest;
 import java.util.List;
 
 /**
@@ -41,41 +37,51 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(UnauthorizedException.class)
-    @ResponseStatus(HttpStatus.UNAUTHORIZED)
     public Object handleUnauthorized(UnauthorizedException ex) {
         if (isApiRequest()) {
-            return new UnauthorizedError(ex.getMessage());
+            return UnifiedErrorResponse.res(ex.getMessage(), null, HttpStatus.UNAUTHORIZED);
         }
 
         return "redirect:/web/login/error=" + ex.getMessage();
     }
 
     @ExceptionHandler(ForbiddenException.class)
-    @ResponseStatus(HttpStatus.FORBIDDEN)
-    public UnauthorizedError handleForbidden(ForbiddenException ex) {
+    public Object handleForbidden(ForbiddenException ex) {
+        if (isApiRequest()) {
+            return UnifiedErrorResponse.res(ex.getMessage(), null, HttpStatus.FORBIDDEN);
+        }
+
         return new UnauthorizedError(ex.getMessage());
     }
 
     @ExceptionHandler(AccessDeniedException.class)
-    @ResponseStatus(HttpStatus.FORBIDDEN)
-    public UnauthorizedError handleForbidden(AccessDeniedException ex) {
-        return new UnauthorizedError(ex.getMessage());
+    public Object handleForbidden(AccessDeniedException ex) {
+        if (isApiRequest()) {
+            return UnifiedErrorResponse.res(ex.getMessage(), null, HttpStatus.FORBIDDEN);
+        }
+
+        return "redirect:/web/issues/error=" + ex.getMessage();
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ErrorResponse handleIllegalArgument(IllegalArgumentException ex) {
-        return new ErrorResponse(ex.getMessage());
+    public Object handleIllegalArgument(IllegalArgumentException ex) {
+        if (isApiRequest()) {
+            return UnifiedErrorResponse.res(ex.getMessage(), null, HttpStatus.FORBIDDEN);
+        }
+
+        return "redirect:/web/issues/error=" + ex.getMessage();
     }
 
     @ExceptionHandler(BadErrorRequestException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ErrorResponse handleBadRequest(BadErrorRequestException ex) {
-        return new ErrorResponse(ex.getMessage());
+    public Object handleBadRequest(BadErrorRequestException ex) {
+        if (isApiRequest()) {
+            return UnifiedErrorResponse.res(ex.getMessage(), null, HttpStatus.BAD_REQUEST);
+        }
+
+        return "redirect:/web/issues/error=" + ex.getMessage();
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
     public Object validationErrorsResponse(MethodArgumentNotValidException ex) {
         if (isApiRequest()) {
             List<ValidationError> errors = ex.getBindingResult()
@@ -85,7 +91,7 @@ public class GlobalExceptionHandler {
                             error.getField(),
                             error.getDefaultMessage()))
                     .toList();
-            return new ValidationErrorResponse(errors);
+            return UnifiedErrorResponse.res(null, errors, HttpStatus.BAD_REQUEST);
         }
         return "redirect:/issue-form";
     }
@@ -93,26 +99,28 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(DuplicateIssueException.class)
     public Object errorResponse(DuplicateIssueException ex) {
         if (isApiRequest()) {
-            return ResponseEntity
-                    .status(HttpStatus.CONFLICT)
-                    .body(new ErrorResponse(ex.getMessage()));
+            return UnifiedErrorResponse.res(ex.getMessage(), null, HttpStatus.CONFLICT);
         }
 
-        ModelAndView mav = new ModelAndView("issue-form");
-        mav.addObject("message", ex.getMessage());
-        mav.setStatus(HttpStatus.NOT_FOUND);
-        return mav;
+        return ModelViewResponse.res(ex.getMessage(), HttpStatus.NOT_FOUND, "issue-form");
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ErrorResponse handleInvalidJson(HttpMessageNotReadableException ex) {
-        return new ErrorResponse("Invalid request payload -> " + ex.getMessage());
+    public Object handleInvalidJson(HttpMessageNotReadableException ex) {
+        if (isApiRequest()) {
+            return UnifiedErrorResponse.res(ex.getMessage(), null, HttpStatus.BAD_REQUEST);
+        }
+
+        return ModelViewResponse.res("Invalid request payload -> " + ex.getMessage(),
+                HttpStatus.BAD_REQUEST,
+                "issues");
     }
 
     @ExceptionHandler(IssueNotFoundException.class)
-    @ResponseStatus(HttpStatus.NOT_FOUND)
-    public ErrorResponse handleIssueNotFound(IssueNotFoundException ex) {
-        return new ErrorResponse(ex.getMessage());
+    public Object handleIssueNotFound(IssueNotFoundException ex) {
+        if (isApiRequest()) {
+            return UnifiedErrorResponse.res(ex.getMessage(), null, HttpStatus.NOT_FOUND);
+        }
+        return ModelViewResponse.res(ex.getMessage(), HttpStatus.NOT_FOUND, "issues");
     }
 }
