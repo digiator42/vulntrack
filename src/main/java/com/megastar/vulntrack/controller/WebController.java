@@ -8,6 +8,8 @@ import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import java.util.List;
 import java.util.Map;
+
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -36,6 +38,7 @@ public class WebController {
 
         if ("admin".equals(username) && "password123".equals(password)) {
             session.setAttribute("LOGGED_IN_USER", username);
+            session.setAttribute("USER_ID", 1L);
             return "redirect:/web/issues";
         }
         return "redirect:/web/login?error=true";
@@ -49,6 +52,8 @@ public class WebController {
     @PostMapping("/issues")
     public String createIssue(@Valid @ModelAttribute CreateIssueRequest request) {
         Long userId = userContext.getUserId();
+
+        System.out.println("===>>> " + userId);
 
         Issue issue = new Issue(
                 null,
@@ -68,6 +73,7 @@ public class WebController {
             Model model) {
 
         Long userId = userContext.getUserId();
+        System.out.println("===>>> " + userId);
         List<Issue> issues = issueService.getAllByOwnerId(userId);
 
         model.addAttribute("issues", issues);
@@ -82,5 +88,12 @@ public class WebController {
         Map<String, Object> stats = issueService.getStats();
         model.addAttribute("stats", stats);
         return "dashboard";
+    }
+
+    @GetMapping("/logout")
+    public String logout(HttpSession session) {
+        session.invalidate();
+        SecurityContextHolder.clearContext();
+        return "redirect:/web/login?logout";
     }
 }

@@ -19,7 +19,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/issues")
+@RequestMapping("/api/issues")
 public class IssueController {
     private final IssueService service;
     private final UserContext userContext;

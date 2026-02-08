@@ -63,10 +63,10 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             java.lang.System.out.println("=========>> " + userId);
             java.lang.System.out.println("=========>> " + role);
 
-            userContext.setUserID(Long.valueOf(userId));
-            userContext.setRole(role);
+            // userContext.setUserID(Long.valueOf(userId));
+            // userContext.setRole(role);
 
-            UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+            var authToken = new UsernamePasswordAuthenticationToken(
                     userId,
                     null,
                     List.of(new SimpleGrantedAuthority("ROLE_" + role)));

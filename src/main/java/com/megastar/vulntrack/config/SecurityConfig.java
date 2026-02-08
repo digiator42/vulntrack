@@ -11,28 +11,41 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import com.megastar.vulntrack.filter.JwtAuthFilter;
+import com.megastar.vulntrack.filter.SessionAuthFilter;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 
     private final JwtAuthFilter jwtFilter;
+    private final SessionAuthFilter sessionFilter;
 
-    public SecurityConfig(JwtAuthFilter jwtFilter) {
+    public SecurityConfig(JwtAuthFilter jwtFilter, SessionAuthFilter sessionFilter) {
         this.jwtFilter = jwtFilter;
+        this.sessionFilter = sessionFilter;
     }
 
     @Bean
     SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable)
-                .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/css/**", "/js/**", "/images/**", "/webjars/**").permitAll()
-                        .requestMatchers("/web/**", "/auth/**", "issues", "/error").permitAll()
-                        .requestMatchers(HttpMethod.DELETE, "/issues/**").hasRole("ADMIN")
+                        .requestMatchers(
+                                "/css/**",
+                                "/js/**",
+                                "/images/**",
+                                "/webjars/**",
+                                "/web/login",
+                                "/auth/**",
+                                "/error")
+                        .permitAll()
+                        .requestMatchers("/api/**").authenticated()
+                        .requestMatchers("/web/**").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/api/issues/**").hasRole("ADMIN")
                         .anyRequest().authenticated())
-                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterAfter(sessionFilter, JwtAuthFilter.class);
 
         return http.build();
     }
