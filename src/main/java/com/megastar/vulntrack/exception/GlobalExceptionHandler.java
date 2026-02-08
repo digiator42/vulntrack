@@ -1,11 +1,6 @@
 package com.megastar.vulntrack.exception;
 
-import com.megastar.vulntrack.dto.ModelViewResponse;
-import com.megastar.vulntrack.dto.UnauthorizedError;
-import com.megastar.vulntrack.dto.UnifiedErrorResponse;
-import com.megastar.vulntrack.dto.ValidationError;
-
-import jakarta.servlet.http.HttpServletRequest;
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -13,8 +8,13 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.servlet.ModelAndView;
 
-import java.util.List;
+import com.megastar.vulntrack.dto.ModelViewResponse;
+import com.megastar.vulntrack.dto.UnifiedErrorResponse;
+import com.megastar.vulntrack.dto.ValidationError;
+
+import jakarta.servlet.http.HttpServletRequest;
 
 /**
  * JSON parsing
@@ -42,7 +42,7 @@ public class GlobalExceptionHandler {
             return UnifiedErrorResponse.res(ex.getMessage(), null, HttpStatus.UNAUTHORIZED);
         }
 
-        return "redirect:/web/login?error=" + ex.getMessage();
+        return ModelViewResponse.res(ex.getMessage(), HttpStatus.FORBIDDEN, "login");
     }
 
     @ExceptionHandler(ForbiddenException.class)
@@ -51,7 +51,7 @@ public class GlobalExceptionHandler {
             return UnifiedErrorResponse.res(ex.getMessage(), null, HttpStatus.FORBIDDEN);
         }
 
-        return new UnauthorizedError(ex.getMessage());
+        return ModelViewResponse.res(ex.getMessage(), HttpStatus.FORBIDDEN, "issues");
     }
 
     @ExceptionHandler(AccessDeniedException.class)
@@ -60,7 +60,7 @@ public class GlobalExceptionHandler {
             return UnifiedErrorResponse.res(ex.getMessage(), null, HttpStatus.FORBIDDEN);
         }
 
-        return "redirect:/web/issues?error=" + ex.getMessage();
+        return ModelViewResponse.res(ex.getMessage(), HttpStatus.FORBIDDEN, "issues");
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
@@ -69,7 +69,7 @@ public class GlobalExceptionHandler {
             return UnifiedErrorResponse.res(ex.getMessage(), null, HttpStatus.FORBIDDEN);
         }
 
-        return "redirect:/web/issues?error=" + ex.getMessage();
+        return ModelViewResponse.res(ex.getMessage(), HttpStatus.FORBIDDEN, "issues");
     }
 
     @ExceptionHandler(BadErrorRequestException.class)
@@ -78,23 +78,26 @@ public class GlobalExceptionHandler {
             return UnifiedErrorResponse.res(ex.getMessage(), null, HttpStatus.BAD_REQUEST);
         }
 
-        return "redirect:/web/issues?error=" + ex.getMessage();
+        return ModelViewResponse.res(ex.getMessage(), HttpStatus.BAD_REQUEST, "issues");
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public Object validationErrorsResponse(MethodArgumentNotValidException ex) {
+        List<ValidationError> errors = ex.getBindingResult()
+                .getFieldErrors()
+                .stream()
+                .map(error -> new ValidationError(
+                        error.getField(),
+                        error.getDefaultMessage()))
+                .toList();
+
         if (isApiRequest()) {
-            List<ValidationError> errors = ex.getBindingResult()
-                    .getFieldErrors()
-                    .stream()
-                    .map(error -> new ValidationError(
-                            error.getField(),
-                            error.getDefaultMessage()))
-                    .toList();
             return UnifiedErrorResponse.res(null, errors, HttpStatus.BAD_REQUEST);
         }
 
-        return ModelViewResponse.res(ex.getMessage(), HttpStatus.NOT_FOUND, "issue-form");
+        ModelAndView mav = ModelViewResponse.res("Please fix the errors below", HttpStatus.BAD_REQUEST, "dashboard");
+        mav.addObject("errors", errors);
+        return "redirect:/web/issues?error=true";
     }
 
     @ExceptionHandler(DuplicateIssueException.class)

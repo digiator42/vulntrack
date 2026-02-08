@@ -13,6 +13,16 @@
                 </tr>
             </thead>
             <tbody class="divide-y divide-gray-100">
+                <tr th:if="${issues == null or #lists.isEmpty(issues)}">
+                    <td colspan="4" class="p-12 text-center text-gray-400">
+                        <div class="flex flex-col items-center">
+                            <span>No issues found or invalid request.</span>
+                            <div th:each="err : ${errors}" class="text-red-500 text-xs mt-2"
+                                th:text="${err.defaultMessage}"></div>
+                        </div>
+                    </td>
+                </tr>
+
                 <tr th:each="issue : ${issues}" class="hover:bg-blue-50/50 transition border-b">
                     <td class="p-4 font-mono text-sm text-gray-500" th:text="${issue.id}">0</td>
                     <td class="p-4 font-medium" th:text="${issue.title}">Title</td>
@@ -24,13 +34,11 @@
                     </td>
                     <td class="p-4 text-sm text-gray-600" th:text="${issue.status ?: 'OPEN'}">OPEN</td>
                 </tr>
-                <tr th:if="${#lists.isEmpty(issues)}">
-                    <td colspan="4" class="p-12 text-center text-gray-400">No issues found.</td>
-                </tr>
             </tbody>
         </table>
     </div>
-    <div class="flex justify-center items-center gap-2 mt-8">
+    <div th:if="${totalPages != null and totalPages > 0}" class="flex justify-center items-center gap-2 mt-8">
+
         <a th:if="${currentPage > 0}" th:href="@{/web/issues(page=${currentPage - 1}, size=${pageSize})}"
             class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition">
             Previous
@@ -50,6 +58,9 @@
     </div>
     <div class="error-container mt-6 bg-red-100 p-4 rounded-lg" th:if="${statusCode}">
         <p th:text="${errorMessage}"></p>
+    </div>
+    <div th:each="err : ${errors}" class="text-danger">
+        <span th:text="${err.defaultMessage}">Error message here</span>
     </div>
 </div>
 
