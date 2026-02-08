@@ -13,7 +13,6 @@ import com.megastar.vulntrack.repository.IssueRepository;
 
 import org.springframework.stereotype.Service;
 import org.springframework.data.domain.Pageable;
-import org.apache.coyote.BadRequestException;
 import org.springframework.data.domain.Page;
 
 import java.util.HashMap;

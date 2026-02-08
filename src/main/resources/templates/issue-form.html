@@ -43,6 +43,9 @@
                 </a>
             </div>
         </form>
+        <div th:if="${message}" class="text-red-500 text-sm mb-4 text-center">
+            <p th:text="${message}"></p>
+        </div>
     </div>
 </div>
 

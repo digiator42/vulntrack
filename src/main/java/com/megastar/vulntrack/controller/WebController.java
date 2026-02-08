@@ -9,6 +9,7 @@ import jakarta.validation.Valid;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -27,7 +28,14 @@ public class WebController {
     }
 
     @GetMapping("/login")
-    public String loginPage() {
+    public String loginPage(HttpSession session) {
+
+        var auth = SecurityContextHolder.getContext().getAuthentication();
+
+        if (auth != null && auth.isAuthenticated() && !(auth instanceof AnonymousAuthenticationToken)) {
+            return "redirect:/web/issues";
+        }
+
         return "login";
     }
 
@@ -50,10 +58,9 @@ public class WebController {
     }
 
     @PostMapping("/issues")
-    public String createIssue(@Valid @ModelAttribute CreateIssueRequest request) {
-        Long userId = userContext.getUserId();
+    public String createIssue(@Valid @ModelAttribute CreateIssueRequest request, HttpSession session) {
 
-        System.out.println("===>>> " + userId);
+        Long userId = userContext.getUserId();
 
         Issue issue = new Issue(
                 null,

@@ -5,13 +5,19 @@ import com.megastar.vulntrack.dto.UnauthorizedError;
 import com.megastar.vulntrack.dto.ValidationError;
 import com.megastar.vulntrack.dto.ValidationErrorResponse;
 
+import jakarta.servlet.http.HttpServletRequest;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.ModelAndView;
 
+import java.net.http.HttpRequest;
 import java.util.List;
 
 /**
@@ -24,13 +30,24 @@ import java.util.List;
  * Business rules
  * DuplicateIssueException → 409
  */
-@RestControllerAdvice
+@ControllerAdvice
 public class GlobalExceptionHandler {
+
+    @Autowired
+    private HttpServletRequest request;
+
+    private boolean isApiRequest() {
+        return request.getRequestURI().startsWith("/api");
+    }
 
     @ExceptionHandler(UnauthorizedException.class)
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
-    public UnauthorizedError handleUnauthorized(UnauthorizedException ex) {
-        return new UnauthorizedError(ex.getMessage());
+    public Object handleUnauthorized(UnauthorizedException ex) {
+        if (isApiRequest()) {
+            return new UnauthorizedError(ex.getMessage());
+        }
+
+        return "redirect:/web/login/error=" + ex.getMessage();
     }
 
     @ExceptionHandler(ForbiddenException.class)
@@ -59,21 +76,32 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ValidationErrorResponse validationErrorsResponse(MethodArgumentNotValidException ex) {
-        List<ValidationError> errors = ex.getBindingResult()
-                .getFieldErrors()
-                .stream()
-                .map(error -> new ValidationError(
-                        error.getField(),
-                        error.getDefaultMessage()))
-                .toList();
-        return new ValidationErrorResponse(errors);
+    public Object validationErrorsResponse(MethodArgumentNotValidException ex) {
+        if (isApiRequest()) {
+            List<ValidationError> errors = ex.getBindingResult()
+                    .getFieldErrors()
+                    .stream()
+                    .map(error -> new ValidationError(
+                            error.getField(),
+                            error.getDefaultMessage()))
+                    .toList();
+            return new ValidationErrorResponse(errors);
+        }
+        return "redirect:/issue-form";
     }
 
     @ExceptionHandler(DuplicateIssueException.class)
-    @ResponseStatus(HttpStatus.CONFLICT) // 409 errors
-    public ErrorResponse errorResponse(DuplicateIssueException ex) {
-        return new ErrorResponse(ex.getMessage());
+    public Object errorResponse(DuplicateIssueException ex) {
+        if (isApiRequest()) {
+            return ResponseEntity
+                    .status(HttpStatus.CONFLICT)
+                    .body(new ErrorResponse(ex.getMessage()));
+        }
+
+        ModelAndView mav = new ModelAndView("issue-form");
+        mav.addObject("message", ex.getMessage());
+        mav.setStatus(HttpStatus.NOT_FOUND);
+        return mav;
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
