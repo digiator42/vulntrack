@@ -2,6 +2,8 @@ package com.megastar.vulntrack.controller;
 
 import com.megastar.vulntrack.config.UserContext;
 import com.megastar.vulntrack.dto.CreateIssueRequest;
+import com.megastar.vulntrack.dto.IssuePageRequest;
+import com.megastar.vulntrack.dto.IssueResponse;
 import com.megastar.vulntrack.model.Issue;
 import com.megastar.vulntrack.service.IssueService;
 import jakarta.servlet.http.HttpSession;
@@ -9,6 +11,7 @@ import jakarta.validation.Valid;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.data.domain.Page;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
@@ -73,28 +76,27 @@ public class WebController {
         return "redirect:/web/issues";
     }
 
-    @GetMapping("/issues")
-    public String listIssues(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            Model model) {
-
-        Long userId = userContext.getUserId();
-        System.out.println("===>>> " + userId);
-        List<Issue> issues = issueService.getAllByOwnerId(userId);
-
-        model.addAttribute("issues", issues);
-        model.addAttribute("currentPage", page);
-        model.addAttribute("pageSize", size);
-
-        return "issues";
-    }
 
     @GetMapping("/dashboard")
     public String dashboard(Model model) {
         Map<String, Object> stats = issueService.getStats();
         model.addAttribute("stats", stats);
         return "dashboard";
+    }
+
+    @GetMapping("/issues")
+    public String listIssues(@Valid @ModelAttribute IssuePageRequest request, Model model)
+            throws Exception {
+
+        var page = issueService.getSortedListIssues(userContext.getUserId(), request.toPeagable());
+
+        model.addAttribute("issues", page.getContent());
+        model.addAttribute("currentPage", page.getNumber());
+        model.addAttribute("totalPages", page.getTotalPages());
+        model.addAttribute("totalItems", page.getTotalElements());
+        model.addAttribute("pageSize", page.getSize());
+
+        return "issues";
     }
 
     @GetMapping("/logout")

@@ -42,7 +42,7 @@ public class GlobalExceptionHandler {
             return UnifiedErrorResponse.res(ex.getMessage(), null, HttpStatus.UNAUTHORIZED);
         }
 
-        return "redirect:/web/login/error=" + ex.getMessage();
+        return "redirect:/web/login?error=" + ex.getMessage();
     }
 
     @ExceptionHandler(ForbiddenException.class)
@@ -60,7 +60,7 @@ public class GlobalExceptionHandler {
             return UnifiedErrorResponse.res(ex.getMessage(), null, HttpStatus.FORBIDDEN);
         }
 
-        return "redirect:/web/issues/error=" + ex.getMessage();
+        return "redirect:/web/issues?error=" + ex.getMessage();
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
@@ -69,7 +69,7 @@ public class GlobalExceptionHandler {
             return UnifiedErrorResponse.res(ex.getMessage(), null, HttpStatus.FORBIDDEN);
         }
 
-        return "redirect:/web/issues/error=" + ex.getMessage();
+        return "redirect:/web/issues?error=" + ex.getMessage();
     }
 
     @ExceptionHandler(BadErrorRequestException.class)
@@ -78,7 +78,7 @@ public class GlobalExceptionHandler {
             return UnifiedErrorResponse.res(ex.getMessage(), null, HttpStatus.BAD_REQUEST);
         }
 
-        return "redirect:/web/issues/error=" + ex.getMessage();
+        return "redirect:/web/issues?error=" + ex.getMessage();
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -93,7 +93,8 @@ public class GlobalExceptionHandler {
                     .toList();
             return UnifiedErrorResponse.res(null, errors, HttpStatus.BAD_REQUEST);
         }
-        return "redirect:/issue-form";
+
+        return ModelViewResponse.res(ex.getMessage(), HttpStatus.NOT_FOUND, "issue-form");
     }
 
     @ExceptionHandler(DuplicateIssueException.class)

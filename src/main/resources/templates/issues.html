@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: mainLayout(~{::div})}">
-<div>
+<div class="w-4/5">
     <h2 class="text-3xl font-bold mb-6 text-gray-800">System Issues</h2>
     <div class="bg-white shadow-lg rounded-xl overflow-hidden">
         <table class="w-full text-left">
@@ -30,19 +30,26 @@
             </tbody>
         </table>
     </div>
-    <div class="mt-4 flex justify-between items-center text-sm text-gray-500">
-        <p>
-            Page <span th:text="${currentPage + 1}">1</span>
-            (Size: <span th:text="${pageSize}">10</span>)
-        </p>
+    <div class="flex justify-center items-center gap-2 mt-8">
+        <a th:if="${currentPage > 0}" th:href="@{/web/issues(page=${currentPage - 1}, size=${pageSize})}"
+            class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition">
+            Previous
+        </a>
 
-        <div class="flex gap-2">
-            <a th:href="@{/web/issues(page=${currentPage - 1})}" th:if="${currentPage > 0}"
-                class="px-3 py-1 bg-white border rounded hover:bg-gray-50">Previous</a>
+        <span th:each="i : ${#numbers.sequence(0, totalPages - 1)}" class="flex gap-1">
+            <a th:href="@{/web/issues(page=${i}, size=${pageSize})}" th:text="${i + 1}"
+                th:classappend="${i == currentPage} ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'"
+                class="px-3 py-2 rounded-lg transition font-semibold">
+            </a>
+        </span>
 
-            <a th:href="@{/web/issues(page=${currentPage + 1})}"
-                class="px-3 py-1 bg-white border rounded hover:bg-gray-50">Next</a>
-        </div>
+        <a th:if="${currentPage < totalPages - 1}" th:href="@{/web/issues(page=${currentPage + 1}, size=${pageSize})}"
+            class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition">
+            Next
+        </a>
+    </div>
+    <div class="error-container mt-6 bg-red-100 p-4 rounded-lg" th:if="${statusCode}">
+        <p th:text="${errorMessage}"></p>
     </div>
 </div>
 

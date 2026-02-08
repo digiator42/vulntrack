@@ -46,6 +46,9 @@
         <div th:if="${message}" class="text-red-500 text-sm mb-4 text-center">
             <p th:text="${message}"></p>
         </div>
+        <div class="error-container mt-6 bg-red-100 p-4 rounded-lg" th:if="${statusCode}">
+            <p th:text="${errorMessage}"></p>
+        </div>
     </div>
 </div>
 
