@@ -1,7 +1,7 @@
 package com.vulntrack;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.vulntrack.security.JwtService;
+import com.vulntrack.service.JwtService;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

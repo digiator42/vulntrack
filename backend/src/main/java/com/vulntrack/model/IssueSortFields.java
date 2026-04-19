@@ -10,13 +10,9 @@ public enum IssueSortFields {
 
     private final String field;
 
-    private IssueSortFields(String field) {
-        this.field = field;
-    }
+    private IssueSortFields(String field) { this.field = field; }
 
-    public String getField() {
-        return field;
-    }
+    public String getField() { return field; }
 
     public static boolean isValid(String value) {
         return Arrays.stream(values()).anyMatch(v -> {

@@ -50,7 +50,12 @@ public class SecurityConfig {
                         "/webjars/**",
                         "/web/login",
                         "/auth/**",
-                        "/error"
+                        "/error",
+                        // Swagger UI paths
+                        "/swagger-ui/**",
+                        "/swagger-ui.html",
+                        "/v3/api-docs/**",
+                        "/swagger-resources/**"
                     )
                     .permitAll()
 

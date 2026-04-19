@@ -9,7 +9,7 @@ import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 import com.vulntrack.model.Issue;
 import com.vulntrack.model.IssueStatus;
-import com.vulntrack.security.JwtService;
+import com.vulntrack.service.JwtService;
 import com.vulntrack.service.IssueService;
 
 @Component

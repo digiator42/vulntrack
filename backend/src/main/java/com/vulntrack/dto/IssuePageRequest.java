@@ -11,9 +11,10 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
 public record IssuePageRequest(
-        @Min(0) @Max(500) Integer page,
-        @Min(1) @Max(50) Integer size,
-        String sort) {
+    @Min(0) @Max(500) Integer page,
+    @Min(1) @Max(50) Integer size,
+    String sort
+) {
     public IssuePageRequest {
         page = (page == null) ? 0 : page;
         size = (size == null) ? 10 : size;
@@ -37,8 +38,8 @@ public record IssuePageRequest(
         System.out.println("sort in page request ===>>>> " + sort);
 
         Sort.Direction direction = sort.toLowerCase().equals("asc")
-                ? Sort.Direction.ASC
-                : Sort.Direction.DESC;
+            ? Sort.Direction.ASC
+            : Sort.Direction.DESC;
 
         return PageRequest.of(page, size, Sort.by(direction, field));
     }

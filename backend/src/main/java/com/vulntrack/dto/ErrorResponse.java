@@ -1,4 +1,6 @@
 package com.vulntrack.dto;
 
-public record ErrorResponse(String message) {
+public record ErrorResponse(
+    String message
+) {
 }

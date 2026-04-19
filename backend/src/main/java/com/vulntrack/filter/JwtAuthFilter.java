@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import com.vulntrack.config.UserContext;
-import com.vulntrack.security.JwtService;
+import com.vulntrack.service.JwtService;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;

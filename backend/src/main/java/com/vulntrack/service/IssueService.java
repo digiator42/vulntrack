@@ -23,22 +23,19 @@ import java.util.Map;
 public class IssueService {
     private final IssueRepository issueRepository;
 
-    public IssueService(IssueRepository issueRepository) {
-        this.issueRepository = issueRepository;
-    }
+    public IssueService(IssueRepository issueRepository) { this.issueRepository = issueRepository; }
 
     public Issue create(Issue issue, Long userId) {
         boolean exists = issueRepository.existsByTitle(issue.getTitle());
         if (exists) {
             throw new DuplicateIssueException(
-                    "Issue with this title already exists");
+                "Issue with this title already exists"
+            );
         }
         return issueRepository.save(issue);
     }
 
-    public List<Issue> getAll() {
-        return issueRepository.findAll();
-    }
+    public List<Issue> getAll() { return issueRepository.findAll(); }
 
     public Issue getById(long id) {
         return issueRepository.findById(id).orElseThrow(() -> new IssueNotFoundException(id));
@@ -83,9 +80,10 @@ public class IssueService {
     }
 
     public IssueResponse patchIssue(
-            Long id,
-            Long userId,
-            IssuePatchRequest req) throws Exception {
+        Long id,
+        Long userId,
+        IssuePatchRequest req
+    ) throws Exception {
 
         Issue issue = this.getById(id);
 

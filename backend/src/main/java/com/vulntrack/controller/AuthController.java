@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.vulntrack.config.UserContext;
 import com.vulntrack.dto.LoginRequest;
 import com.vulntrack.exception.UnauthorizedException;
-import com.vulntrack.security.JwtService;
+import com.vulntrack.service.JwtService;
 
 @RestController
 @RequestMapping("/auth")

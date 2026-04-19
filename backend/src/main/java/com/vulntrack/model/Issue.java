@@ -35,12 +35,9 @@ public class Issue {
     private boolean isUpdated;
     private boolean adminCreated;
 
-    public Issue() {
-    }
+    public Issue() {}
 
-    public Issue(Long ownerId) {
-        this.ownerId = ownerId;
-    }
+    public Issue(Long ownerId) { this.ownerId = ownerId; }
 
     public Issue(Long id, String title, String description, Integer severity, Long ownerId) {
         this.id = id;
@@ -51,90 +48,62 @@ public class Issue {
         this.ownerId = ownerId;
     }
 
-    public Long getId() {
-        return id;
-    }
+    public Long getId() { return id; }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
+    public void setId(Long id) { this.id = id; }
 
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
+    public LocalDateTime getCreatedAt() { return createdAt; }
 
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 
-    public String getTitle() {
-        return title;
-    }
+    public String getTitle() { return title; }
 
     public void setTitle(String title) {
         this.title = title;
         this.setUpdated(true);
     }
 
-    public String getDescription() {
-        return description;
-    }
+    public String getDescription() { return description; }
 
     public void setDescription(String description) {
         this.description = description;
         this.setUpdated(true);
     }
 
-    public User getCreatedBy() {
-        return createdBy;
-    }
+    public User getCreatedBy() { return createdBy; }
 
-    public void setCreatedBy(User createdBy) {
-        this.createdBy = createdBy;
-    }
+    public void setCreatedBy(User createdBy) { this.createdBy = createdBy; }
 
-    public Integer getSeverity() {
-        return severity;
-    }
+    public Integer getSeverity() { return severity; }
 
     public void setSeverity(Integer severity) {
         this.severity = severity;
         this.setUpdated(true);
     }
 
-    public Long getOwnerId() {
-        return ownerId;
-    }
+    public Long getOwnerId() { return ownerId; }
 
-    public IssueStatus getStatus() {
-        return status;
-    }
+    public IssueStatus getStatus() { return status; }
 
     public void setStatus(IssueStatus status) {
         this.status = status;
         this.setUpdated(true);
     }
 
-    public boolean isUpdated() {
-        return isUpdated;
-    }
+    public boolean isUpdated() { return isUpdated; }
 
-    public void setUpdated(boolean isUpdated) {
-        this.isUpdated = isUpdated;
-    }
+    public void setUpdated(boolean isUpdated) { this.isUpdated = isUpdated; }
 
-    public boolean isAdminCreated() {
-        return adminCreated;
-    }
+    public boolean isAdminCreated() { return adminCreated; }
 
-    public void setAdminCreated(boolean adminCreated) {
-        this.adminCreated = adminCreated;
-    }
+    public void setAdminCreated(boolean adminCreated) { this.adminCreated = adminCreated; }
 
     @Override
     public String toString() {
-        return "Issue [id=" + id + ", createdAt=" + createdAt + ", title=" + title + ", description=" + description
-                + ", severity=" + severity + ", ownerId=" + ownerId + ", status=" + status + ", isUpdated=" + isUpdated
-                + ", getId()=" + getId() + "]";
+        return "Issue [id=" + id + ", createdAt=" + createdAt + ", title=" + title
+            + ", description=" + description
+            + ", severity=" + severity + ", ownerId=" + ownerId + ", status=" + status
+            + ", isUpdated=" + isUpdated
+            + ", getId()=" + getId() + "]";
     }
 }

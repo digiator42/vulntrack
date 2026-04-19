@@ -10,8 +10,9 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
 public record CreateIssueRequest(
-                @NotBlank(message = "Title is required") String title,
-                String description,
-                @NotNull(message = "Severity is required") @Min(1) @Max(4) Integer severity,
-                @AuthenticationPrincipal User user) {
+    @NotBlank(message = "Title is required") String title,
+    String description,
+    @NotNull(message = "Severity is required") @Min(1) @Max(4) Integer severity,
+    @AuthenticationPrincipal User user
+) {
 }

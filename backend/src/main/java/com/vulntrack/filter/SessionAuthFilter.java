@@ -20,10 +20,11 @@ public class SessionAuthFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(
-            HttpServletRequest request,
-            HttpServletResponse response,
-            FilterChain filterChain)
-            throws ServletException, IOException {
+        HttpServletRequest request,
+        HttpServletResponse response,
+        FilterChain filterChain
+    )
+        throws ServletException, IOException {
 
         HttpSession session = request.getSession(false);
 
@@ -35,14 +36,15 @@ public class SessionAuthFilter extends OncePerRequestFilter {
 
         // If there's a session and we haven't authenticated (JWT) this request yet
         if (session != null && session.getAttribute("USER_ID") != null
-                && SecurityContextHolder.getContext().getAuthentication() == null) {
+            && SecurityContextHolder.getContext().getAuthentication() == null) {
 
             Long userId = (Long) session.getAttribute("USER_ID");
 
             var auth = new UsernamePasswordAuthenticationToken(
-                    userId,
-                    null,
-                    List.of(new SimpleGrantedAuthority("ROLE_USER")));
+                userId,
+                null,
+                List.of(new SimpleGrantedAuthority("ROLE_USER"))
+            );
 
             SecurityContextHolder.getContext().setAuthentication(auth);
         }
