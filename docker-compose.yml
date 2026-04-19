@@ -1,0 +1,38 @@
+# docker-compose.yml - Local Development
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: ../docker/backend.Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=dev
+    volumes:
+      - ./backend:/app
+      - /app/target  # Prevent overwriting compiled files
+    networks:
+      - vulntrack-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: ../docker/frontend.Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8080
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
+    depends_on:
+      - backend
+    networks:
+      - vulntrack-network
+
+networks:
+  vulntrack-network:
+    driver: bridge
