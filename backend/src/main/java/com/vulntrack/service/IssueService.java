@@ -133,4 +133,11 @@ public class IssueService {
 
         return issueRepository.findAllByOwnerId(ownerId, pageable);
     }
+
+    public boolean isOwner(Long issueId, Long userId) {
+        return issueRepository.findById(issueId)
+            .map(Issue::getOwnerId)
+            .map(ownerId -> ownerId.equals(userId))
+            .orElse(false);
+    }
 }

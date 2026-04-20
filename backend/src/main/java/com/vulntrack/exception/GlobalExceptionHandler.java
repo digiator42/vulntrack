@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -80,6 +81,11 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(IssueNotFoundException.class)
     public Object handleIssueNotFound(IssueNotFoundException ex) {
+        return UnifiedErrorResponse.res(ex.getMessage(), null, HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(UsernameNotFoundException.class)
+    public Object handleUsernameNotFound(org.springframework.security.core.userdetails.UsernameNotFoundException ex) {
         return UnifiedErrorResponse.res(ex.getMessage(), null, HttpStatus.NOT_FOUND);
     }
 }

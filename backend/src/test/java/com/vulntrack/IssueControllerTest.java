@@ -37,7 +37,7 @@ public class IssueControllerTest {
 
   @BeforeEach
   void setUp() {
-    adminToken = "Bearer " + jwtService.generateToken(1L, "USER");
+    adminToken = "Bearer " + jwtService.generateToken("user", 1L, "USER");
   }
 
   public Long createInitialIssue(int userId, String payload) throws Exception {
@@ -319,7 +319,7 @@ public class IssueControllerTest {
         .andDo(print())
         .andExpect(status().isOk());
 
-    String userToken = jwtService.generateToken(1L, payload2);
+    String userToken = jwtService.generateToken("user", 1L, "USER");
 
     mockMvc.perform(post("/issues")
         .header(authorization, adminToken)
@@ -404,7 +404,7 @@ public class IssueControllerTest {
 
     Long id = objectMapper.readTree(response).get("id").asLong();
 
-    String otherUserToken = jwtService.generateToken(999L, "USER");
+    String otherUserToken = jwtService.generateToken("otheruser", 999L, "USER");
 
     mockMvc.perform(put("/issues/" + id)
         .header(authorization, otherUserToken)
@@ -540,7 +540,7 @@ public class IssueControllerTest {
 
     Long id = objectMapper.readTree(response).get("id").asLong();
 
-    String otherUserToken = jwtService.generateToken(999L, "USER");
+    String otherUserToken = jwtService.generateToken("otheruser", 999L, "USER");
 
     mockMvc.perform(patch("/issues/" + id)
         .header(authorization, otherUserToken)
@@ -655,7 +655,7 @@ public class IssueControllerTest {
   @Test
   public void sortIssues_withDefaultSort_shouldReturnTenIssues() throws Exception {
 
-    String userToken = jwtService.generateToken(10L, "USER");
+    String userToken = jwtService.generateToken("user", 10L, "USER");
     mockMvc.perform(get("/issues")
         .header(authorization, userToken))
         .andDo(print())
@@ -701,7 +701,7 @@ public class IssueControllerTest {
 
   @Test
   void request_withTokenMissingRole_shouldReturn401() throws Exception {
-    String badToken = jwtService.generateToken(1L, null);
+    String badToken = jwtService.generateToken("baduser", 1L, null);
 
     mockMvc.perform(get("/issues")
         .header(authorization, "Bearer " + badToken))

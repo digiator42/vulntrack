@@ -1,12 +1,14 @@
 package com.vulntrack.service;
 
+import com.vulntrack.model.User;
+import com.vulntrack.repository.UserRepository;
+import com.vulntrack.model.SecurityUser;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
-
-import com.vulntrack.model.User;
-import com.vulntrack.repository.UserRepository;
+import java.util.List;
 
 @Service
 public class CustomUserDetailsService implements UserDetailsService {
@@ -17,14 +19,15 @@ public class CustomUserDetailsService implements UserDetailsService {
     }
 
     @Override
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+    public UserDetails loadUserByUsername(String username) {
         User user = userRepository.findByUsername(username)
             .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
-        return org.springframework.security.core.userdetails.User
-            .withUsername(user.getUsername())
-            .password(user.getPassword())
-            .authorities(user.getRole().name())
-            .build();
+        return new SecurityUser(
+            user.getId(),
+            user.getUsername(),
+            user.getPassword(),
+            List.of(new SimpleGrantedAuthority(user.getRole().name()))
+        );
     }
 }

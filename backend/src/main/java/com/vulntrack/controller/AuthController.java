@@ -6,6 +6,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -36,10 +37,11 @@ public class AuthController {
             new UsernamePasswordAuthenticationToken(req.username(), req.password())
         );
 
-        System.out.println("=========>> " + auth.getPrincipal());
+        System.out.println("=========>>>>> " + auth.getPrincipal());
 
-        User user = userRepository.findByUsername(req.username()).get();
-        String token = jwtService.generateToken(user.getId(), user.getRole().name());
+        User user = userRepository.findByUsername(req.username())
+            .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+        String token = jwtService.generateToken(user.getUsername(), user.getId(), user.getRole().name());
 
         return Map.of("token", token);
     }
