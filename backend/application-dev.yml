@@ -1,0 +1,22 @@
+server:
+  port: 8080
+  
+spring:
+  datasource:
+    url: jdbc:h2:mem:vulntrack
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: 
+  
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+  
+  # CORS for local development
+  web:
+    cors:
+      allowed-origins: "http://localhost:3000"
+      allowed-methods: "*"
+      allowed-headers: "*"
+      allow-credentials: true

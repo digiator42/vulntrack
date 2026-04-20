@@ -2,7 +2,6 @@
 
 # Backend (Spring Boot)
 backend/target/
-backend/.mvn/
 backend/mvnw
 backend/mvnw.cmd
 backend/*.log
@@ -17,6 +16,7 @@ frontend/build/
 frontend/.env*.local
 frontend/.vercel
 frontend/bun.lockb
+next-env.d.ts
 
 # IDEs
 .vscode/
