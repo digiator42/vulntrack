@@ -65,7 +65,7 @@ public class IssueService {
         currentIssue.setTitle(request.title());
         currentIssue.setDescription(request.description());
 
-        return currentIssue;
+        return issueRepository.save(currentIssue);
     }
 
     public void deleteIssue(Long id, Long userId) {
@@ -106,7 +106,8 @@ public class IssueService {
         if (!issue.isUpdated()) {
             throw new BadErrorRequestException("No fields provided for update");
         }
-
+        issueRepository.save(issue);
+        
         return IssueResponse.from(issue);
     }
 
