@@ -10,11 +10,17 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import lombok.Data;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
 @Table(name = "issues")
-@Data
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class Issue {
 
     @Id
@@ -36,8 +42,6 @@ public class Issue {
 
     private boolean isUpdated;
     private boolean adminCreated;
-
-    public Issue() {}
 
     public Issue(Long ownerId) { this.ownerId = ownerId; }
 

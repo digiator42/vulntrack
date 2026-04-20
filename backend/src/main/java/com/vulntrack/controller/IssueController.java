@@ -39,11 +39,12 @@ public class IssueController {
         Long userId = userContext.getUserId();
 
         Issue issue = new Issue(
-                null,
-                issueRequest.title(),
-                issueRequest.description(),
-                issueRequest.severity(),
-                userId);
+            null,
+            issueRequest.title(),
+            issueRequest.description(),
+            issueRequest.severity(),
+            userId
+        );
         return this.service.create(issue, userId);
     }
 
@@ -63,8 +64,9 @@ public class IssueController {
 
     @PutMapping("/{id}")
     public Issue updateIssue(
-            @PathVariable Long id,
-            @Valid @RequestBody UpdateIssueRequest request) {
+        @PathVariable Long id,
+        @Valid @RequestBody UpdateIssueRequest request
+    ) {
         return this.service.updateIssue(id, userContext.getUserId(), request);
     }
 
@@ -76,8 +78,9 @@ public class IssueController {
 
     @PatchMapping("/{id}")
     public IssueResponse patchIssue(
-            @PathVariable Long id,
-            @Valid @RequestBody IssuePatchRequest request) throws Exception {
+        @PathVariable Long id,
+        @Valid @RequestBody IssuePatchRequest request
+    ) throws Exception {
         return this.service.patchIssue(id, userContext.getUserId(), request);
     }
 

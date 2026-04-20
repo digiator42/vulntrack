@@ -10,7 +10,7 @@ import com.vulntrack.model.Role;
 import com.vulntrack.model.User;
 
 @Repository
-public interface UserRepository extends JpaRepository<User, Long>, UserRepositoryCustom {
+public interface UserRepository extends JpaRepository<User, Long> {
 
     Optional<User> findByUsername(String username);
 
