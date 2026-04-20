@@ -4,7 +4,7 @@ import com.vulntrack.dto.IssuePatchRequest;
 import com.vulntrack.dto.IssueResponse;
 import com.vulntrack.dto.UpdateIssueRequest;
 import com.vulntrack.exception.AccessDeniedException;
-import com.vulntrack.exception.DuplicateIssueException;
+import com.vulntrack.exception.DuplicateItemException;
 import com.vulntrack.exception.BadErrorRequestException;
 import com.vulntrack.exception.IssueNotFoundException;
 import com.vulntrack.model.Issue;
@@ -28,10 +28,11 @@ public class IssueService {
     public Issue create(Issue issue, Long userId) {
         boolean exists = issueRepository.existsByTitle(issue.getTitle());
         if (exists) {
-            throw new DuplicateIssueException(
+            throw new DuplicateItemException(
                 "Issue with this title already exists"
             );
         }
+        issue.setOwnerId(userId);
         return issueRepository.save(issue);
     }
 
@@ -107,7 +108,7 @@ public class IssueService {
             throw new BadErrorRequestException("No fields provided for update");
         }
         issueRepository.save(issue);
-        
+
         return IssueResponse.from(issue);
     }
 

@@ -32,9 +32,10 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(
-            HttpServletRequest request,
-            HttpServletResponse response,
-            FilterChain filterChain) throws ServletException, IOException {
+        HttpServletRequest request,
+        HttpServletResponse response,
+        FilterChain filterChain
+    ) throws ServletException, IOException {
 
         String header = request.getHeader("Authorization");
 
@@ -64,9 +65,10 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             java.lang.System.out.println("=========>> " + role);
 
             var authToken = new UsernamePasswordAuthenticationToken(
-                    userId,
-                    null,
-                    List.of(new SimpleGrantedAuthority("ROLE_" + role)));
+                userId,
+                null,
+                List.of(new SimpleGrantedAuthority("ROLE_" + role))
+            );
             SecurityContextHolder.getContext().setAuthentication(authToken);
         }
 
@@ -76,10 +78,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
         String path = request.getServletPath();
-        return path.startsWith("/auth/") ||
-                path.startsWith("/web/") ||
-                path.startsWith("/css/") ||
-                path.startsWith("/js/");
+        return path.startsWith("/auth/");
     }
 
 }

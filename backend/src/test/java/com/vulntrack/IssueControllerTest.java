@@ -54,8 +54,6 @@ public class IssueControllerTest {
           """.replaceFirst("\\{title\\}", title);
     }
 
-    System.out.println("------------->>> " + payload);
-
     String response = mockMvc.perform(post("/issues")
         .header(authorization, adminToken)
         .contentType(MediaType.APPLICATION_JSON)

@@ -6,8 +6,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
-import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import com.vulntrack.dto.UnifiedErrorResponse;
 import com.vulntrack.dto.ValidationError;
@@ -19,9 +19,9 @@ import jakarta.servlet.http.HttpServletRequest;
  *
  * Bean validation MethodArgumentNotValidException → 400 (errors[])
  *
- * Business rules DuplicateIssueException → 409
+ * Business rules DuplicateItemException → 409
  */
-@ControllerAdvice
+@RestControllerAdvice
 public class GlobalExceptionHandler {
 
     @Autowired
@@ -68,8 +68,8 @@ public class GlobalExceptionHandler {
         return UnifiedErrorResponse.res(null, errors, HttpStatus.BAD_REQUEST);
     }
 
-    @ExceptionHandler(DuplicateIssueException.class)
-    public Object errorResponse(DuplicateIssueException ex) {
+    @ExceptionHandler(DuplicateItemException.class)
+    public Object errorResponse(DuplicateItemException ex) {
         return UnifiedErrorResponse.res(ex.getMessage(), null, HttpStatus.CONFLICT);
     }
 

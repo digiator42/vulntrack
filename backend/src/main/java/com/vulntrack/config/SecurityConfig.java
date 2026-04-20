@@ -9,6 +9,8 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
@@ -29,9 +31,13 @@ public class SecurityConfig {
     private final JwtAuthFilter jwtFilter;
 
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration config)
+        throws Exception {
         return config.getAuthenticationManager();
     }
+
+    @Bean
+    public PasswordEncoder passwordEncoder() { return new BCryptPasswordEncoder(); }
 
     @Bean
     SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -46,27 +52,11 @@ public class SecurityConfig {
             .authorizeHttpRequests(
                 auth -> auth
                     // Allow public resources
-                    .requestMatchers(
-                        "/css/**",
-                        "/js/**",
-                        "/images/**",
-                        "/webjars/**",
-                        "/web/login",
-                        "/auth/**",
-                        "/error",
-                        // Swagger UI paths
-                        "/swagger-ui/**",
-                        "/swagger-ui.html",
-                        "/v3/api-docs/**",
-                        "/swagger-resources/**"
-                    )
-                    .permitAll()
-
+                    .requestMatchers("/auth/**", "/v3/api-docs/**", "/swagger-ui/**").permitAll()
                     // API endpoints require authentication
                     .requestMatchers("/api/**").authenticated()
-
                     // DELETE requires ADMIN role
-                    .requestMatchers(HttpMethod.DELETE, "/api/issues/**").hasRole("ADMIN")
+                    .requestMatchers(HttpMethod.DELETE, "/api/issues/**").hasAuthority("ROLE_ADMIN")
 
                     .anyRequest().authenticated()
             )

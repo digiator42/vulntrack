@@ -7,7 +7,6 @@ import com.vulntrack.dto.IssuePatchRequest;
 import com.vulntrack.dto.IssueResponse;
 import com.vulntrack.dto.UpdateIssueRequest;
 import com.vulntrack.exception.AccessDeniedException;
-import com.vulntrack.exception.IssueNotFoundException;
 import com.vulntrack.model.Issue;
 import com.vulntrack.service.IssueService;
 import jakarta.validation.Valid;
@@ -51,10 +50,6 @@ public class IssueController {
     @GetMapping("/{id}")
     public Issue findById(@PathVariable long id) {
         Issue issue = service.getById(id);
-
-        if (issue == null) {
-            throw new IssueNotFoundException(id);
-        }
 
         if (!issue.getOwnerId().equals(userContext.getUserId())) {
             throw new AccessDeniedException("Access denied");
