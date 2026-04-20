@@ -16,11 +16,11 @@ import com.vulntrack.service.JwtService;
 @RequestMapping("/auth")
 public class AuthController {
     private final JwtService jwtService;
-
+    
     public AuthController(JwtService jwtService, UserContext userContext) {
         this.jwtService = jwtService;
     }
-
+    
     @PostMapping("/login")
     public Map<String, String> getToken(@RequestBody LoginRequest req) {
         if (!"user".equals(req.username())) {

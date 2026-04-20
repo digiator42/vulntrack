@@ -10,9 +10,11 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import lombok.Data;
 
 @Entity
 @Table(name = "issues")
+@Data
 public class Issue {
 
     @Id
@@ -48,16 +50,6 @@ public class Issue {
         this.ownerId = ownerId;
     }
 
-    public Long getId() { return id; }
-
-    public void setId(Long id) { this.id = id; }
-
-    public LocalDateTime getCreatedAt() { return createdAt; }
-
-    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
-
-    public String getTitle() { return title; }
-
     public void setTitle(String title) {
         this.title = title;
         this.setUpdated(true);
@@ -70,20 +62,12 @@ public class Issue {
         this.setUpdated(true);
     }
 
-    public User getCreatedBy() { return createdBy; }
-
-    public void setCreatedBy(User createdBy) { this.createdBy = createdBy; }
-
     public Integer getSeverity() { return severity; }
 
     public void setSeverity(Integer severity) {
         this.severity = severity;
         this.setUpdated(true);
     }
-
-    public Long getOwnerId() { return ownerId; }
-
-    public IssueStatus getStatus() { return status; }
 
     public void setStatus(IssueStatus status) {
         this.status = status;
@@ -92,11 +76,7 @@ public class Issue {
 
     public boolean isUpdated() { return isUpdated; }
 
-    public void setUpdated(boolean isUpdated) { this.isUpdated = isUpdated; }
-
     public boolean isAdminCreated() { return adminCreated; }
-
-    public void setAdminCreated(boolean adminCreated) { this.adminCreated = adminCreated; }
 
     @Override
     public String toString() {

@@ -28,8 +28,6 @@ public class SessionAuthFilter extends OncePerRequestFilter {
 
         HttpSession session = request.getSession(false);
 
-        System.out.println("Session: ==> " + (session != null));
-
         if (session != null) {
             System.out.println("User ID in Session: ==> " + session.getAttribute("USER_ID"));
         }
