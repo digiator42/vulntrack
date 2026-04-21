@@ -5,6 +5,7 @@ import com.vulntrack.dto.CreateIssueRequest;
 import com.vulntrack.dto.IssuePageRequest;
 import com.vulntrack.dto.IssuePatchRequest;
 import com.vulntrack.dto.IssueResponse;
+import com.vulntrack.dto.SearchCriteria;
 import com.vulntrack.dto.UpdateIssueRequest;
 import com.vulntrack.model.Issue;
 import com.vulntrack.service.IssueService;
@@ -12,7 +13,10 @@ import com.vulntrack.utils.SecurityUtils;
 
 import jakarta.validation.Valid;
 
+import java.util.List;
+
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -88,6 +92,11 @@ public class IssueController {
     ) throws Exception {
         return this.service
             .getSortedListIssues(SecurityUtils.getCurrentUser().id(), request.toPeagable());
+    }
+
+    @PostMapping("/search")
+    public Page<IssueResponse> search(@RequestBody List<SearchCriteria> params, Pageable pageable) {
+        return service.searchWithSpecifications(params, pageable);
     }
 
 }

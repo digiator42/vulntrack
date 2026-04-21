@@ -2,6 +2,7 @@ package com.vulntrack.service;
 
 import com.vulntrack.dto.IssuePatchRequest;
 import com.vulntrack.dto.IssueResponse;
+import com.vulntrack.dto.SearchCriteria;
 import com.vulntrack.dto.UpdateIssueRequest;
 import com.vulntrack.exception.AccessDeniedException;
 import com.vulntrack.exception.DuplicateItemException;
@@ -10,9 +11,11 @@ import com.vulntrack.exception.IssueNotFoundException;
 import com.vulntrack.model.Issue;
 import com.vulntrack.model.IssueSortFields;
 import com.vulntrack.repository.IssueRepository;
+import com.vulntrack.utils.IssueSpecification;
 
 import org.springframework.stereotype.Service;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.domain.Page;
 
 import java.util.HashMap;
@@ -132,6 +135,20 @@ public class IssueService {
         }
 
         return issueRepository.findAllByOwnerId(ownerId, pageable);
+    }
+
+    public Page<IssueResponse> searchWithSpecifications(
+        List<SearchCriteria> params,
+        Pageable pageable
+    ) {
+        Specification<Issue> spec = Specification.where(null);
+
+        for (SearchCriteria criteria : params) {
+            System.out.println("Adding criteria: " + criteria.getKey() + " " + criteria.getOperation() + " " + criteria.getValue());
+            spec = spec.and(new IssueSpecification(criteria));
+        }
+
+        return issueRepository.findAll(spec, pageable).map(IssueResponse::from);
     }
 
     public boolean isOwner(Long issueId, Long userId) {

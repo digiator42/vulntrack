@@ -9,6 +9,7 @@ import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
 import com.vulntrack.enums.IssueStatus;
+import com.vulntrack.enums.Severity;
 import com.vulntrack.model.Issue;
 import com.vulntrack.service.JwtService;
 import com.vulntrack.service.IssueService;
@@ -34,11 +35,12 @@ public class DataInitializer {
         statusTypes.put(2, IssueStatus.RESOLVED);
         statusTypes.put(3, IssueStatus.CLOSED);
 
-        // for (int i = 1; i <= 25; i++) {
-        // int r = rand.nextInt(4);
-        // Issue issue = new Issue(Long.valueOf(i), "Valid title " + i, "Desc", i, 10L);
-        // issue.setStatus(statusTypes.get(r));
-        // issueService.create(issue, 1L);
-        // }
+        for (int i = 1; i <= 25; i++) {
+            int r = rand.nextInt(4);
+            Severity severity = Severity.values()[rand.nextInt(Severity.values().length)];
+            Issue issue = new Issue("Valid title " + i, "Desc", severity, 10L);
+            issue.setStatus(statusTypes.get(r));
+            issueService.create(issue, 1L);
+        }
     }
 }

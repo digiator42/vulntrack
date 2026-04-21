@@ -1,6 +1,6 @@
 package com.vulntrack.service;
 
-import com.vulntrack.model.AuditLogEntity;
+import com.vulntrack.model.AuditLog;
 import com.vulntrack.repository.AuditLogRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,7 +24,7 @@ public class AuditLogService {
         String status
     ) {
         try {
-            AuditLogEntity entity = AuditLogEntity.builder()
+            AuditLog entity = AuditLog.builder()
                 .timestamp(Instant.now())
                 .principal(principal)
                 .action(action)
