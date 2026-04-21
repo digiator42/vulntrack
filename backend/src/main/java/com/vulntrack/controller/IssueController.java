@@ -7,11 +7,15 @@ import com.vulntrack.dto.IssuePatchRequest;
 import com.vulntrack.dto.IssueResponse;
 import com.vulntrack.dto.SearchCriteria;
 import com.vulntrack.dto.UpdateIssueRequest;
+import com.vulntrack.exception.BadErrorRequestException;
 import com.vulntrack.model.Issue;
+import com.vulntrack.repository.UserRepository;
+import com.vulntrack.service.CvssService;
 import com.vulntrack.service.IssueService;
 import com.vulntrack.utils.SecurityUtils;
 
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 
 import java.util.List;
 
@@ -24,11 +28,12 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/api/issues")
 public class IssueController {
     private final IssueService service;
-
-    public IssueController(IssueService issueService) { this.service = issueService; }
+    private final CvssService cvssService;
+    private final UserRepository userRepository;
 
     @GetMapping("/me")
     public String getCurrentUser(@AuthenticationPrincipal UserDetails userDetails) {
@@ -42,12 +47,24 @@ public class IssueController {
 
         Long userId = SecurityUtils.getCurrentUser().id();
 
-        Issue issue = new Issue(
-            issueRequest.title(),
-            issueRequest.description(),
-            issueRequest.severity(),
-            userId
-        );
+        Double finalCvss = issueRequest.cvssScore();
+        if (issueRequest.cvssVector() != null && !issueRequest.cvssVector().isEmpty()) {
+            try {
+                finalCvss = cvssService.calculateBaseScore(issueRequest.cvssVector());
+            } catch (Exception e) {
+                throw new BadErrorRequestException("Invalid CVSS Vector format");
+            }
+        }
+
+        Issue issue = Issue.builder()
+            .title(issueRequest.title())
+            .description(issueRequest.description())
+            .severity(issueRequest.severity())
+            .cvssScore(finalCvss)
+            .cweId(issueRequest.cweId())
+            .owner(userRepository.findById(userId).orElseThrow())
+            .build();
+
         return this.service.create(issue, userId);
     }
 

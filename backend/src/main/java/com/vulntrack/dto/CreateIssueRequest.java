@@ -9,13 +9,17 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
 public record CreateIssueRequest(
-    @NotBlank(message = "Title is required")
-    String title,
-    
+    @NotBlank(message = "Title is required") String title,
+
+    @NotNull(message = "Severity is required") Severity severity,
+
     String description,
-    
-    @NotNull(message = "Severity is required") 
-    Severity severity,
+
+    String cvssVector,
+
+    String cweId,
+
+    Double cvssScore,
 
     @AuthenticationPrincipal User user
 ) {
