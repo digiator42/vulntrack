@@ -8,9 +8,11 @@ import com.vulntrack.dto.IssueResponse;
 import com.vulntrack.dto.SearchCriteria;
 import com.vulntrack.dto.UpdateIssueRequest;
 import com.vulntrack.exception.BadErrorRequestException;
+import com.vulntrack.model.CweEntry;
 import com.vulntrack.model.Issue;
 import com.vulntrack.repository.UserRepository;
 import com.vulntrack.service.CvssService;
+import com.vulntrack.service.CweService;
 import com.vulntrack.service.IssueService;
 import com.vulntrack.utils.SecurityUtils;
 
@@ -34,6 +36,7 @@ public class IssueController {
     private final IssueService service;
     private final CvssService cvssService;
     private final UserRepository userRepository;
+    private final CweService cweService;
 
     @GetMapping("/me")
     public String getCurrentUser(@AuthenticationPrincipal UserDetails userDetails) {
@@ -47,6 +50,19 @@ public class IssueController {
 
         Long userId = SecurityUtils.getCurrentUser().id();
 
+        String description = issueRequest.description();
+        String title = issueRequest.title();
+
+        if (issueRequest.cweId() != null && (description == null || description.isBlank())) {
+            CweEntry cwe = cweService.getCweById(issueRequest.cweId());
+            if (cwe != null) {
+                description = cwe.getDescription();
+                if (title == null || title.isBlank()) {
+                    title = cwe.getName();
+                }
+            }
+        }
+
         Double finalCvss = issueRequest.cvssScore();
         if (issueRequest.cvssVector() != null && !issueRequest.cvssVector().isEmpty()) {
             try {
@@ -57,10 +73,10 @@ public class IssueController {
         }
 
         Issue issue = Issue.builder()
-            .title(issueRequest.title())
-            .description(issueRequest.description())
-            .severity(issueRequest.severity())
+            .title(title)
+            .description(description)
             .cvssScore(finalCvss)
+            .severity(issueRequest.severity())
             .cweId(issueRequest.cweId())
             .owner(userRepository.findById(userId).orElseThrow())
             .build();
