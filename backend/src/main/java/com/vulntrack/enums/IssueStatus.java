@@ -1,4 +1,4 @@
-package com.vulntrack.model;
+package com.vulntrack.enums;
 
 public enum IssueStatus {
     OPEN,

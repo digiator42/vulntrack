@@ -7,7 +7,6 @@ import com.vulntrack.dto.IssuePatchRequest;
 import com.vulntrack.dto.IssueResponse;
 import com.vulntrack.dto.UpdateIssueRequest;
 import com.vulntrack.model.Issue;
-import com.vulntrack.model.SecurityUser;
 import com.vulntrack.service.IssueService;
 import com.vulntrack.utils.SecurityUtils;
 
@@ -17,7 +16,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
@@ -41,7 +39,6 @@ public class IssueController {
         Long userId = SecurityUtils.getCurrentUser().id();
 
         Issue issue = new Issue(
-            null,
             issueRequest.title(),
             issueRequest.description(),
             issueRequest.severity(),

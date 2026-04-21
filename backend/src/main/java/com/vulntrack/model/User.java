@@ -11,6 +11,9 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+
+import com.vulntrack.enums.Role;
+
 import jakarta.persistence.Column;
 
 @Entity

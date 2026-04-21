@@ -1,6 +1,6 @@
 package com.vulntrack.dto;
 
-import com.vulntrack.model.IssueStatus;
+import com.vulntrack.enums.IssueStatus;
 
 import jakarta.validation.constraints.Size;
 

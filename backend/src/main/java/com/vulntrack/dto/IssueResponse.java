@@ -1,13 +1,14 @@
 package com.vulntrack.dto;
 
+import com.vulntrack.enums.IssueStatus;
+import com.vulntrack.enums.Severity;
 import com.vulntrack.model.Issue;
-import com.vulntrack.model.IssueStatus;
 
 public record IssueResponse(
     Long id,
     String title,
     String description,
-    Integer severity,
+    Severity severity,
     IssueStatus status
 ) {
     public static IssueResponse from(Issue issue) {

@@ -2,85 +2,93 @@ package com.vulntrack.model;
 
 import java.time.LocalDateTime;
 
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+
+import com.vulntrack.enums.IssueStatus;
+import com.vulntrack.enums.Severity;
+
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
-import lombok.Getter;
+import lombok.Builder;
+import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 @Entity
 @Table(name = "issues")
-@Getter
-@Setter
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class Issue {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private LocalDateTime createdAt;
-
+    @Column(nullable = false)
     private String title;
-    private String description;
-    private Integer severity;
+
+    @Column(nullable = false)
     private Long ownerId;
 
-    @ManyToOne
-    private User createdBy;
+    @Column(columnDefinition = "TEXT")
+    private String description;
+
+    @Column(nullable = false)
+    @Builder.Default
+    private boolean isUpdated = false;
+
+    @Enumerated(EnumType.ORDINAL)
+    private Severity severity; // LOW, MEDIUM, HIGH, CRITICAL
+
+    private Double cvssScore; // 0.0 - 10.0
+
+    private String cweId; // e.g., "CWE-79" for XSS
+
+    private String cveId; // e.g., "CVE-2023-1234"
 
     @Enumerated(EnumType.STRING)
-    private IssueStatus status;
+    private IssueStatus status; // OPEN, IN_PROGRESS, RESOLVED, CLOSED
 
-    private boolean isUpdated;
-    private boolean adminCreated;
+    private String scannerSource; // "OWASP ZAP", "Snyk", "Manual Pentest"
 
-    public Issue(Long ownerId) { this.ownerId = ownerId; }
-
-    public Issue(Long id, String title, String description, Integer severity, Long ownerId) {
-        this.id = id;
-        this.createdAt = LocalDateTime.now();
+    public Issue(String title, String description, Severity severity, Long ownerId) {
         this.title = title;
         this.description = description;
         this.severity = severity;
         this.ownerId = ownerId;
     }
 
-    public void setTitle(String title) {
-        this.title = title;
-        this.setUpdated(true);
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "owner_id")
+    private User owner;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "assignee_id")
+    private User assignee; // Who is fixing it?
+
+    @CreationTimestamp
+    private LocalDateTime createdAt;
+
+    @UpdateTimestamp
+    private LocalDateTime updatedAt;
+
+    @PrePersist
+    protected void onCreate() {
+        if (status == null)
+            status = IssueStatus.OPEN;
     }
-
-    public String getDescription() { return description; }
-
-    public void setDescription(String description) {
-        this.description = description;
-        this.setUpdated(true);
-    }
-
-    public Integer getSeverity() { return severity; }
-
-    public void setSeverity(Integer severity) {
-        this.severity = severity;
-        this.setUpdated(true);
-    }
-
-    public void setStatus(IssueStatus status) {
-        this.status = status;
-        this.setUpdated(true);
-    }
-
-    public boolean isUpdated() { return isUpdated; }
-
-    public boolean isAdminCreated() { return adminCreated; }
 
     @Override
     public String toString() {
