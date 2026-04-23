@@ -10,6 +10,7 @@ import com.vulntrack.dto.UpdateIssueRequest;
 import com.vulntrack.exception.BadErrorRequestException;
 import com.vulntrack.model.CweEntry;
 import com.vulntrack.model.Issue;
+import com.vulntrack.model.User;
 import com.vulntrack.repository.UserRepository;
 import com.vulntrack.service.CvssService;
 import com.vulntrack.service.CweService;
@@ -44,11 +45,12 @@ public class IssueController {
     }
 
     @PostMapping
-    public Issue createIssue(
+    public IssueResponse createIssue(
         @Valid @RequestBody CreateIssueRequest issueRequest
     ) {
 
-        Long userId = SecurityUtils.getCurrentUser().id();
+        User owner = userRepository.findById(SecurityUtils.getCurrentUser().id())
+            .orElseThrow(() -> new BadErrorRequestException("User not found"));
 
         String description = issueRequest.description();
         String title = issueRequest.title();
@@ -78,10 +80,10 @@ public class IssueController {
             .cvssScore(finalCvss)
             .severity(issueRequest.severity())
             .cweId(issueRequest.cweId())
-            .owner(userRepository.findById(userId).orElseThrow())
+            .owner(owner)
             .build();
 
-        return this.service.create(issue, userId);
+        return IssueResponse.from(this.service.create(issue, owner));
     }
 
     @GetMapping("/{id}")
@@ -99,8 +101,9 @@ public class IssueController {
         @Valid @RequestBody UpdateIssueRequest request
     ) {
 
-        Long userId = SecurityUtils.getCurrentUser().id();
-        return this.service.updateIssue(id, userId, request);
+        User owner = userRepository.findById(SecurityUtils.getCurrentUser().id())
+            .orElseThrow(() -> new BadErrorRequestException("User not found"));
+        return this.service.updateIssue(id, owner, request);
     }
 
     @DeleteMapping("/{id}")
@@ -108,7 +111,10 @@ public class IssueController {
     public void deleteIssue(
         @PathVariable Long id
     ) {
-        this.service.deleteIssue(id, SecurityUtils.getCurrentUser().id());
+        User owner = userRepository.findById(SecurityUtils.getCurrentUser().id())
+            .orElseThrow(() -> new BadErrorRequestException("User not found"));
+
+        this.service.deleteIssue(id, owner);
     }
 
     @PatchMapping("/{id}")
@@ -116,7 +122,10 @@ public class IssueController {
         @PathVariable Long id,
         @Valid @RequestBody IssuePatchRequest request
     ) throws Exception {
-        return this.service.patchIssue(id, SecurityUtils.getCurrentUser().id(), request);
+        User owner = userRepository.findById(SecurityUtils.getCurrentUser().id())
+            .orElseThrow(() -> new BadErrorRequestException("User not found"));
+
+        return this.service.patchIssue(id, owner, request);
     }
 
     @GetMapping()

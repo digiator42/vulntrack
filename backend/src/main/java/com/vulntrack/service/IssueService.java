@@ -10,6 +10,7 @@ import com.vulntrack.exception.BadErrorRequestException;
 import com.vulntrack.exception.IssueNotFoundException;
 import com.vulntrack.model.Issue;
 import com.vulntrack.model.IssueSortFields;
+import com.vulntrack.model.User;
 import com.vulntrack.repository.IssueRepository;
 import com.vulntrack.utils.IssueSpecification;
 
@@ -28,14 +29,14 @@ public class IssueService {
 
     public IssueService(IssueRepository issueRepository) { this.issueRepository = issueRepository; }
 
-    public Issue create(Issue issue, Long userId) {
+    public Issue create(Issue issue, User owner) {
         boolean exists = issueRepository.existsByTitle(issue.getTitle());
         if (exists) {
             throw new DuplicateItemException(
                 "Issue with this title already exists"
             );
         }
-        issue.setOwnerId(userId);
+        issue.setOwner(owner);
         return issueRepository.save(issue);
     }
 
@@ -58,12 +59,8 @@ public class IssueService {
         return stats;
     }
 
-    public Issue updateIssue(Long id, Long userId, UpdateIssueRequest request) {
+    public Issue updateIssue(Long id, User owner, UpdateIssueRequest request) {
         Issue currentIssue = this.getById(id);
-
-        if (!currentIssue.getOwnerId().equals(userId)) {
-            throw new AccessDeniedException(request.title());
-        }
 
         currentIssue.setId(id);
         currentIssue.setTitle(request.title());
@@ -72,28 +69,20 @@ public class IssueService {
         return issueRepository.save(currentIssue);
     }
 
-    public void deleteIssue(Long id, Long userId) {
+    public void deleteIssue(Long id, User owner) {
 
         Issue currentIssue = this.getById(id);
-
-        if (!currentIssue.getOwnerId().equals(userId)) {
-            throw new AccessDeniedException("You do not own this issue");
-        }
 
         issueRepository.delete(currentIssue);
     }
 
     public IssueResponse patchIssue(
         Long id,
-        Long userId,
+        User owner,
         IssuePatchRequest req
     ) throws Exception {
 
         Issue issue = this.getById(id);
-
-        if (!issue.getOwnerId().equals(userId)) {
-            throw new AccessDeniedException(issue.getTitle());
-        }
 
         if (req.title() != null) {
             issue.setTitle(req.title());
@@ -151,10 +140,11 @@ public class IssueService {
         return issueRepository.findAll(spec, pageable).map(IssueResponse::from);
     }
 
-    public boolean isOwner(Long issueId, Long userId) {
+    public boolean isOwner(Long issueId, User owner) {
         return issueRepository.findById(issueId)
-            .map(Issue::getOwnerId)
-            .map(ownerId -> ownerId.equals(userId))
+            .map(Issue::getOwner)
+            .map(User::getId)
+            .map(ownerId -> ownerId.equals(owner.getId()))
             .orElse(false);
     }
 }

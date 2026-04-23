@@ -39,9 +39,6 @@ public class Issue {
     @Column(nullable = false)
     private String title;
 
-    @Column(nullable = false)
-    private Long ownerId;
-
     @Column(columnDefinition = "TEXT")
     private String description;
 
@@ -63,15 +60,15 @@ public class Issue {
 
     private String scannerSource; // "OWASP ZAP", "Snyk", "Manual Pentest"
 
-    public Issue(String title, String description, Severity severity, Long ownerId) {
+    public Issue(String title, String description, Severity severity, User owner) {
         this.title = title;
         this.description = description;
         this.severity = severity;
-        this.ownerId = ownerId;
+        this.owner = owner;
     }
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "owner")
+    @JoinColumn(name = "owner_id", nullable = false)
     private User owner;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -94,7 +91,8 @@ public class Issue {
     public String toString() {
         return "Issue [id=" + id + ", createdAt=" + createdAt + ", title=" + title
             + ", description=" + description
-            + ", severity=" + severity + ", ownerId=" + ownerId + ", status=" + status
+            + ", severity=" + severity + ", ownerId=" + owner.getId()
+            + ", assigneeId=" + (assignee != null ? assignee.getId() : null) + ", status=" + status
             + ", isUpdated=" + isUpdated
             + ", getId()=" + getId() + "]";
     }

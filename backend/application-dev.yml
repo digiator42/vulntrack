@@ -3,20 +3,14 @@ server:
   
 spring:
   datasource:
-    url: jdbc:h2:mem:vulntrack
-    driver-class-name: org.h2.Driver
-    username: sa
-    password: 
+    url: jdbc:postgresql://localhost:5432/vuluntrack_dev
+    username: postgres
+    password: admin
+    driver-class-name: org.postgresql.Driver
   
   jpa:
     hibernate:
-      ddl-auto: update
-    show-sql: true
-  
-  # CORS for local development
-  web:
-    cors:
-      allowed-origins: "http://localhost:3000"
-      allowed-methods: "*"
-      allowed-headers: "*"
-      allow-credentials: true
+      ddl-auto: validate 
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
