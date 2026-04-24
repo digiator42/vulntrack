@@ -8,6 +8,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -23,7 +24,7 @@ import com.vulntrack.service.JwtService;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/auth")
+@RequestMapping("/api/auth")
 @RequiredArgsConstructor
 public class AuthController {
     private final AuthenticationManager authManager;
@@ -41,7 +42,8 @@ public class AuthController {
 
         User user = userRepository.findByUsername(req.username())
             .orElseThrow(() -> new UsernameNotFoundException("User not found"));
-        String token = jwtService.generateToken(user.getUsername(), user.getId(), user.getRole().name());
+        String token = jwtService
+            .generateToken(user.getUsername(), user.getId(), user.getRole().name());
 
         return Map.of("token", token);
     }
@@ -62,5 +64,24 @@ public class AuthController {
         userRepository.save(newUser);
 
         return ResponseEntity.ok("User registered successfully!");
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<?> getCurrentUser(Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return ResponseEntity.status(401).body("Unauthorized");
+        }
+
+        String username = authentication.getName();
+        User user = userRepository.findByUsername(username)
+            .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+
+        return ResponseEntity.ok(
+            Map.of(
+                "id", user.getId(),
+                "username", user.getUsername(),
+                "role", user.getRole().name()
+            )
+        );
     }
 }

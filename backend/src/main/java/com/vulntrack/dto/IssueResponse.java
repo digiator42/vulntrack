@@ -1,5 +1,7 @@
 package com.vulntrack.dto;
 
+import java.time.LocalDateTime;
+
 import com.vulntrack.enums.IssueStatus;
 import com.vulntrack.enums.Severity;
 import com.vulntrack.model.Issue;
@@ -9,7 +11,9 @@ public record IssueResponse(
     String title,
     String description,
     Severity severity,
-    IssueStatus status
+    IssueStatus status,
+    LocalDateTime createdAt,
+    LocalDateTime updatedAt
 ) {
     public static IssueResponse from(Issue issue) {
         return new IssueResponse(
@@ -17,7 +21,9 @@ public record IssueResponse(
             issue.getTitle(),
             issue.getDescription(),
             issue.getSeverity(),
-            issue.getStatus()
+            issue.getStatus(),
+            issue.getCreatedAt(),
+            issue.getUpdatedAt()
         );
     }
 }

@@ -53,8 +53,9 @@ public class SecurityConfig {
 
             .authorizeHttpRequests(
                 auth -> auth
+                    .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                     // Allow public resources
-                    .requestMatchers("/auth/**", "/v3/api-docs/**", "/swagger-ui/**").permitAll()
+                    .requestMatchers("/api/auth/**", "/v3/api-docs/**", "/swagger-ui/**").permitAll()
                     // API endpoints require authentication
                     .requestMatchers("/api/**").authenticated()
                     // DELETE requires ADMIN role
