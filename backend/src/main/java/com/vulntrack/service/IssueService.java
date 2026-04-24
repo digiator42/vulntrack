@@ -4,7 +4,6 @@ import com.vulntrack.dto.IssuePatchRequest;
 import com.vulntrack.dto.IssueResponse;
 import com.vulntrack.dto.SearchCriteria;
 import com.vulntrack.dto.UpdateIssueRequest;
-import com.vulntrack.exception.AccessDeniedException;
 import com.vulntrack.exception.DuplicateItemException;
 import com.vulntrack.exception.BadErrorRequestException;
 import com.vulntrack.exception.IssueNotFoundException;

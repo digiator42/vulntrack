@@ -17,7 +17,6 @@ import org.springframework.web.bind.annotation.RestController;
 import com.vulntrack.dto.LoginRequest;
 import com.vulntrack.dto.RegisterRequest;
 import com.vulntrack.enums.Role;
-import com.vulntrack.model.SecurityUser;
 import com.vulntrack.model.User;
 import com.vulntrack.repository.UserRepository;
 import com.vulntrack.service.JwtService;
