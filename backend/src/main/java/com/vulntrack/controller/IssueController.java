@@ -87,23 +87,23 @@ public class IssueController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("@issueService.isOwner(#id, authentication.principal.id)")
+    // @PreAuthorize("@issueService.isOwner(#id, authentication.principal.id)")
     @AuditLog(action = "ACCESS_ISSUE", resource = "ISSUE", id = "#id")
-    public Issue findById(@PathVariable long id) {
+    public IssueResponse findById(@PathVariable long id) {
         Issue issue = service.getById(id);
 
-        return issue;
+        return IssueResponse.from(issue);
     }
 
     @PutMapping("/{id}")
-    public Issue updateIssue(
+    public IssueResponse updateIssue(
         @PathVariable Long id,
         @Valid @RequestBody UpdateIssueRequest request
     ) {
 
         User owner = userRepository.findById(SecurityUtils.getCurrentUser().id())
             .orElseThrow(() -> new BadErrorRequestException("User not found"));
-        return this.service.updateIssue(id, owner, request);
+        return IssueResponse.from(this.service.updateIssue(id, owner, request));
     }
 
     @DeleteMapping("/{id}")

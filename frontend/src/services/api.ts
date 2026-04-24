@@ -50,12 +50,12 @@ export const getIssueById = async (id: number): Promise<Issue> => {
   return response.data;
 };
 
-export const updateIssue = async (id: number, data: any): Promise<Issue> => {
+export const updateIssue = async (id: number, data: { title: string; description: string; severity: string }): Promise<Issue> => {
   const response = await api.put(`/issues/${id}`, data);
   return response.data;
 };
 
-export const patchIssue = async (id: number, data: any): Promise<Issue> => {
+export const patchIssue = async (id: number, data: { status?: string; title?: string; description?: string }): Promise<Issue> => {
   const response = await api.patch(`/issues/${id}`, data);
   return response.data;
 };

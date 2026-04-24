@@ -95,9 +95,6 @@ public class IssueService {
             issue.setStatus(req.status());
         }
 
-        if (!issue.isUpdated()) {
-            throw new BadErrorRequestException("No fields provided for update");
-        }
         issueRepository.save(issue);
 
         return IssueResponse.from(issue);
