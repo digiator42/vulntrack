@@ -17,9 +17,11 @@ import org.springframework.web.bind.annotation.RestController;
 import com.vulntrack.dto.LoginRequest;
 import com.vulntrack.dto.RegisterRequest;
 import com.vulntrack.enums.Role;
+import com.vulntrack.model.SecurityUser;
 import com.vulntrack.model.User;
 import com.vulntrack.repository.UserRepository;
 import com.vulntrack.service.JwtService;
+import com.vulntrack.utils.SecurityUtils;
 
 import lombok.RequiredArgsConstructor;
 
@@ -45,6 +47,10 @@ public class AuthController {
         String token = jwtService
             .generateToken(user.getUsername(), user.getId(), user.getRole().name());
 
+        user.setLastLogin(System.currentTimeMillis());
+        user.setToken(token);
+        userRepository.save(user);
+
         return Map.of("token", token);
     }
 
@@ -57,6 +63,7 @@ public class AuthController {
 
         // Create and hash password
         User newUser = new User();
+        newUser.setEmail(req.email());
         newUser.setUsername(req.username());
         newUser.setPassword(passwordEncoder.encode(req.password()));
         newUser.setRole(Role.ROLE_USER); // Default role
@@ -83,5 +90,16 @@ public class AuthController {
                 "role", user.getRole().name()
             )
         );
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout() {
+        User user = userRepository.findByUsername(SecurityUtils.getCurrentUser().getUsername())
+            .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+
+        user.setToken(null);
+        userRepository.save(user);
+
+        return ResponseEntity.ok("Logged out successfully");
     }
 }

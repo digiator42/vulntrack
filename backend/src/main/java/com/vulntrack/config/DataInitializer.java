@@ -56,7 +56,17 @@ public class DataInitializer {
             String username = "user" + i;
             String password = "password";
             String token = jwtService.generateToken(username, i, Role.ROLE_USER.name());
-            userRepository.save(new User(i, username, password, Role.ROLE_USER));
+            userRepository.save(
+                User.builder()
+                    .id(i)
+                    .email(username + "@example.com")
+                    .username(username)
+                    .password(password)
+                    .role(Role.ROLE_USER)
+                    .lastLogin(System.currentTimeMillis())
+                    .token(token)
+                    .build()
+            );
             System.out
                 .println("Username: " + username + ", Password: " + password + ", Token: " + token);
         }
