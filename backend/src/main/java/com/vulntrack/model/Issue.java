@@ -87,6 +87,10 @@ public class Issue {
             status = IssueStatus.OPEN;
     }
 
+    public Long getOwnerId() {
+        return owner != null ? owner.getId() : null;
+    }
+
     @Override
     public String toString() {
         return "Issue [id=" + id + ", createdAt=" + createdAt + ", title=" + title

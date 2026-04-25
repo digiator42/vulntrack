@@ -46,9 +46,6 @@ public class IssueController {
         @Valid @RequestBody CreateIssueRequest issueRequest
     ) {
 
-        User owner = userRepository.findById(SecurityUtils.getCurrentUser().id())
-            .orElseThrow(() -> new BadErrorRequestException("User not found"));
-
         String description = issueRequest.description();
         String title = issueRequest.title();
 
@@ -68,10 +65,9 @@ public class IssueController {
             .cvssScore(finalCvss)
             .severity(issueRequest.severity())
             .cweId(issueRequest.cweId())
-            .owner(owner)
             .build();
 
-        return IssueResponse.from(this.service.create(issue, owner));
+        return IssueResponse.from(service.create(issue));
     }
 
     @GetMapping("/{id}")
@@ -88,32 +84,19 @@ public class IssueController {
         @PathVariable Long id,
         @Valid @RequestBody UpdateIssueRequest request
     ) {
-
-        User owner = userRepository.findById(SecurityUtils.getCurrentUser().id())
-            .orElseThrow(() -> new BadErrorRequestException("User not found"));
-        return IssueResponse.from(this.service.updateIssue(id, owner, request));
+        return IssueResponse.from(this.service.updateIssue(id, request));
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteIssue(
-        @PathVariable Long id
-    ) {
-        User owner = userRepository.findById(SecurityUtils.getCurrentUser().id())
-            .orElseThrow(() -> new BadErrorRequestException("User not found"));
-
-        this.service.deleteIssue(id, owner);
-    }
+    public void deleteIssue(@PathVariable Long id) { service.deleteIssue(id); }
 
     @PatchMapping("/{id}")
     public IssueResponse patchIssue(
         @PathVariable Long id,
         @Valid @RequestBody IssuePatchRequest request
     ) throws Exception {
-        User owner = userRepository.findById(SecurityUtils.getCurrentUser().id())
-            .orElseThrow(() -> new BadErrorRequestException("User not found"));
-
-        return this.service.patchIssue(id, owner, request);
+        return this.service.patchIssue(id, request);
     }
 
     @GetMapping()
@@ -121,7 +104,7 @@ public class IssueController {
         @Valid IssuePageRequest request
     ) throws Exception {
         return this.service
-            .getSortedListIssues(SecurityUtils.getCurrentUser().id(), request.toPeagable());
+            .getSortedListIssues(request.toPeagable());
     }
 
     @PostMapping("/search")

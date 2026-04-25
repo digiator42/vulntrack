@@ -65,7 +65,7 @@ public class AuthController {
         newUser.setEmail(req.email());
         newUser.setUsername(req.username());
         newUser.setPassword(passwordEncoder.encode(req.password()));
-        newUser.setRole(Role.ROLE_USER); // Default role
+        newUser.setRole(Role.ROLE_DEVELOPER); // Default role
         newUser.setLastLogin(System.currentTimeMillis());
 
         userRepository.save(newUser);

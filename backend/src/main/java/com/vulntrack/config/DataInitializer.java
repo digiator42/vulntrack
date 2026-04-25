@@ -1,6 +1,7 @@
 package com.vulntrack.config;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
@@ -47,7 +48,8 @@ public class DataInitializer {
             Severity severity = Severity.values()[rand.nextInt(Severity.values().length)];
             Issue issue = new Issue("Valid title " + i, "Desc", severity, owner);
             issue.setStatus(statusTypes.get(r));
-            issueService.create(issue, owner);
+            userRepository.save(owner);
+            // issueService.create(issue);
         }
     }
 
@@ -55,14 +57,14 @@ public class DataInitializer {
         for (Long i = 1L; i <= 5L; i++) {
             String username = "user" + i;
             String password = "password";
-            String token = jwtService.generateToken(username, i, Role.ROLE_USER.name());
+            String token = jwtService.generateToken(username, i, Role.ROLE_DEVELOPER.name());
             userRepository.save(
                 User.builder()
                     .id(i)
                     .email(username + "@example.com")
                     .username(username)
                     .password(password)
-                    .role(Role.ROLE_USER)
+                    .role(Role.ROLE_DEVELOPER)
                     .lastLogin(System.currentTimeMillis())
                     .token(token)
                     .build()

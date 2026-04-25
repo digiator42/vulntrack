@@ -13,6 +13,7 @@ import com.vulntrack.dto.IssueResponse;
 import com.vulntrack.enums.IssueStatus;
 import com.vulntrack.enums.Severity;
 import com.vulntrack.model.Issue;
+import com.vulntrack.model.User;
 
 @Repository
 public interface IssueRepository extends JpaRepository<Issue, Long> {
@@ -21,7 +22,9 @@ public interface IssueRepository extends JpaRepository<Issue, Long> {
 
     Page<Issue> findAll(Specification<Issue> specification, Pageable pageable);
 
-    List<Issue> findAllByOwnerId(Long ownerId);
+    List<Issue> findAllByOwner(User owner);
+
+    Page<Issue> findAllByOwnerIdOrAssigneeId(Long ownerId, Long assigneeId, Pageable pageable);
 
     Page<Issue> findByDescriptionContainingIgnoreCase(String keyword, Pageable pageable);
 
