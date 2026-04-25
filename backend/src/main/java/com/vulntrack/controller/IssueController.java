@@ -8,12 +8,10 @@ import com.vulntrack.dto.IssueResponse;
 import com.vulntrack.dto.SearchCriteria;
 import com.vulntrack.dto.UpdateIssueRequest;
 import com.vulntrack.exception.BadErrorRequestException;
-import com.vulntrack.model.CweEntry;
 import com.vulntrack.model.Issue;
 import com.vulntrack.model.User;
 import com.vulntrack.repository.UserRepository;
 import com.vulntrack.service.CvssService;
-import com.vulntrack.service.CweService;
 import com.vulntrack.service.IssueService;
 import com.vulntrack.utils.SecurityUtils;
 
@@ -37,7 +35,6 @@ public class IssueController {
     private final IssueService service;
     private final CvssService cvssService;
     private final UserRepository userRepository;
-    private final CweService cweService;
 
     @GetMapping("/me")
     public String getCurrentUser(@AuthenticationPrincipal UserDetails userDetails) {
@@ -55,20 +52,11 @@ public class IssueController {
         String description = issueRequest.description();
         String title = issueRequest.title();
 
-        if (issueRequest.cweId() != null && (description == null || description.isBlank())) {
-            CweEntry cwe = cweService.getCweById(issueRequest.cweId());
-            if (cwe != null) {
-                description = cwe.getDescription();
-                if (title == null || title.isBlank()) {
-                    title = cwe.getName();
-                }
-            }
-        }
-
         Double finalCvss = issueRequest.cvssScore();
         if (issueRequest.cvssVector() != null && !issueRequest.cvssVector().isEmpty()) {
             try {
                 finalCvss = cvssService.calculateBaseScore(issueRequest.cvssVector());
+                System.out.println("==========> " + finalCvss + " " + issueRequest.cvssVector());
             } catch (Exception e) {
                 throw new BadErrorRequestException("Invalid CVSS Vector format");
             }
@@ -87,7 +75,7 @@ public class IssueController {
     }
 
     @GetMapping("/{id}")
-    // @PreAuthorize("@issueService.isOwner(#id, authentication.principal.id)")
+    @PreAuthorize("@issueService.isOwner(#id, authentication.principal)")
     @AuditLog(action = "ACCESS_ISSUE", resource = "ISSUE", id = "#id")
     public IssueResponse findById(@PathVariable long id) {
         Issue issue = service.getById(id);

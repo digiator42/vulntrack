@@ -1,11 +1,17 @@
 // src/pages/issues/[id].tsx
-import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/router';
-import { withAuth } from '@/components/common/ProtectedRoute';
-import LoadingSpinner from '@/components/common/LoadingSpinner';
-import { getIssueById, updateIssue, patchIssue, deleteIssue } from '@/services/api';
-import { Issue } from '@/types';
-import { format } from 'date-fns';
+import React, { useState, useEffect } from "react";
+import { useRouter } from "next/router";
+import { withAuth } from "@/components/common/ProtectedRoute";
+import LoadingSpinner from "@/components/common/LoadingSpinner";
+import {
+  getIssueById,
+  updateIssue,
+  patchIssue,
+  deleteIssue,
+} from "@/services/api";
+import { Issue } from "@/types";
+import { format } from "date-fns";
+import { toast } from "sonner";
 
 const IssueDetailPage: React.FC = () => {
   const router = useRouter();
@@ -15,13 +21,13 @@ const IssueDetailPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  
+
   // Edit form state
   const [editForm, setEditForm] = useState({
-    title: '',
-    description: '',
-    severity: '',
-    status: ''
+    title: "",
+    description: "",
+    severity: "",
+    status: "",
   });
 
   useEffect(() => {
@@ -37,12 +43,13 @@ const IssueDetailPage: React.FC = () => {
       setIssue(data);
       setEditForm({
         title: data.title,
-        description: data.description || '',
+        description: data.description || "",
         severity: data.severity,
-        status: data.status
+        status: data.status,
       });
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to load issue');
+      setError(err.response?.data?.message || "Failed to load issue");
+      router.push("/issues");
     } finally {
       setLoading(false);
     }
@@ -54,12 +61,12 @@ const IssueDetailPage: React.FC = () => {
       const updated = await updateIssue(Number(id), {
         title: editForm.title,
         description: editForm.description,
-        severity: editForm.severity
+        severity: editForm.severity,
       });
       setIssue(updated);
       setIsEditing(false);
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to update issue');
+      setError(err.response?.data?.message || "Failed to update issue");
     } finally {
       setLoading(false);
     }
@@ -71,43 +78,49 @@ const IssueDetailPage: React.FC = () => {
       setIssue(updated);
       setEditForm({ ...editForm, status: updated.status });
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to update status');
+      setError(err.response?.data?.message || "Failed to update status");
     }
   };
 
   const handleDelete = async () => {
-    if (!confirm('Are you sure you want to delete this issue? This action cannot be undone.')) {
+    if (
+      !confirm(
+        "Are you sure you want to delete this issue? This action cannot be undone.",
+      )
+    ) {
       return;
     }
-    
+
     try {
       setIsDeleting(true);
       await deleteIssue(Number(id));
-      router.push('/issues');
+      router.push("/issues");
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to delete issue');
+      setError(err.response?.data?.message || "Failed to delete issue");
       setIsDeleting(false);
     }
   };
 
   const getSeverityColor = (severity: string) => {
     const colors = {
-      CRITICAL: 'bg-red-100 text-red-800',
-      HIGH: 'bg-orange-100 text-orange-800',
-      MEDIUM: 'bg-yellow-100 text-yellow-800',
-      LOW: 'bg-blue-100 text-blue-800'
+      CRITICAL: "bg-red-100 text-red-800",
+      HIGH: "bg-orange-100 text-orange-800",
+      MEDIUM: "bg-yellow-100 text-yellow-800",
+      LOW: "bg-blue-100 text-blue-800",
     };
-    return colors[severity as keyof typeof colors] || 'bg-gray-100 text-gray-800';
+    return (
+      colors[severity as keyof typeof colors] || "bg-gray-100 text-gray-800"
+    );
   };
 
   const getStatusColor = (status: string) => {
     const colors = {
-      OPEN: 'bg-red-100 text-red-800',
-      IN_PROGRESS: 'bg-yellow-100 text-yellow-800',
-      RESOLVED: 'bg-green-100 text-green-800',
-      CLOSED: 'bg-gray-400 text-gray-800'
+      OPEN: "bg-red-100 text-red-800",
+      IN_PROGRESS: "bg-yellow-100 text-yellow-800",
+      RESOLVED: "bg-green-100 text-green-800",
+      CLOSED: "bg-gray-400 text-gray-800",
     };
-    return colors[status as keyof typeof colors] || 'bg-gray-100 text-gray-800';
+    return colors[status as keyof typeof colors] || "bg-gray-100 text-gray-800";
   };
 
   if (loading) {
@@ -119,19 +132,9 @@ const IssueDetailPage: React.FC = () => {
   }
 
   if (error || !issue) {
-    return (
-      <div className="max-w-4xl mx-auto py-8">
-        <div className="bg-red-50 border border-red-200 rounded-md p-4 text-red-700">
-          {error || 'Issue not found'}
-        </div>
-        <button
-          onClick={() => router.push('/issues')}
-          className="mt-4 px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700"
-        >
-          Back to Issues
-        </button>
-      </div>
-    );
+    toast.error(error || "Issue not found");
+    router.push("/issues");
+    return null;
   }
 
   if (isEditing) {
@@ -139,7 +142,7 @@ const IssueDetailPage: React.FC = () => {
       <div className="max-w-4xl mx-auto py-8">
         <div className="bg-white rounded-lg shadow p-6">
           <h1 className="text-2xl font-bold mb-6">Edit Issue</h1>
-          
+
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -148,7 +151,9 @@ const IssueDetailPage: React.FC = () => {
               <input
                 type="text"
                 value={editForm.title}
-                onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
+                onChange={(e) =>
+                  setEditForm({ ...editForm, title: e.target.value })
+                }
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
@@ -159,7 +164,9 @@ const IssueDetailPage: React.FC = () => {
               </label>
               <select
                 value={editForm.severity}
-                onChange={(e) => setEditForm({ ...editForm, severity: e.target.value })}
+                onChange={(e) =>
+                  setEditForm({ ...editForm, severity: e.target.value })
+                }
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="CRITICAL">Critical</option>
@@ -176,7 +183,9 @@ const IssueDetailPage: React.FC = () => {
               <textarea
                 rows={8}
                 value={editForm.description}
-                onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+                onChange={(e) =>
+                  setEditForm({ ...editForm, description: e.target.value })
+                }
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
@@ -209,25 +218,36 @@ const IssueDetailPage: React.FC = () => {
           <div className="flex justify-between items-start">
             <div className="flex-1">
               <div className="flex items-center gap-3 mb-2">
-                <h1 className="text-2xl font-bold text-gray-900">{issue.title}</h1>
-                <span className={`px-2 py-1 text-xs rounded-full ${getSeverityColor(issue.severity)}`}>
+                <h1 className="text-2xl font-bold text-gray-900">
+                  {issue.title}
+                </h1>
+                <span
+                  className={`px-2 py-1 text-xs rounded-full ${getSeverityColor(issue.severity)}`}
+                >
                   {issue.severity}
                 </span>
               </div>
-              
+
               <div className="flex items-center gap-4 text-sm text-gray-500">
                 <span>Issue #{issue.id}</span>
                 <span>•</span>
-                <span>Created {format(new Date(issue.createdAt), 'MMM d, yyyy')}</span>
+                <span>
+                  Created {format(new Date(issue.createdAt), "MMM d, yyyy")}
+                </span>
                 {issue.cvssScore && (
                   <>
                     <span>•</span>
-                    <span>CVSS Score: <strong className="text-gray-900">{issue.cvssScore.toFixed(1)}</strong></span>
+                    <span>
+                      CVSS Score:{" "}
+                      <strong className="text-gray-900">
+                        {issue.cvssScore.toFixed(1)}
+                      </strong>
+                    </span>
                   </>
                 )}
               </div>
             </div>
-            
+
             <div className="flex gap-2">
               <button
                 onClick={() => setIsEditing(true)}
@@ -240,7 +260,7 @@ const IssueDetailPage: React.FC = () => {
                 disabled={isDeleting}
                 className="px-3 py-1.5 text-sm text-red-600 border border-red-300 rounded-md hover:bg-red-50 disabled:opacity-50"
               >
-                {isDeleting ? 'Deleting...' : 'Delete'}
+                {isDeleting ? "Deleting..." : "Delete"}
               </button>
             </div>
           </div>
@@ -250,17 +270,17 @@ const IssueDetailPage: React.FC = () => {
         <div className="p-6 border-b border-gray-200">
           <h3 className="text-sm font-medium text-gray-500 mb-3">Status</h3>
           <div className="flex gap-2">
-            {['OPEN', 'IN_PROGRESS', 'RESOLVED', 'CLOSED'].map((status) => (
+            {["OPEN", "IN_PROGRESS", "RESOLVED", "CLOSED"].map((status) => (
               <button
                 key={status}
                 onClick={() => handleStatusUpdate(status)}
                 className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
                   issue.status === status
                     ? `${getStatusColor(status)} font-medium`
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                 }`}
               >
-                {status.replace('_', ' ')}
+                {status.replace("_", " ")}
               </button>
             ))}
           </div>
@@ -268,10 +288,14 @@ const IssueDetailPage: React.FC = () => {
 
         {/* Description */}
         <div className="p-6 border-b border-gray-200">
-          <h3 className="text-sm font-medium text-gray-500 mb-3">Description</h3>
+          <h3 className="text-sm font-medium text-gray-500 mb-3">
+            Description
+          </h3>
           <div className="prose max-w-none">
             {issue.description ? (
-              <p className="text-gray-700 whitespace-pre-wrap">{issue.description}</p>
+              <p className="text-gray-700 whitespace-pre-wrap">
+                {issue.description}
+              </p>
             ) : (
               <p className="text-gray-400 italic">No description provided</p>
             )}
@@ -280,7 +304,9 @@ const IssueDetailPage: React.FC = () => {
 
         {/* Additional Info */}
         <div className="p-6">
-          <h3 className="text-sm font-medium text-gray-500 mb-3">Additional Information</h3>
+          <h3 className="text-sm font-medium text-gray-500 mb-3">
+            Additional Information
+          </h3>
           <div className="grid grid-cols-2 gap-4 text-sm">
             {issue.cweId && (
               <div>
@@ -298,11 +324,15 @@ const IssueDetailPage: React.FC = () => {
             )}
             <div>
               <span className="text-gray-500">Created By:</span>
-              <span className="ml-2 text-gray-900">{issue.owner?.username || 'Unknown'}</span>
+              <span className="ml-2 text-gray-900">
+                {issue.owner?.username || "Unknown"}
+              </span>
             </div>
             <div>
               <span className="text-gray-500">Last Updated:</span>
-              <span className="ml-2 text-gray-900">{format(new Date(issue.updatedAt), 'MMM d, yyyy h:mm a')}</span>
+              <span className="ml-2 text-gray-900">
+                {format(new Date(issue.updatedAt), "MMM d, yyyy h:mm a")}
+              </span>
             </div>
           </div>
         </div>
@@ -310,7 +340,7 @@ const IssueDetailPage: React.FC = () => {
         {/* Back Button */}
         <div className="p-6 border-t border-gray-200 bg-gray-50 rounded-b-lg">
           <button
-            onClick={() => router.push('/issues')}
+            onClick={() => router.push("/issues")}
             className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900"
           >
             ← Back to Issues

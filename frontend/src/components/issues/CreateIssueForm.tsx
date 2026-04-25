@@ -1,15 +1,15 @@
 // components/issues/CreateIssueForm.tsx
-import React, { useState } from 'react';
-import { useRouter } from 'next/router';
-import CVSSCalculator from '../cvss/CVSSCalculator';
-import CVELookup from '../cvss/CVELookup';
-import { createIssue } from '../../services/api';
-import { CVEEntry, Issue } from '../../types';
-import LoadingSpinner from '@/components/common/LoadingSpinner';
+import React, { useState } from "react";
+import { useRouter } from "next/router";
+import CVSSCalculator from "../cvss/CVSSCalculator";
+import CVELookup from "../cvss/CVELookup";
+import { createIssue } from "../../services/api";
+import { CVEEntry, Issue } from "../../types";
+import LoadingSpinner from "@/components/common/LoadingSpinner";
 
 interface FormData {
   title: string;
-  severity: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
+  severity: "CRITICAL" | "HIGH" | "MEDIUM" | "LOW";
   description: string;
   cvssVector?: string;
   cvssScore?: number;
@@ -19,11 +19,11 @@ interface FormData {
 const CreateIssueForm: React.FC = () => {
   const router = useRouter();
   const [formData, setFormData] = useState<FormData>({
-    title: '',
-    severity: 'MEDIUM',
-    description: ''
+    title: "",
+    severity: "MEDIUM",
+    description: "",
   });
-  const [cvssVector, setCvssVector] = useState<string>('');
+  const [cvssVector, setCvssVector] = useState<string>("");
   const [cvssScore, setCvssScore] = useState<number>(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -31,16 +31,16 @@ const CreateIssueForm: React.FC = () => {
   const handleCVSSChange = (vector: string, score: number) => {
     setCvssVector(vector);
     setCvssScore(score);
-    
+
     // Auto-set severity based on CVSS score
     if (score >= 9) {
-      setFormData({ ...formData, severity: 'CRITICAL' });
+      setFormData({ ...formData, severity: "CRITICAL" });
     } else if (score >= 7) {
-      setFormData({ ...formData, severity: 'HIGH' });
+      setFormData({ ...formData, severity: "HIGH" });
     } else if (score >= 4) {
-      setFormData({ ...formData, severity: 'MEDIUM' });
+      setFormData({ ...formData, severity: "MEDIUM" });
     } else if (score > 0) {
-      setFormData({ ...formData, severity: 'LOW' });
+      setFormData({ ...formData, severity: "LOW" });
     }
   };
 
@@ -49,9 +49,9 @@ const CreateIssueForm: React.FC = () => {
       ...formData,
       title: cveData.id,
       description: cveData.description,
-      cweId: cveData.weaknesses?.[0]?.cweId || formData.cweId
+      cweId: cveData.weaknesses?.[0]?.cweId || formData.cweId,
     });
-    
+
     if (cveData.cvssVector) {
       setCvssVector(cveData.cvssVector);
       setCvssScore(cveData.cvssScore || 0);
@@ -70,13 +70,13 @@ const CreateIssueForm: React.FC = () => {
         description: formData.description,
         cvssVector: cvssVector || undefined,
         cvssScore: cvssScore || undefined,
-        cweId: formData.cweId || undefined
+        cweId: formData.cweId || undefined,
       };
 
       const response = await createIssue(issueData);
       router.push(`/issues/${response.id}`);
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to create issue');
+      setError(err.response?.data?.message || "Failed to create issue");
     } finally {
       setLoading(false);
     }
@@ -109,12 +109,27 @@ const CreateIssueForm: React.FC = () => {
 
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">
+          CWE ID (Optional)
+        </label>
+        <input
+          type="text"
+          value={formData.cweId || ""}
+          onChange={(e) => setFormData({ ...formData, cweId: e.target.value })}
+          placeholder="e.g., CWE-89"
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
           Severity *
         </label>
         <select
           required
           value={formData.severity}
-          onChange={(e) => setFormData({ ...formData, severity: e.target.value as any })}
+          onChange={(e) =>
+            setFormData({ ...formData, severity: e.target.value as any })
+          }
           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           <option value="CRITICAL">Critical</option>
@@ -134,22 +149,11 @@ const CreateIssueForm: React.FC = () => {
         <textarea
           rows={6}
           value={formData.description}
-          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+          onChange={(e) =>
+            setFormData({ ...formData, description: e.target.value })
+          }
           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           placeholder="Detailed description of the vulnerability..."
-        />
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          CWE ID (Optional)
-        </label>
-        <input
-          type="text"
-          value={formData.cweId || ''}
-          onChange={(e) => setFormData({ ...formData, cweId: e.target.value })}
-          placeholder="e.g., CWE-89"
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
       </div>
 
@@ -166,7 +170,7 @@ const CreateIssueForm: React.FC = () => {
           disabled={loading}
           className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
         >
-          {loading ? <LoadingSpinner size="small" /> : 'Create Issue'}
+          {loading ? <LoadingSpinner size="small" /> : "Create Issue"}
         </button>
       </div>
     </form>

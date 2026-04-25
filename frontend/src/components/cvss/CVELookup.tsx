@@ -50,6 +50,7 @@ const CVELookup: React.FC<CVELookupProps> = ({ onCVESelect }) => {
     try {
       const cveData = await getCVEDetails(cveId.toUpperCase());
       setSelectedCVE(cveData);
+      console.log('Fetched CVE details:', cveData);
       onCVESelect(cveData);
     } catch (err) {
       setError('CVE not found. Please check the ID and try again.');

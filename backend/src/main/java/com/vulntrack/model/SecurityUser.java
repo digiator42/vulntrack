@@ -11,6 +11,8 @@ public record SecurityUser(
     Collection<? extends GrantedAuthority> authorities
 ) implements UserDetails {
 
+    public Long getId() { return this.id; }
+
     @Override
     public String getUsername() { return username; }
 

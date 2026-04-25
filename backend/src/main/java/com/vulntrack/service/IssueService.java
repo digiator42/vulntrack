@@ -9,6 +9,7 @@ import com.vulntrack.exception.BadErrorRequestException;
 import com.vulntrack.exception.IssueNotFoundException;
 import com.vulntrack.model.Issue;
 import com.vulntrack.model.IssueSortFields;
+import com.vulntrack.model.SecurityUser;
 import com.vulntrack.model.User;
 import com.vulntrack.repository.IssueRepository;
 import com.vulntrack.utils.IssueSpecification;
@@ -136,11 +137,20 @@ public class IssueService {
         return issueRepository.findAll(spec, pageable).map(IssueResponse::from);
     }
 
-    public boolean isOwner(Long issueId, User owner) {
-        return issueRepository.findById(issueId)
-            .map(Issue::getOwner)
-            .map(User::getId)
-            .map(ownerId -> ownerId.equals(owner.getId()))
-            .orElse(false);
+public boolean isOwner(Long issueId, Object principal) {
+    // Safely cast the principal to SecurityUser
+    if (!(principal instanceof SecurityUser)) {
+        return false;
     }
+    
+    // Get the user ID from the record
+    Long userId = ((SecurityUser) principal).id();
+    
+    // Check ownership
+    return issueRepository.findById(issueId)
+        .map(Issue::getOwner)
+        .map(User::getId)
+        .map(ownerId -> ownerId.equals(userId))
+        .orElse(false);
+}
 }

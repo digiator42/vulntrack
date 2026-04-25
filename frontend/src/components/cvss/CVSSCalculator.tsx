@@ -3,14 +3,14 @@ import React, { useState, useEffect } from 'react';
 import CVSSMetricGroup from './CVSSMetricGroup';
 
 interface CVSSMetrics {
-  attackVector: 'N' | 'A' | 'L' | 'P';
-  attackComplexity: 'L' | 'H';
-  privilegesRequired: 'N' | 'L' | 'H';
-  userInteraction: 'N' | 'R';
-  scope: 'U' | 'C';
-  confidentiality: 'N' | 'L' | 'H';
-  integrity: 'N' | 'L' | 'H';
-  availability: 'N' | 'L' | 'H';
+  AV: 'N' | 'A' | 'L' | 'P';
+  AC: 'L' | 'H';
+  PR: 'N' | 'L' | 'H';
+  UI: 'N' | 'R';
+  S: 'U' | 'C';
+  C: 'N' | 'L' | 'H';
+  I: 'N' | 'L' | 'H';
+  A: 'N' | 'L' | 'H';
 }
 
 interface CVSSCalculatorProps {
@@ -20,14 +20,14 @@ interface CVSSCalculatorProps {
 
 const CVSSCalculator: React.FC<CVSSCalculatorProps> = ({ onVectorChange, initialVector }) => {
   const [metrics, setMetrics] = useState<CVSSMetrics>({
-    attackVector: 'N',
-    attackComplexity: 'L',
-    privilegesRequired: 'N',
-    userInteraction: 'N',
-    scope: 'U',
-    confidentiality: 'H',
-    integrity: 'H',
-    availability: 'H'
+    AV: 'N',
+    AC: 'L',
+    PR: 'N',
+    UI: 'N',
+    S: 'U',
+    C: 'H',
+    I: 'H',
+    A: 'H'
   });
   const [score, setScore] = useState(0);
 
@@ -46,14 +46,14 @@ const CVSSCalculator: React.FC<CVSSCalculatorProps> = ({ onVectorChange, initial
     parts.forEach(part => {
       const [key, value] = part.split(':');
       switch(key) {
-        case 'AV': newMetrics.attackVector = value as CVSSMetrics['attackVector']; break;
-        case 'AC': newMetrics.attackComplexity = value as CVSSMetrics['attackComplexity']; break;
-        case 'PR': newMetrics.privilegesRequired = value as CVSSMetrics['privilegesRequired']; break;
-        case 'UI': newMetrics.userInteraction = value as CVSSMetrics['userInteraction']; break;
-        case 'S': newMetrics.scope = value as CVSSMetrics['scope']; break;
-        case 'C': newMetrics.confidentiality = value as CVSSMetrics['confidentiality']; break;
-        case 'I': newMetrics.integrity = value as CVSSMetrics['integrity']; break;
-        case 'A': newMetrics.availability = value as CVSSMetrics['availability']; break;
+        case 'AV': newMetrics.AV = value as CVSSMetrics['AV']; break;
+        case 'AC': newMetrics.AC = value as CVSSMetrics['AC']; break;
+        case 'PR': newMetrics.PR = value as CVSSMetrics['PR']; break;
+        case 'UI': newMetrics.UI = value as CVSSMetrics['UI']; break;
+        case 'S': newMetrics.S = value as CVSSMetrics['S']; break;
+        case 'C': newMetrics.C = value as CVSSMetrics['C']; break;
+        case 'I': newMetrics.I = value as CVSSMetrics['I']; break;
+        case 'A': newMetrics.A = value as CVSSMetrics['A']; break;
       }
     });
 
@@ -63,26 +63,26 @@ const CVSSCalculator: React.FC<CVSSCalculatorProps> = ({ onVectorChange, initial
 
   const calculateScore = (currentMetrics: CVSSMetrics) => {
     // Base metric values
-    const AV = { N: 0.85, A: 0.62, L: 0.55, P: 0.2 }[currentMetrics.attackVector];
-    const AC = { L: 0.77, H: 0.44 }[currentMetrics.attackComplexity];
+    const AV = { N: 0.85, A: 0.62, L: 0.55, P: 0.2 }[currentMetrics.AV];
+    const AC = { L: 0.77, H: 0.44 }[currentMetrics.AC];
     const PR = { 
       N: 0.85, 
-      L: currentMetrics.scope === 'U' ? 0.62 : 0.68, 
-      H: currentMetrics.scope === 'U' ? 0.27 : 0.5 
-    }[currentMetrics.privilegesRequired];
-    const UI = { N: 0.85, R: 0.62 }[currentMetrics.userInteraction];
+      L: currentMetrics.S === 'U' ? 0.62 : 0.68, 
+      H: currentMetrics.S === 'U' ? 0.27 : 0.5 
+    }[currentMetrics.PR];
+    const UI = { N: 0.85, R: 0.62 }[currentMetrics.UI];
     
     // Impact metrics
-    const C = { N: 0, L: 0.22, H: 0.56 }[currentMetrics.confidentiality];
-    const I = { N: 0, L: 0.22, H: 0.56 }[currentMetrics.integrity];
-    const A = { N: 0, L: 0.22, H: 0.56 }[currentMetrics.availability];
+    const C = { N: 0, L: 0.22, H: 0.56 }[currentMetrics.C];
+    const I = { N: 0, L: 0.22, H: 0.56 }[currentMetrics.I];
+    const A = { N: 0, L: 0.22, H: 0.56 }[currentMetrics.A];
 
     // Calculate ISS
     const ISS = 1 - ((1 - C) * (1 - I) * (1 - A));
     
     // Calculate Impact
     let Impact;
-    if (currentMetrics.scope === 'U') {
+    if (currentMetrics.S === 'U') {
       Impact = 6.42 * ISS;
     } else {
       Impact = 7.52 * (ISS - 0.029) - 3.25 * Math.pow(ISS - 0.02, 15);
@@ -96,7 +96,7 @@ const CVSSCalculator: React.FC<CVSSCalculatorProps> = ({ onVectorChange, initial
     if (Impact <= 0) {
       baseScore = 0;
     } else {
-      if (currentMetrics.scope === 'U') {
+      if (currentMetrics.S === 'U') {
         baseScore = Math.min(Impact + Exploitability, 10);
       } else {
         baseScore = Math.min(1.08 * (Impact + Exploitability), 10);
@@ -119,20 +119,20 @@ const CVSSCalculator: React.FC<CVSSCalculatorProps> = ({ onVectorChange, initial
       roundedScore = Math.min(roundedScore, 10);
     }
     
-    if (currentMetrics.attackVector === 'L' && 
-        currentMetrics.attackComplexity === 'H' &&
-        currentMetrics.privilegesRequired === 'H' &&
-        currentMetrics.userInteraction === 'R' &&
-        currentMetrics.scope === 'U' &&
-        currentMetrics.confidentiality === 'L' &&
-        currentMetrics.integrity === 'N' &&
-        currentMetrics.availability === 'N') {
+    if (currentMetrics.AV === 'L' && 
+        currentMetrics.AC === 'H' &&
+        currentMetrics.PR === 'H' &&
+        currentMetrics.UI === 'R' &&
+        currentMetrics.S === 'U' &&
+        currentMetrics.C === 'L' &&
+        currentMetrics.I === 'N' &&
+        currentMetrics.A === 'N') {
       roundedScore = 1.1;
     }
     
     setScore(roundedScore);
     
-    const vector = `CVSS:3.1/AV:${currentMetrics.attackVector}/AC:${currentMetrics.attackComplexity}/PR:${currentMetrics.privilegesRequired}/UI:${currentMetrics.userInteraction}/S:${currentMetrics.scope}/C:${currentMetrics.confidentiality}/I:${currentMetrics.integrity}/A:${currentMetrics.availability}`;
+    const vector = `CVSS:3.1/AV:${currentMetrics.AV}/AC:${currentMetrics.AC}/PR:${currentMetrics.PR}/UI:${currentMetrics.UI}/S:${currentMetrics.S}/C:${currentMetrics.C}/I:${currentMetrics.I}/A:${currentMetrics.A}`;
     onVectorChange(vector, roundedScore);
   };
 
@@ -173,8 +173,8 @@ const CVSSCalculator: React.FC<CVSSCalculatorProps> = ({ onVectorChange, initial
             { value: 'L', label: 'Local', description: 'Local access required' },
             { value: 'P', label: 'Physical', description: 'Physical access required' }
           ]}
-          value={metrics.attackVector}
-          onChange={(v) => updateMetric('attackVector', v)}
+          value={metrics.AV}
+          onChange={(v) => updateMetric('AV', v)}
         />
 
         <CVSSMetricGroup
@@ -184,8 +184,8 @@ const CVSSCalculator: React.FC<CVSSCalculatorProps> = ({ onVectorChange, initial
             { value: 'L', label: 'Low', description: 'No specialized conditions' },
             { value: 'H', label: 'High', description: 'Specialized conditions required' }
           ]}
-          value={metrics.attackComplexity}
-          onChange={(v) => updateMetric('attackComplexity', v)}
+          value={metrics.AC}
+          onChange={(v) => updateMetric('AC', v)}
         />
 
         <CVSSMetricGroup
@@ -196,8 +196,8 @@ const CVSSCalculator: React.FC<CVSSCalculatorProps> = ({ onVectorChange, initial
             { value: 'L', label: 'Low', description: 'Basic user privileges' },
             { value: 'H', label: 'High', description: 'Administrative privileges' }
           ]}
-          value={metrics.privilegesRequired}
-          onChange={(v) => updateMetric('privilegesRequired', v)}
+          value={metrics.PR}
+          onChange={(v) => updateMetric('PR', v)}
         />
 
         <CVSSMetricGroup
@@ -207,8 +207,8 @@ const CVSSCalculator: React.FC<CVSSCalculatorProps> = ({ onVectorChange, initial
             { value: 'N', label: 'None', description: 'No user interaction required' },
             { value: 'R', label: 'Required', description: 'User must perform an action' }
           ]}
-          value={metrics.userInteraction}
-          onChange={(v) => updateMetric('userInteraction', v)}
+          value={metrics.UI}
+          onChange={(v) => updateMetric('UI', v)}
         />
 
         <CVSSMetricGroup
@@ -218,8 +218,8 @@ const CVSSCalculator: React.FC<CVSSCalculatorProps> = ({ onVectorChange, initial
             { value: 'U', label: 'Unchanged', description: 'Only affects local component' },
             { value: 'C', label: 'Changed', description: 'May affect other components' }
           ]}
-          value={metrics.scope}
-          onChange={(v) => updateMetric('scope', v)}
+          value={metrics.S}
+          onChange={(v) => updateMetric('S', v)}
         />
 
         <div className="col-span-2">
@@ -233,8 +233,8 @@ const CVSSCalculator: React.FC<CVSSCalculatorProps> = ({ onVectorChange, initial
                   { value: 'L', label: 'Low', description: 'Limited data exposure' },
                   { value: 'H', label: 'High', description: 'Complete data exposure' }
                 ]}
-                value={metrics.confidentiality}
-                onChange={(v) => updateMetric('confidentiality', v)}
+                value={metrics.C}
+                onChange={(v) => updateMetric('C', v)}
               />
 
               <CVSSMetricGroup
@@ -244,8 +244,8 @@ const CVSSCalculator: React.FC<CVSSCalculatorProps> = ({ onVectorChange, initial
                   { value: 'L', label: 'Low', description: 'Limited modification' },
                   { value: 'H', label: 'High', description: 'Complete compromise' }
                 ]}
-                value={metrics.integrity}
-                onChange={(v) => updateMetric('integrity', v)}
+                value={metrics.I}
+                onChange={(v) => updateMetric('I', v)}
               />
 
               <CVSSMetricGroup
@@ -255,8 +255,8 @@ const CVSSCalculator: React.FC<CVSSCalculatorProps> = ({ onVectorChange, initial
                   { value: 'L', label: 'Low', description: 'Performance degradation' },
                   { value: 'H', label: 'High', description: 'Service unavailable' }
                 ]}
-                value={metrics.availability}
-                onChange={(v) => updateMetric('availability', v)}
+                value={metrics.A}
+                onChange={(v) => updateMetric('A', v)}
               />
             </div>
           </div>
@@ -270,7 +270,7 @@ const CVSSCalculator: React.FC<CVSSCalculatorProps> = ({ onVectorChange, initial
               <label className="block text-sm font-medium text-gray-700">CVSS Vector String</label>
               <div className="flex items-center gap-2">
                 <code className="flex-1 p-2 bg-gray-100 rounded text-sm font-mono break-all">
-                  CVSS:3.1/AV:{metrics.attackVector}/AC:{metrics.attackComplexity}/PR:{metrics.privilegesRequired}/UI:{metrics.userInteraction}/S:{metrics.scope}/C:{metrics.confidentiality}/I:{metrics.integrity}/A:{metrics.availability}
+                  CVSS:3.1/AV:{metrics.AV}/AC:{metrics.AC}/PR:{metrics.PR}/UI:{metrics.UI}/S:{metrics.S}/C:{metrics.C}/I:{metrics.I}/A:{metrics.A}
                 </code>
               </div>
             </div>
