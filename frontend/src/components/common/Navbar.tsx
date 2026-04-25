@@ -6,14 +6,8 @@ import {
   BugAntIcon,
   PlusCircleIcon,
   DocumentTextIcon,
+  UsersIcon,
 } from "@heroicons/react/24/outline";
-
-const navigation = [
-  { name: "Dashboard", href: "/dashboard", icon: ChartBarIcon },
-  { name: "Issues", href: "/issues", icon: BugAntIcon },
-  { name: "Create Issue", href: "/issues/create", icon: PlusCircleIcon },
-  { name: "Reports", href: "/reports", icon: DocumentTextIcon },
-];
 
 const Navbar: React.FC = () => {
   const { user, logout } = useAuth();
@@ -23,6 +17,48 @@ const Navbar: React.FC = () => {
     logout();
     router.push("/login");
   };
+
+  // Define navigation based on user role
+  const getNavigation = () => {
+    const role = user?.role;
+
+    // Admin sees everything
+    if (role === "ROLE_ADMIN") {
+      return [
+        { name: "Dashboard", href: "/dashboard", icon: ChartBarIcon },
+        { name: "Issues", href: "/issues", icon: BugAntIcon },
+        { name: "Create Issue", href: "/issues/create", icon: PlusCircleIcon },
+        { name: "Reports", href: "/reports", icon: DocumentTextIcon },
+        { name: "Users", href: "/users", icon: UsersIcon },
+      ];
+    }
+
+    // Security Admin (Researcher) sees create issue
+    if (role === "ROLE_SECURITY_ADMIN") {
+      return [
+        { name: "Dashboard", href: "/dashboard", icon: ChartBarIcon },
+        { name: "Issues", href: "/issues", icon: BugAntIcon },
+        { name: "Create Issue", href: "/issues/create", icon: PlusCircleIcon },
+        { name: "Reports", href: "/reports", icon: DocumentTextIcon },
+      ];
+    }
+
+    // Developer sees only issues (no create issue)
+    if (role === "ROLE_DEVELOPER") {
+      return [
+        { name: "Dashboard", href: "/dashboard", icon: ChartBarIcon },
+        { name: "My Issues", href: "/issues", icon: BugAntIcon },
+      ];
+    }
+
+    // Default (should not happen)
+    return [
+      { name: "Dashboard", href: "/dashboard", icon: ChartBarIcon },
+      { name: "Issues", href: "/issues", icon: BugAntIcon },
+    ];
+  };
+
+  const navigation = getNavigation();
 
   return (
     <>
@@ -44,7 +80,8 @@ const Navbar: React.FC = () => {
                     key={item.name}
                     href={item.href}
                     className={`inline-flex items-center px-1 pt-1 text-sm font-medium ${
-                      router.pathname === item.href
+                      router.pathname === item.href ||
+                      router.pathname.startsWith(item.href + "/")
                         ? "text-blue-600 border-b-2 border-blue-600"
                         : "text-gray-500 hover:text-gray-700 hover:border-b-2 hover:border-gray-300"
                     }`}
@@ -59,7 +96,8 @@ const Navbar: React.FC = () => {
             </div>
             <div className="flex items-center space-x-4">
               <span className="text-sm text-gray-600">
-                👤 {user?.username || "User"}
+                👤 {user?.username || "User"} (
+                {user?.role?.replace("ROLE_", "")})
               </span>
               <button
                 onClick={handleLogout}

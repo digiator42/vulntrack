@@ -76,7 +76,7 @@ public class IssueController {
     public IssueResponse findById(@PathVariable long id) {
         Issue issue = service.getById(id);
 
-        return IssueResponse.from(issue);
+        return IssueResponse.withAsignee(issue);
     }
 
     @PutMapping("/{id}")

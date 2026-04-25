@@ -22,4 +22,8 @@ const CreateIssuePage: React.FC = () => {
   );
 };
 
-export default withAuth(CreateIssuePage);
+// Only ADMIN and SECURITY_ADMIN can create issues
+export default withAuth(CreateIssuePage, {
+  allowedRoles: ["ROLE_ADMIN", "ROLE_SECURITY_ADMIN"],
+  redirectTo: "/issues",
+});

@@ -182,7 +182,7 @@ public class IssueService {
             return issueRepository.findAll(pageable).map(IssueResponse::from);
         } else {
             // Developers see only their assigned/owned issues
-            return issueRepository.findAllByOwnerIdOrAssigneeId(user.id(), user.id(), pageable)
+            return issueRepository.findAllByOwner_IdOrAssignee_Id(user.id(), user.id(), pageable)
                 .map(IssueResponse::from);
         }
 

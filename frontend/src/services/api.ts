@@ -84,4 +84,9 @@ export const getCWEDetails = async (id: string): Promise<any> => {
   return response.data;
 };
 
+export const getMyIssues = async (page: number = 0, size: number = 10): Promise<PageableResponse<Issue>> => {
+  const response = await api.get('/issues/me', { params: { page, size } });
+  return response.data;
+};
+
 export default api;

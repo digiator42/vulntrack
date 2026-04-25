@@ -3,7 +3,7 @@ export interface User {
   id: number;
   username: string;
   email: string;
-  role: 'ROLE_USER' | 'ROLE_ADMIN';
+  role: 'ROLE_ADMIN' | 'ROLE_SECURITY_ADMIN' | 'ROLE_DEVELOPER';
 }
 
 export interface Issue {
@@ -18,6 +18,7 @@ export interface Issue {
   createdAt: string;
   updatedAt: string;
   owner: User;
+  assignedTo?: User;
 }
 
 export interface CVSSMetrics {

@@ -12,10 +12,12 @@ import {
 import { Issue } from "@/types";
 import { format } from "date-fns";
 import { toast } from "sonner";
+import { useAuth } from "@/hooks/useAuth";
 
 const IssueDetailPage: React.FC = () => {
   const router = useRouter();
   const { id } = router.query;
+  const { user } = useAuth();
   const [issue, setIssue] = useState<Issue | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -30,6 +32,19 @@ const IssueDetailPage: React.FC = () => {
     status: "",
   });
 
+  // Role-based permissions
+  const isAdmin = user?.role === "ROLE_ADMIN";
+  const isSecurityAdmin = user?.role === "ROLE_SECURITY_ADMIN";
+  const isDeveloper = user?.role === "ROLE_DEVELOPER";
+  
+  const canEdit = isAdmin || isSecurityAdmin;
+  const canDelete = isAdmin; // Only admins can delete
+  const canChangeStatus = isAdmin || isSecurityAdmin || isDeveloper;
+  
+  // For developers, check if issue is assigned to them
+  const isAssignedToMe = issue?.assignedTo?.id === user?.id;
+  const canUpdateStatus = canChangeStatus && (!isDeveloper || isAssignedToMe);
+
   useEffect(() => {
     if (id) {
       loadIssue();
@@ -40,6 +55,14 @@ const IssueDetailPage: React.FC = () => {
     try {
       setLoading(true);
       const data = await getIssueById(Number(id));
+      
+      // Check if developer has access to this issue
+      if (isDeveloper && data.assignedTo?.id !== user?.id) {
+        toast.error("You don't have access to this issue");
+        router.push("/issues");
+        return;
+      }
+      
       setIssue(data);
       setEditForm({
         title: data.title,
@@ -56,6 +79,11 @@ const IssueDetailPage: React.FC = () => {
   };
 
   const handleUpdate = async () => {
+    if (!canEdit) {
+      toast.error("You don't have permission to edit this issue");
+      return;
+    }
+    
     try {
       setLoading(true);
       const updated = await updateIssue(Number(id), {
@@ -65,24 +93,36 @@ const IssueDetailPage: React.FC = () => {
       });
       setIssue(updated);
       setIsEditing(false);
+      toast.success("Issue updated successfully");
     } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to update issue");
+      toast.error(err.response?.data?.message || "Failed to update issue");
     } finally {
       setLoading(false);
     }
   };
 
   const handleStatusUpdate = async (newStatus: string) => {
+    if (!canUpdateStatus) {
+      toast.error("You don't have permission to change status");
+      return;
+    }
+    
     try {
       const updated = await patchIssue(Number(id), { status: newStatus });
       setIssue(updated);
       setEditForm({ ...editForm, status: updated.status });
+      toast.success(`Status updated to ${newStatus.replace("_", " ")}`);
     } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to update status");
+      toast.error(err.response?.data?.message || "Failed to update status");
     }
   };
 
   const handleDelete = async () => {
+    if (!canDelete) {
+      toast.error("You don't have permission to delete this issue");
+      return;
+    }
+    
     if (
       !confirm(
         "Are you sure you want to delete this issue? This action cannot be undone.",
@@ -94,9 +134,10 @@ const IssueDetailPage: React.FC = () => {
     try {
       setIsDeleting(true);
       await deleteIssue(Number(id));
+      toast.success("Issue deleted successfully");
       router.push("/issues");
     } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to delete issue");
+      toast.error(err.response?.data?.message || "Failed to delete issue");
       setIsDeleting(false);
     }
   };
@@ -249,19 +290,23 @@ const IssueDetailPage: React.FC = () => {
             </div>
 
             <div className="flex gap-2">
-              <button
-                onClick={() => setIsEditing(true)}
-                className="px-3 py-1.5 text-sm border border-gray-300 rounded-md hover:bg-gray-50"
-              >
-                Edit
-              </button>
-              <button
-                onClick={handleDelete}
-                disabled={isDeleting}
-                className="px-3 py-1.5 text-sm text-red-600 border border-red-300 rounded-md hover:bg-red-50 disabled:opacity-50"
-              >
-                {isDeleting ? "Deleting..." : "Delete"}
-              </button>
+              {canEdit && (
+                <button
+                  onClick={() => setIsEditing(true)}
+                  className="px-3 py-1.5 text-sm border border-gray-300 rounded-md hover:bg-gray-50"
+                >
+                  Edit
+                </button>
+              )}
+              {canDelete && (
+                <button
+                  onClick={handleDelete}
+                  disabled={isDeleting}
+                  className="px-3 py-1.5 text-sm text-red-600 border border-red-300 rounded-md hover:bg-red-50 disabled:opacity-50"
+                >
+                  {isDeleting ? "Deleting..." : "Delete"}
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -274,15 +319,39 @@ const IssueDetailPage: React.FC = () => {
               <button
                 key={status}
                 onClick={() => handleStatusUpdate(status)}
+                disabled={!canUpdateStatus || (isDeveloper && !isAssignedToMe)}
                 className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
                   issue.status === status
                     ? `${getStatusColor(status)} font-medium`
                     : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                } ${
+                  (!canUpdateStatus || (isDeveloper && !isAssignedToMe)) && 
+                  "opacity-50 cursor-not-allowed"
                 }`}
               >
                 {status.replace("_", " ")}
               </button>
             ))}
+          </div>
+          {isDeveloper && !isAssignedToMe && (
+            <p className="text-xs text-gray-500 mt-2">
+              You can only change status for issues assigned to you
+            </p>
+          )}
+        </div>
+
+        {/* Assigned To Section - Show for all roles */}
+        <div className="p-6 border-b border-gray-200">
+          <h3 className="text-sm font-medium text-gray-500 mb-3">Assigned To</h3>
+          <div className="flex items-center gap-2">
+            <span className="text-gray-900">
+              {issue.assignedTo?.username || "Unassigned"}
+            </span>
+            {issue.assignedTo?.role && (
+              <span className="text-xs text-gray-500">
+                ({issue.assignedTo.role?.replace("ROLE_", "")})
+              </span>
+            )}
           </div>
         </div>
 
@@ -351,4 +420,8 @@ const IssueDetailPage: React.FC = () => {
   );
 };
 
-export default withAuth(IssueDetailPage);
+// Allow access based on role
+export default withAuth(IssueDetailPage, {
+  allowedRoles: ["ROLE_ADMIN", "ROLE_SECURITY_ADMIN", "ROLE_DEVELOPER"],
+  redirectTo: "/dashboard"
+});

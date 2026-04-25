@@ -1,21 +1,40 @@
 // components/common/ProtectedRoute.tsx
-import React, { useEffect } from 'react';
-import { useRouter } from 'next/router';
-import { useAuth } from '@/hooks/useAuth';
-import LoadingSpinner from './LoadingSpinner';
+import React, { useEffect } from "react";
+import { useRouter } from "next/router";
+import { useAuth } from "@/hooks/useAuth";
+import LoadingSpinner from "./LoadingSpinner";
+
+interface WithAuthOptions {
+  allowedRoles?: string[];
+  redirectTo?: string;
+}
 
 export function withAuth<P extends object>(
-  WrappedComponent: React.ComponentType<P>
+  WrappedComponent: React.ComponentType<P>,
+  options: WithAuthOptions = {},
 ) {
   return function WithAuthComponent(props: P) {
-    const { isAuthenticated, loading } = useAuth();
+    const { isAuthenticated, loading, user } = useAuth();
     const router = useRouter();
+    const { allowedRoles, redirectTo = "/" } = options;
 
     useEffect(() => {
-      if (!loading && !isAuthenticated) {
-        router.push('/login');
+      if (!loading) {
+        if (!isAuthenticated) {
+          router.push("/login");
+          return;
+        }
+
+        // Check role-based access
+        if (allowedRoles && allowedRoles.length > 0 && user) {
+          const userRole = user.role;
+          if (!allowedRoles.includes(userRole)) {
+            router.push(redirectTo);
+            return;
+          }
+        }
       }
-    }, [isAuthenticated, loading, router]);
+    }, [isAuthenticated, loading, user, router, allowedRoles, redirectTo]);
 
     if (loading) {
       return (
@@ -27,6 +46,13 @@ export function withAuth<P extends object>(
 
     if (!isAuthenticated) {
       return null;
+    }
+
+    // Role check before rendering
+    if (allowedRoles && allowedRoles.length > 0 && user) {
+      if (!allowedRoles.includes(user.role)) {
+        return null;
+      }
     }
 
     return <WrappedComponent {...props} />;

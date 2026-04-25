@@ -6,6 +6,8 @@ import com.vulntrack.enums.IssueStatus;
 import com.vulntrack.enums.Severity;
 import com.vulntrack.model.Issue;
 
+import com.vulntrack.dto.UserResponse;
+
 public record IssueResponse(
     Long id,
     String title,
@@ -13,7 +15,8 @@ public record IssueResponse(
     Severity severity,
     IssueStatus status,
     LocalDateTime createdAt,
-    LocalDateTime updatedAt
+    LocalDateTime updatedAt,
+    UserResponse assignedTo
 ) {
     public static IssueResponse from(Issue issue) {
         return new IssueResponse(
@@ -23,7 +26,22 @@ public record IssueResponse(
             issue.getSeverity(),
             issue.getStatus(),
             issue.getCreatedAt(),
-            issue.getUpdatedAt()
+            issue.getUpdatedAt(),
+            null
+        );
+    }
+
+    public static IssueResponse withAsignee(Issue issue) {
+
+        return new IssueResponse(
+            issue.getId(),
+            issue.getTitle(),
+            issue.getDescription(),
+            issue.getSeverity(),
+            issue.getStatus(),
+            issue.getCreatedAt(),
+            issue.getUpdatedAt(),
+            UserResponse.from(issue.getAssignee())
         );
     }
 }
