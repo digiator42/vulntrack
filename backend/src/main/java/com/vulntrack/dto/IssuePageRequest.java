@@ -12,7 +12,7 @@ import org.springframework.data.domain.Pageable;
 
 public record IssuePageRequest(
     @Min(0) @Max(500) Integer page,
-    @Min(1) @Max(50) Integer size,
+    @Min(1) @Max(100) Integer size,
     String sort
 ) {
     public IssuePageRequest {

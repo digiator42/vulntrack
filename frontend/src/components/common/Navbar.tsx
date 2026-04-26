@@ -44,17 +44,9 @@ const Navbar: React.FC = () => {
     }
 
     // Developer sees only issues (no create issue)
-    if (role === "ROLE_DEVELOPER") {
-      return [
-        { name: "Dashboard", href: "/dashboard", icon: ChartBarIcon },
-        { name: "My Issues", href: "/issues", icon: BugAntIcon },
-      ];
-    }
-
-    // Default (should not happen)
     return [
       { name: "Dashboard", href: "/dashboard", icon: ChartBarIcon },
-      { name: "Issues", href: "/issues", icon: BugAntIcon },
+      { name: "My Issues", href: "/issues", icon: BugAntIcon },
     ];
   };
 

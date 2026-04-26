@@ -1,6 +1,6 @@
 // services/api.ts
 import axios from 'axios';
-import { Issue, PageableResponse } from '../types';
+import { Issue, PageableResponse, User } from '../types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
 
@@ -86,6 +86,29 @@ export const getCWEDetails = async (id: string): Promise<any> => {
 
 export const getMyIssues = async (page: number = 0, size: number = 10): Promise<PageableResponse<Issue>> => {
   const response = await api.get('/issues/me', { params: { page, size } });
+  return response.data;
+};
+
+// Get all users (admin only)
+export const getUsers = async (): Promise<User[]> => {
+  const response = await api.get('/admin/users');
+  return response.data;
+};
+
+// Update user role (admin only)
+export const updateUserRole = async (userId: number, role: {newRole: String}): Promise<void> => {
+  await api.patch(`/admin/users/${userId}/role?newRole=${role.newRole}`, JSON.stringify(role));
+};
+
+// Assign issue to developer (admin only)
+export const assignIssue = async (issueId: number, assigneeId: number): Promise<Issue> => {
+  const response = await api.post(`/admin/issues/${issueId}/assign?assigneeId=${assigneeId}`);
+  return response.data;
+};
+
+// Unassign issue (admin only)
+export const unassignIssue = async (issueId: number): Promise<Issue> => {
+  const response = await api.delete(`/admin/issues/${issueId}/assign`);
   return response.data;
 };
 

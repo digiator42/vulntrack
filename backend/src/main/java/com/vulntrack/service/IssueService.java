@@ -4,6 +4,7 @@ import com.vulntrack.dto.IssuePatchRequest;
 import com.vulntrack.dto.IssueResponse;
 import com.vulntrack.dto.SearchCriteria;
 import com.vulntrack.dto.UpdateIssueRequest;
+import com.vulntrack.enums.IssueStatus;
 import com.vulntrack.enums.Role;
 import com.vulntrack.exception.DuplicateItemException;
 import com.vulntrack.exception.AccessDeniedException;
@@ -63,7 +64,10 @@ public class IssueService {
             .orElseThrow(() -> new IssueNotFoundException(id));
 
         SecurityUser user = SecurityUtils.getCurrentUser();
-        System.out.println("=========>> " + user.getUsername() + " " + user.getAuthorities() + " " + SecurityUtils.isSecurityAdmin());
+        System.out.println(
+            "=========>> " + user.getUsername() + " " + user.getAuthorities() + " "
+                + SecurityUtils.isSecurityAdmin()
+        );
 
         // Admin/SecurityAdmin sees everything
         if (SecurityUtils.isSecurityAdmin()) {
@@ -164,7 +168,8 @@ public class IssueService {
 
     public Page<IssueResponse> getSortedListIssues(Pageable pageable) {
 
-        if (pageable.getPageSize() > 50) {
+        if (pageable.getPageSize() > 50 && !SecurityUtils.isSecurityAdmin()) {
+            System.out.println("==========> " + SecurityUtils.isSecurityAdmin());
             throw new BadErrorRequestException("Page size too large");
         }
 
@@ -182,13 +187,74 @@ public class IssueService {
         SecurityUser user = SecurityUtils.getCurrentUser();
 
         if (SecurityUtils.isSecurityAdmin()) {
-            return issueRepository.findAll(pageable).map(IssueResponse::from);
+            return issueRepository.findAll(pageable).map(IssueResponse::withAsignee);
         } else {
             // Developers see only their assigned/owned issues
             return issueRepository.findAllByOwner_IdOrAssignee_Id(user.id(), user.id(), pageable)
-                .map(IssueResponse::from);
+                .map(IssueResponse::withAsignee);
         }
 
+    }
+
+    @Transactional
+    public Issue assignIssue(Long issueId, Long assigneeId) {
+        // RBAC Check: Only Admins/Security Admins can assign
+        if (!SecurityUtils.isSecurityAdmin()) {
+            throw new com.vulntrack.exception.AccessDeniedException(
+                "Only Administrators can assign issues."
+            );
+        }
+
+        // Fetch Issue
+        Issue issue = issueRepository.findById(issueId)
+            .orElseThrow(() -> new com.vulntrack.exception.IssueNotFoundException(issueId));
+
+        // Fetch Assignee and Validate Role
+        User assignee = userRepository.findById(assigneeId)
+            .orElseThrow(
+                () -> new IllegalArgumentException("User not found with ID: " + assigneeId)
+            );
+
+        // Enforce that only Developers can be assigned
+        if (!assignee.getRole().name().equals(Role.ROLE_DEVELOPER.name())) {
+            throw new IllegalArgumentException(
+                "Can only assign issues to users with ROLE_DEVELOPER."
+            );
+        }
+
+        // Update Assignment
+        issue.setAssignee(assignee);
+
+        // Auto-update status to IN_PROGRESS when assigned
+        if (issue.getStatus() == IssueStatus.OPEN) {
+            issue.setStatus(IssueStatus.IN_PROGRESS);
+        }
+
+        return issueRepository.save(issue);
+    }
+
+    @Transactional
+    public Issue unAssignIssue(Long issueId) {
+        // RBAC Check: Only Admins/Security Admins can assign
+        if (!SecurityUtils.isSecurityAdmin()) {
+            throw new com.vulntrack.exception.AccessDeniedException(
+                "Only Administrators can assign issues."
+            );
+        }
+
+        // Fetch Issue
+        Issue issue = issueRepository.findById(issueId)
+            .orElseThrow(() -> new com.vulntrack.exception.IssueNotFoundException(issueId));
+
+        // Update Assignment
+        issue.setAssignee(null);
+
+        // Auto-update status to OPEN when assigned
+        if (issue.getStatus() == IssueStatus.IN_PROGRESS) {
+            issue.setStatus(IssueStatus.OPEN);
+        }
+
+        return issueRepository.save(issue);
     }
 
     public Page<IssueResponse> searchWithSpecifications(
