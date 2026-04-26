@@ -36,6 +36,8 @@ public class IssueService {
     private final IssueRepository issueRepository;
     private final UserRepository userRepository;
 
+    public Issue createInternal(Issue issue) { return issueRepository.save(issue); }
+
     public Issue create(Issue issue) {
         if (!SecurityUtils.isSecurityAdmin()) {
             throw new AccessDeniedException(
@@ -61,6 +63,7 @@ public class IssueService {
             .orElseThrow(() -> new IssueNotFoundException(id));
 
         SecurityUser user = SecurityUtils.getCurrentUser();
+        System.out.println("=========>> " + user.getUsername() + " " + user.getAuthorities() + " " + SecurityUtils.isSecurityAdmin());
 
         // Admin/SecurityAdmin sees everything
         if (SecurityUtils.isSecurityAdmin()) {

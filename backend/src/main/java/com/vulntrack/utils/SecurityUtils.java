@@ -42,5 +42,7 @@ public final class SecurityUtils {
 
     public static boolean isAdmin() { return hasRole(Role.ROLE_ADMIN); }
 
-    public static boolean isSecurityAdmin() { return hasRole(Role.ROLE_SECURITY_ADMIN); }
+    public static boolean isSecurityAdmin() { return hasRole(Role.ROLE_SECURITY_ADMIN) || isAdmin(); }
+
+    public static boolean isDeveloper() { return hasRole(Role.ROLE_DEVELOPER); }
 }

@@ -6,7 +6,6 @@ import com.vulntrack.enums.IssueStatus;
 import com.vulntrack.enums.Severity;
 import com.vulntrack.model.Issue;
 
-import com.vulntrack.dto.UserResponse;
 
 public record IssueResponse(
     Long id,
@@ -41,7 +40,7 @@ public record IssueResponse(
             issue.getStatus(),
             issue.getCreatedAt(),
             issue.getUpdatedAt(),
-            UserResponse.from(issue.getAssignee())
+            UserResponse.from(issue.getAssignee() != null ? issue.getAssignee() : issue.getOwner())
         );
     }
 }
