@@ -1,34 +1,37 @@
 package com.vulntrack.controller;
 
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.GetMapping;
-
-import com.vulntrack.service.AuditLogService;
 import com.vulntrack.service.ReportService;
-
 import lombok.RequiredArgsConstructor;
+
+import java.util.Map;
 
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api")
+@RequestMapping("/api/report")
 public class ReportController {
     private final ReportService reportService;
-    private final AuditLogService auditLogService;
 
-    @GetMapping("/report/pdf")
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @GetMapping("/pdf")
     public ResponseEntity<byte[]> downloadReport() throws Exception {
-        byte[] pdf = reportService.generateComplianceReport();
+        // Security is handled inside generateRoleBasedReport()
+        byte[] pdf = reportService.generateRoleBasedReport();
+
         return ResponseEntity.ok()
             .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=vulntrack-report.pdf")
             .contentType(MediaType.APPLICATION_PDF)
             .body(pdf);
     }
 
+    @GetMapping("/summary")
+    public ResponseEntity<Map<String, Object>> getSummary() {
+        Map<String, Object> summary = reportService.getJsonSummary();
+        return ResponseEntity.ok(summary);
+    }
 }

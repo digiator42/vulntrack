@@ -9,11 +9,9 @@ import com.vulntrack.dto.SearchCriteria;
 import com.vulntrack.dto.UpdateIssueRequest;
 import com.vulntrack.exception.BadErrorRequestException;
 import com.vulntrack.model.Issue;
-import com.vulntrack.model.User;
 import com.vulntrack.repository.UserRepository;
 import com.vulntrack.service.CvssService;
 import com.vulntrack.service.IssueService;
-import com.vulntrack.utils.SecurityUtils;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -71,7 +69,7 @@ public class IssueController {
     }
 
     @GetMapping("/{id}")
-    // @PreAuthorize("@issueService.isOwner(#id, authentication.principal)")
+    @PreAuthorize("@issueService.isOwner(#id, authentication.principal)")
     @AuditLog(action = "ACCESS_ISSUE", resource = "ISSUE", id = "#id")
     public IssueResponse findById(@PathVariable long id) {
         Issue issue = service.getById(id);

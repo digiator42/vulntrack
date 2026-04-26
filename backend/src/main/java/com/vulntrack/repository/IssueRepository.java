@@ -26,6 +26,8 @@ public interface IssueRepository extends JpaRepository<Issue, Long> {
 
     Page<Issue> findAllByOwner_IdOrAssignee_Id(Long ownerId, Long assigneeId, Pageable pageable);
 
+    List<Issue> findAllByOwner_IdOrAssignee_Id(Long ownerId, Long assigneeId);
+
     Page<Issue> findByDescriptionContainingIgnoreCase(String keyword, Pageable pageable);
 
     Page<IssueResponse> findAllByOwnerId(Long ownerId, Pageable pageable);
