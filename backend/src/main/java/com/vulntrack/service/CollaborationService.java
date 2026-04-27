@@ -38,8 +38,8 @@ public class CollaborationService {
 
         Comment saved = commentRepo.save(comment);
 
-        // Log Activity
-        logActivity(issue, user, "COMMENT_ADDED", null, content);
+        // Log Activity, no need for now as the chat has logs already
+        // logActivity(issue, user, "COMMENT_ADDED", null, content);
 
         CommentResponse response = CommentResponse.from(saved);
 
@@ -64,7 +64,7 @@ public class CollaborationService {
         );
     }
 
-    private void logActivity(
+    public void logActivity(
         Issue issue,
         SecurityUser user,
         String action,

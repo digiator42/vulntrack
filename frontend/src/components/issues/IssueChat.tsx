@@ -6,8 +6,12 @@ import {
   PaperAirplaneIcon,
   UserCircleIcon,
   ChatBubbleLeftRightIcon,
+  EllipsisHorizontalIcon,
+  ArrowsPointingOutIcon,
+  XMarkIcon,
+  ClipboardDocumentIcon,
 } from "@heroicons/react/24/outline";
-import { formatDistanceToNow } from "date-fns";
+import { formatDistanceToNow, format } from "date-fns";
 import webSocketService from "@/services/websocket";
 
 interface Comment {
@@ -28,13 +32,20 @@ interface IssueChatProps {
 
 const IssueChat: React.FC<IssueChatProps> = ({ issueId, onNewComment }) => {
   const { user } = useAuth();
-  let token = localStorage.getItem('token');
+  let token = localStorage.getItem("token");
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState("");
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [wsConnected, setWsConnected] = useState(false);
+  const [expandedComment, setExpandedComment] = useState<Comment | null>(null);
+  const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
+
+  const parseDate = (dateString: string): Date | null => {
+    const date = new Date(dateString);
+    return isNaN(date.getTime()) ? null : date;
+  };
 
   // Fetch existing comments
   useEffect(() => {
@@ -43,17 +54,13 @@ const IssueChat: React.FC<IssueChatProps> = ({ issueId, onNewComment }) => {
 
   // Setup WebSocket connection
   useEffect(() => {
-
     const connectWebSocket = async () => {
       try {
-        console.log("SENDING WS HANDSHAKE?");
         if (!webSocketService.isConnected()) {
-          console.log("SENDING WS HANDSHAKE");
           await webSocketService.connect("");
           setWsConnected(true);
         }
 
-        // Subscribe to real-time comments
         webSocketService.subscribe(issueId, (message) => {
           if (message.type === "NEW_COMMENT") {
             setComments((prev) => {
@@ -109,7 +116,7 @@ const IssueChat: React.FC<IssueChatProps> = ({ issueId, onNewComment }) => {
     setSending(true);
     try {
       const response = await fetch(
-        `http://localhost:8080/api/collaborate/${issueId}/comments?content=${newComment}`,
+        `http://localhost:8080/api/collaborate/${issueId}/comments?content=${encodeURIComponent(newComment)}`,
         {
           method: "POST",
           headers: {
@@ -139,6 +146,50 @@ const IssueChat: React.FC<IssueChatProps> = ({ issueId, onNewComment }) => {
     }
   };
 
+  const truncateText = (text: string, maxLength: number = 200) => {
+    if (text.length <= maxLength) return text;
+    return text.substring(0, maxLength) + "...";
+  };
+
+  const handleCommentClick = (e: React.MouseEvent, comment: Comment) => {
+    if (comment.content.length <= 200) return;
+
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    setMenuPosition({
+      x: rect.left + window.scrollX,
+      y: rect.bottom + window.scrollY + 5,
+    });
+    setExpandedComment(comment);
+  };
+
+  const copyToClipboard = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.success("Copied to clipboard");
+    } catch (err) {
+      toast.error("Failed to copy");
+    }
+  };
+
+  const formatCommentDate = (dateString: string) => {
+    // Parse the ISO string correctly
+    const date = new Date(dateString);
+
+    // Check if date is valid
+    if (isNaN(date.getTime())) {
+      return "Invalid date";
+    }
+
+    const now = new Date();
+    const diffInHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60);
+
+    if (diffInHours < 24) {
+      return formatDistanceToNow(date, { addSuffix: true });
+    } else {
+      return format(date, "MMM d, yyyy 'at' h:mm a");
+    }
+  };
+
   const getAuthorColor = (role: string) => {
     const colors = {
       ROLE_ADMIN: "text-purple-600 bg-purple-100",
@@ -159,101 +210,214 @@ const IssueChat: React.FC<IssueChatProps> = ({ issueId, onNewComment }) => {
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-      {/* Header */}
-      <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
-        <div className="flex items-center gap-2">
-          <ChatBubbleLeftRightIcon className="h-5 w-5 text-blue-600" />
-          <h3 className="text-lg font-semibold text-gray-900">Discussion</h3>
-          {wsConnected && (
-            <span className="ml-2 px-2 py-0.5 text-xs rounded-full bg-green-100 text-green-700">
-              Live
+    <>
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+        {/* Header */}
+        <div className="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-white">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <ChatBubbleLeftRightIcon className="h-5 w-5 text-blue-600" />
+              <h3 className="text-lg font-semibold text-gray-900">
+                Discussion
+              </h3>
+              {wsConnected && (
+                <span className="ml-2 px-2 py-0.5 text-xs rounded-full bg-green-100 text-green-700 animate-pulse">
+                  ● Live
+                </span>
+              )}
+            </div>
+            <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+              {comments.length} {comments.length === 1 ? "comment" : "comments"}
             </span>
-          )}
+          </div>
+          <p className="text-sm text-gray-600 mt-1">
+            Collaborate with team members on this vulnerability
+          </p>
         </div>
-        <p className="text-sm text-gray-600 mt-1">
-          Collaborate with team members on this vulnerability
-        </p>
+
+        {/* Comments List */}
+        <div className="h-96 overflow-y-auto p-4 space-y-4 bg-gray-50">
+          {comments.length === 0 ? (
+            <div className="text-center py-12">
+              <ChatBubbleLeftRightIcon className="h-12 w-12 mx-auto text-gray-300 mb-3" />
+              <p className="text-gray-500">No comments yet</p>
+              <p className="text-sm text-gray-400">
+                Be the first to start the discussion
+              </p>
+            </div>
+          ) : (
+            comments.map((comment) => {
+              const isLongComment = comment.content.length > 200;
+              const displayText = isLongComment
+                ? truncateText(comment.content, 200)
+                : comment.content;
+
+              return (
+                <div
+                  key={comment.id}
+                  className="flex gap-3 animate-fade-in group"
+                >
+                  <div className="flex-shrink-0">
+                    <div
+                      className={`w-8 h-8 rounded-full flex items-center justify-center ${getAuthorColor(comment.author.role)}`}
+                    >
+                      <UserCircleIcon className="h-5 w-5" />
+                    </div>
+                  </div>
+                  <div className="flex-1">
+                    <div className="bg-white rounded-lg p-3 shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
+                      <div className="flex justify-between items-start mb-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-sm font-medium text-gray-900">
+                            {comment.author.username}
+                          </span>
+                          <span className="text-xs px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-600">
+                            {comment.author.role.replace("ROLE_", "")}
+                          </span>
+                          <span className="text-xs text-gray-400 flex items-center gap-1">
+                            <span>•</span>
+                            {formatCommentDate(comment.createdAt)}
+                          </span>
+                        </div>
+                        <button
+                          onClick={() => copyToClipboard(comment.content)}
+                          className="opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-gray-600"
+                          title="Copy comment"
+                        >
+                          <ClipboardDocumentIcon className="h-4 w-4" />
+                        </button>
+                      </div>
+
+                      {/* Comment Content */}
+                      <div
+                        className={`text-sm text-gray-700 whitespace-pre-wrap ${isLongComment ? "cursor-pointer hover:text-blue-600" : ""}`}
+                        onClick={(e) => handleCommentClick(e, comment)}
+                      >
+                        {displayText}
+                        {isLongComment && (
+                          <span className="text-blue-500 text-xs ml-1 inline-flex items-center gap-1">
+                            <ArrowsPointingOutIcon className="h-3 w-3" />
+                            Read more
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Full timestamp on hover */}
+                      <div className="text-xs text-gray-400 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        {(() => {
+                          const date = new Date(comment.createdAt);
+                          if (isNaN(date.getTime())) return "Invalid date";
+                          return format(
+                            date,
+                            "EEEE, MMMM do, yyyy 'at' h:mm:ss a",
+                          );
+                        })()}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          )}
+          <div ref={messagesEndRef} />
+        </div>
+
+        {/* Comment Input */}
+        <div className="p-4 border-t border-gray-200 bg-white">
+          <div className="flex gap-2">
+            <textarea
+              value={newComment}
+              onChange={(e) => setNewComment(e.target.value)}
+              onKeyPress={handleKeyPress}
+              placeholder="Add a comment... (Press Enter to send, Shift+Enter for new line)"
+              rows={2}
+              className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+            />
+            <button
+              onClick={sendComment}
+              disabled={sending || !newComment.trim()}
+              className="self-end px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 transition-colors"
+            >
+              {sending ? (
+                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <PaperAirplaneIcon className="h-5 w-5" />
+              )}
+            </button>
+          </div>
+          <p className="text-xs text-gray-400 mt-2">
+            {user?.role === "ROLE_DEVELOPER"
+              ? "Ask clarifying questions about the vulnerability"
+              : "Provide guidance or request additional information"}
+          </p>
+          <div className="text-right text-xs text-gray-400 mt-1">
+            {newComment.length}/2000 characters
+          </div>
+        </div>
       </div>
 
-      {/* Comments List */}
-      <div className="h-96 overflow-y-auto p-4 space-y-4 bg-gray-50">
-        {comments.length === 0 ? (
-          <div className="text-center py-12">
-            <ChatBubbleLeftRightIcon className="h-12 w-12 mx-auto text-gray-300 mb-3" />
-            <p className="text-gray-500">No comments yet</p>
-            <p className="text-sm text-gray-400">
-              Be the first to start the discussion
-            </p>
-          </div>
-        ) : (
-          comments.map((comment) => (
-            <div key={comment.id} className="flex gap-3 animate-fade-in">
-              <div className="flex-shrink-0">
+      {/* Popup Modal for Full Comment */}
+      {expandedComment && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 animate-fade-in"
+          onClick={() => setExpandedComment(null)}
+        >
+          <div
+            className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-white flex justify-between items-center">
+              <div className="flex items-center gap-3">
                 <div
-                  className={`w-8 h-8 rounded-full flex items-center justify-center ${getAuthorColor(comment.author.role)}`}
+                  className={`w-10 h-10 rounded-full flex items-center justify-center ${getAuthorColor(expandedComment.author.role)}`}
                 >
-                  <UserCircleIcon className="h-5 w-5" />
+                  <UserCircleIcon className="h-6 w-6" />
                 </div>
-              </div>
-              <div className="flex-1">
-                <div className="bg-white rounded-lg p-3 shadow-sm border border-gray-200">
-                  <div className="flex justify-between items-start mb-1">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium text-gray-900">
-                        {comment.author.username}
-                      </span>
-                      <span className="text-xs px-1.5 py-0.5 rounded bg-gray-100 text-gray-600">
-                        {comment.author.role.replace("ROLE_", "")}
-                      </span>
-                    </div>
-                    <span className="text-xs text-gray-400">
-                      {/* {formatDistanceToNow(new Date(comment.createdAt), {
-                        addSuffix: true,
-                      })} */}
-                    </span>
-                  </div>
-                  <p className="text-sm text-gray-700 whitespace-pre-wrap">
-                    {comment.content}
+                <div>
+                  <h3 className="font-semibold text-gray-900">
+                    {expandedComment.author.username}
+                  </h3>
+                  <p className="text-xs text-gray-500">
+                    {(() => {
+                      const date = parseDate(expandedComment.createdAt);
+                      return date
+                        ? format(date, "MMMM do, yyyy 'at' h:mm:ss a")
+                        : "Invalid date";
+                    })()}
                   </p>
                 </div>
               </div>
+              <button
+                onClick={() => setExpandedComment(null)}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <XMarkIcon className="h-5 w-5" />
+              </button>
             </div>
-          ))
-        )}
-        <div ref={messagesEndRef} />
-      </div>
-
-      {/* Comment Input */}
-      <div className="p-4 border-t border-gray-200 bg-white">
-        <div className="flex gap-2">
-          <textarea
-            value={newComment}
-            onChange={(e) => setNewComment(e.target.value)}
-            onKeyPress={handleKeyPress}
-            placeholder="Add a comment... (Press Enter to send)"
-            rows={2}
-            className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-          />
-          <button
-            onClick={sendComment}
-            disabled={sending || !newComment.trim()}
-            className="self-end px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 transition-colors"
-          >
-            {sending ? (
-              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-            ) : (
-              <PaperAirplaneIcon className="h-5 w-5" />
-            )}
-          </button>
+            <div className="p-6 overflow-y-auto max-h-[60vh]">
+              <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">
+                {expandedComment.content}
+              </p>
+            </div>
+            <div className="px-6 py-4 border-t border-gray-200 bg-gray-50 flex justify-end gap-2">
+              <button
+                onClick={() => copyToClipboard(expandedComment.content)}
+                className="px-3 py-1.5 text-sm border border-gray-300 rounded-md hover:bg-gray-100 transition-colors flex items-center gap-2"
+              >
+                <ClipboardDocumentIcon className="h-4 w-4" />
+                Copy
+              </button>
+              <button
+                onClick={() => setExpandedComment(null)}
+                className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </div>
         </div>
-        <p className="text-xs text-gray-400 mt-2">
-          {user?.role === "ROLE_DEVELOPER"
-            ? "Ask clarifying questions about the vulnerability"
-            : "Provide guidance or request additional information"}
-        </p>
-      </div>
-    </div>
+      )}
+    </>
   );
 };
 

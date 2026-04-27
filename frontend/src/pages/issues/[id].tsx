@@ -254,7 +254,7 @@ const IssueDetailPage: React.FC = () => {
   }
 
   return (
-    <div className="max-w-4xl mx-auto py-8">
+    <div className="max-w-5xl mx-auto py-8">
       {/* Header */}
       <div className="bg-white rounded-lg shadow mb-6">
         <div className="p-6 border-b border-gray-200">
@@ -411,7 +411,7 @@ const IssueDetailPage: React.FC = () => {
         </div>
 
         {/* Collaboration Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+        <div className="space-y-6 mt-6">
           <IssueChat issueId={issue.id} />
           <ActivityFeed issueId={issue.id} />
         </div>

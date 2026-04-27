@@ -47,7 +47,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({ issueId }) => {
         `http://localhost:8080/api/collaborate/${issueId}/activity`,
         {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`,
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
         },
       );
@@ -163,6 +163,9 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({ issueId }) => {
                               addSuffix: true,
                             })} */}
                           </p>
+                          <span className="font-small text-gray-900">
+                            {activity.performedBy.role.replace("_", ": ").toLowerCase()}
+                          </span>{" "}
                         </div>
                         {activity.oldValue &&
                           activity.newValue &&

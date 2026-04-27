@@ -132,7 +132,8 @@ public class IssueService {
             // issue.setSeverity(request.severity());
         }
 
-        collaborationService.logStatusChange(issue, issue.getStatus().toString(), issue.getStatus().toString());
+        collaborationService
+            .logStatusChange(issue, issue.getStatus().toString(), issue.getStatus().toString());
 
         return issueRepository.save(issue);
     }
@@ -153,14 +154,18 @@ public class IssueService {
         Issue issue = this.getById(id);
 
         if (req.title() != null) {
+            collaborationService.logStatusChange(issue, issue.getTitle(), req.title());
             issue.setTitle(req.title());
         }
 
         if (req.description() != null) {
+            collaborationService.logStatusChange(issue, issue.getDescription(), req.description());
             issue.setDescription(req.description());
         }
 
         if (req.status() != null) {
+            collaborationService
+                .logStatusChange(issue, issue.getStatus().toString(), req.status().toString());
             issue.setStatus(req.status());
         }
 
