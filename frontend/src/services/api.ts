@@ -112,4 +112,9 @@ export const unassignIssue = async (issueId: number): Promise<Issue> => {
   return response.data;
 };
 
+export const getActivities = async (issueId: number): Promise<any> => {
+  const response = await api.get(`/collaborate/${issueId}/activity`);
+  return response.data;
+};
+
 export default api;

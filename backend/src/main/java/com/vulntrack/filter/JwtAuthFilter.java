@@ -35,6 +35,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
         String token = authHeader.substring(7);
         try {
+            System.out.println("===> " + token);
             // Parse token to get username (or user ID)
             String username = jwtService.parse(token).getSubject();
 

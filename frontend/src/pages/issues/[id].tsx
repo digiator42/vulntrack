@@ -13,6 +13,8 @@ import { Issue } from "@/types";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
+import IssueChat from "@/components/issues/IssueChat";
+import ActivityFeed from "@/components/issues/ActivityFeed";
 
 const IssueDetailPage: React.FC = () => {
   const router = useRouter();
@@ -36,11 +38,11 @@ const IssueDetailPage: React.FC = () => {
   const isAdmin = user?.role === "ROLE_ADMIN";
   const isSecurityAdmin = user?.role === "ROLE_SECURITY_ADMIN";
   const isDeveloper = user?.role === "ROLE_DEVELOPER";
-  
+
   const canEdit = isAdmin || isSecurityAdmin;
   const canDelete = isAdmin; // Only admins can delete
   const canChangeStatus = isAdmin || isSecurityAdmin || isDeveloper;
-  
+
   // For developers, check if issue is assigned to them
   const isAssignedToMe = issue?.assignedTo?.id === user?.id;
   const canUpdateStatus = canChangeStatus && (!isDeveloper || isAssignedToMe);
@@ -55,14 +57,14 @@ const IssueDetailPage: React.FC = () => {
     try {
       setLoading(true);
       const data = await getIssueById(Number(id));
-      
+
       // Check if developer has access to this issue
       if (isDeveloper && data.assignedTo?.id !== user?.id) {
         toast.error("You don't have access to this issue");
         router.push("/issues");
         return;
       }
-      
+
       setIssue(data);
       setEditForm({
         title: data.title,
@@ -83,7 +85,7 @@ const IssueDetailPage: React.FC = () => {
       toast.error("You don't have permission to edit this issue");
       return;
     }
-    
+
     try {
       setLoading(true);
       const updated = await updateIssue(Number(id), {
@@ -106,7 +108,7 @@ const IssueDetailPage: React.FC = () => {
       toast.error("You don't have permission to change status");
       return;
     }
-    
+
     try {
       const updated = await patchIssue(Number(id), { status: newStatus });
       setIssue(updated);
@@ -122,7 +124,7 @@ const IssueDetailPage: React.FC = () => {
       toast.error("You don't have permission to delete this issue");
       return;
     }
-    
+
     if (
       !confirm(
         "Are you sure you want to delete this issue? This action cannot be undone.",
@@ -325,7 +327,7 @@ const IssueDetailPage: React.FC = () => {
                     ? `${getStatusColor(status)} font-medium`
                     : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                 } ${
-                  (!canUpdateStatus || (isDeveloper && !isAssignedToMe)) && 
+                  (!canUpdateStatus || (isDeveloper && !isAssignedToMe)) &&
                   "opacity-50 cursor-not-allowed"
                 }`}
               >
@@ -342,7 +344,9 @@ const IssueDetailPage: React.FC = () => {
 
         {/* Assigned To Section - Show for all roles */}
         <div className="p-6 border-b border-gray-200">
-          <h3 className="text-sm font-medium text-gray-500 mb-3">Assigned To</h3>
+          <h3 className="text-sm font-medium text-gray-500 mb-3">
+            Assigned To
+          </h3>
           <div className="flex items-center gap-2">
             <span className="text-gray-900">
               {issue.assignedTo?.username || "Unassigned"}
@@ -406,6 +410,12 @@ const IssueDetailPage: React.FC = () => {
           </div>
         </div>
 
+        {/* Collaboration Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+          <IssueChat issueId={issue.id} />
+          <ActivityFeed issueId={issue.id} />
+        </div>
+
         {/* Back Button */}
         <div className="p-6 border-t border-gray-200 bg-gray-50 rounded-b-lg">
           <button
@@ -423,5 +433,5 @@ const IssueDetailPage: React.FC = () => {
 // Allow access based on role
 export default withAuth(IssueDetailPage, {
   allowedRoles: ["ROLE_ADMIN", "ROLE_SECURITY_ADMIN", "ROLE_DEVELOPER"],
-  redirectTo: "/dashboard"
+  redirectTo: "/dashboard",
 });

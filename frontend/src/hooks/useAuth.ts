@@ -12,6 +12,7 @@ interface User {
 
 export const useAuth = () => {
   const [user, setUser] = useState<User | null>(null);
+  const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
@@ -38,6 +39,7 @@ export const useAuth = () => {
 
   const login = async (username: string, password: string) => {
     const response = await apiLogin(username, password);
+    setToken(response.token);
     localStorage.setItem('token', response.token);
     await loadUser();
     router.push('/dashboard');
@@ -58,6 +60,7 @@ export const useAuth = () => {
 
   return {
     user,
+    token,
     loading,
     isAuthenticated: !!user,
     login,

@@ -36,6 +36,7 @@ import java.util.Map;
 public class IssueService {
     private final IssueRepository issueRepository;
     private final UserRepository userRepository;
+    private final CollaborationService collaborationService;
 
     public Issue createInternal(Issue issue) { return issueRepository.save(issue); }
 
@@ -130,6 +131,8 @@ public class IssueService {
             // if (request.severity() != null)
             // issue.setSeverity(request.severity());
         }
+
+        collaborationService.logStatusChange(issue, issue.getStatus().toString(), issue.getStatus().toString());
 
         return issueRepository.save(issue);
     }
