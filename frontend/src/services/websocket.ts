@@ -38,6 +38,7 @@ class WebSocketService {
     }
 
     const subscription = this.client.subscribe(`/topic/issues/${issueId}`, (message) => {
+      console.log("in ws message ==> ", message.body)
       const data = JSON.parse(message.body);
       callback(data);
     });

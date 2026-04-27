@@ -1,5 +1,6 @@
 package com.vulntrack.controller;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.web.bind.annotation.GetMapping;
@@ -27,10 +28,11 @@ public class CollaborationController {
     public record CommentResponse(
         @JsonProperty("id") Long id,
         @JsonProperty("content") String content,
+        LocalDateTime createdAt,
         UserResponse author
     ) {
         public static CommentResponse from(Comment comment) {
-            return new CommentResponse(comment.getId(), comment.getContent(), UserResponse.from(comment.getAuthor()));
+            return new CommentResponse(comment.getId(), comment.getContent(),comment.getCreatedAt(), UserResponse.from(comment.getAuthor()));
         }
     }
 

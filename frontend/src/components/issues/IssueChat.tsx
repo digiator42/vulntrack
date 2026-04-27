@@ -37,15 +37,18 @@ const IssueChat: React.FC<IssueChatProps> = ({ issueId, onNewComment }) => {
   const [newComment, setNewComment] = useState("");
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
   const [wsConnected, setWsConnected] = useState(false);
   const [expandedComment, setExpandedComment] = useState<Comment | null>(null);
   const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
+  const chatContainerRef = useRef<HTMLDivElement>(null); // ← ref for the scrollable container
 
-  const parseDate = (dateString: string): Date | null => {
-    const date = new Date(dateString);
-    return isNaN(date.getTime()) ? null : date;
-  };
+  useEffect(() => {
+    // Scroll the container
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop =
+        chatContainerRef.current.scrollHeight;
+    }
+  }, [comments]); // Scroll when messages change
 
   // Fetch existing comments
   useEffect(() => {
@@ -64,6 +67,7 @@ const IssueChat: React.FC<IssueChatProps> = ({ issueId, onNewComment }) => {
         webSocketService.subscribe(issueId, (message) => {
           if (message.type === "NEW_COMMENT") {
             setComments((prev) => {
+              console.log("===> recieved ", prev, message.data);
               const exists = prev.some((c) => c.id === message.data.id);
               if (!exists) {
                 return [...prev, message.data];
@@ -84,11 +88,6 @@ const IssueChat: React.FC<IssueChatProps> = ({ issueId, onNewComment }) => {
       webSocketService.unsubscribe(issueId);
     };
   }, [issueId]);
-
-  // Auto-scroll to bottom
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [comments]);
 
   const fetchComments = async () => {
     try {
@@ -171,14 +170,15 @@ const IssueChat: React.FC<IssueChatProps> = ({ issueId, onNewComment }) => {
     }
   };
 
-  const formatCommentDate = (dateString: string) => {
-    // Parse the ISO string correctly
+  // Add this helper function at the top of IssueChat component
+  const parseDate = (dateString: string): Date | null => {
     const date = new Date(dateString);
+    return isNaN(date.getTime()) ? null : date;
+  };
 
-    // Check if date is valid
-    if (isNaN(date.getTime())) {
-      return "Invalid date";
-    }
+  const formatCommentDate = (dateString: string) => {
+    const date = parseDate(dateString);
+    if (!date) return "Invalid date";
 
     const now = new Date();
     const diffInHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60);
@@ -231,12 +231,15 @@ const IssueChat: React.FC<IssueChatProps> = ({ issueId, onNewComment }) => {
             </span>
           </div>
           <p className="text-sm text-gray-600 mt-1">
-            Collaborate with team members on this vulnerability
+            Collaborate with team members
           </p>
         </div>
 
         {/* Comments List */}
-        <div className="h-96 overflow-y-auto p-4 space-y-4 bg-gray-50">
+        <div
+          ref={chatContainerRef}
+          className="h-96 overflow-y-auto p-4 space-y-4 bg-gray-50"
+        >
           {comments.length === 0 ? (
             <div className="text-center py-12">
               <ChatBubbleLeftRightIcon className="h-12 w-12 mx-auto text-gray-300 mb-3" />
@@ -274,10 +277,6 @@ const IssueChat: React.FC<IssueChatProps> = ({ issueId, onNewComment }) => {
                           <span className="text-xs px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-600">
                             {comment.author.role.replace("ROLE_", "")}
                           </span>
-                          <span className="text-xs text-gray-400 flex items-center gap-1">
-                            <span>•</span>
-                            {formatCommentDate(comment.createdAt)}
-                          </span>
                         </div>
                         <button
                           onClick={() => copyToClipboard(comment.content)}
@@ -303,7 +302,7 @@ const IssueChat: React.FC<IssueChatProps> = ({ issueId, onNewComment }) => {
                       </div>
 
                       {/* Full timestamp on hover */}
-                      <div className="text-xs text-gray-400 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="text-sm text-gray-400 mt-4">
                         {(() => {
                           const date = new Date(comment.createdAt);
                           if (isNaN(date.getTime())) return "Invalid date";
@@ -319,7 +318,6 @@ const IssueChat: React.FC<IssueChatProps> = ({ issueId, onNewComment }) => {
               );
             })
           )}
-          <div ref={messagesEndRef} />
         </div>
 
         {/* Comment Input */}
