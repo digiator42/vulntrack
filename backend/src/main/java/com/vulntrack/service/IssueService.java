@@ -273,8 +273,8 @@ public class IssueService {
 
         for (SearchCriteria criteria : params) {
             System.out.println(
-                "Adding criteria: " + criteria.getKey() + " " + criteria.getOperation() + " "
-                    + criteria.getValue()
+                "Adding criteria: " + criteria.key() + " " + criteria.operation() + " "
+                    + criteria.value()
             );
             spec = spec.and(new IssueSpecification(criteria));
         }

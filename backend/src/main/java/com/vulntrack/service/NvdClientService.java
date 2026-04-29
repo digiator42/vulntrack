@@ -37,14 +37,15 @@ public class NvdClientService {
 
     private static final int CACHE_TTL_HOURS = 24;
 
-    public List<CveVulnerability> checkDependency(ParsedDependency dep) {
+    public List<CveVulnerability> checkDependency(ParsedDependency dep, String manifestFile) {
+
         Optional<DependencyVulnerabilityCache> cached = cacheRepository
-            .findByDependencyNameAndDependencyVersion(dep.getName(), dep.getVersion());
+            .findByDependencyNameAndDependencyVersion(dep.name(), dep.version());
 
         if (cached.isPresent()) {
             DependencyVulnerabilityCache cache = cached.get();
             if (cache.getLastChecked().plusHours(CACHE_TTL_HOURS).isAfter(LocalDateTime.now())) {
-                log.info("Using cached result for {}:{}", dep.getName(), dep.getVersion());
+                log.info("Using cached result for {}:{}", dep.name(), dep.version());
                 if (!cache.isHasVulnerabilities()) {
                     return Collections.emptyList();
                 }
@@ -65,8 +66,8 @@ public class NvdClientService {
         try {
             String jsonData = objectMapper.writeValueAsString(vulnerabilities);
             DependencyVulnerabilityCache cache = DependencyVulnerabilityCache.builder()
-                .dependencyName(dep.getName())
-                .dependencyVersion(dep.getVersion())
+                .dependencyName(dep.name())
+                .dependencyVersion(dep.version())
                 .vulnerabilityData(jsonData)
                 .lastChecked(LocalDateTime.now())
                 .hasVulnerabilities(!vulnerabilities.isEmpty())
@@ -105,18 +106,19 @@ public class NvdClientService {
                     String cveId = cve.get("id").asText();
 
                     if (isAffectedByCve(cve, dep)) {
-                        CveVulnerability vuln = new CveVulnerability();
-                        vuln.setId(cveId);
-                        vuln.setDescription(extractDescription(cve));
-                        vuln.setCvssScore(extractCvssScore(cve));
-                        vuln.setSeverity(extractSeverity(cve));
-                        vuln.setPublishedDate(extractDate(cve, "published"));
-                        vuln.setVectorString(extractVectorString(cve));
+                        CveVulnerability vuln = new CveVulnerability(
+                            cveId,
+                            extractDescription(cve),
+                            extractCvssScore(cve),
+                            extractSeverity(cve),
+                            extractDate(cve, "published"),
+                            extractVectorString(cve)
+                        );
 
                         matchingVulnerabilities.add(vuln);
                         log.info(
-                            "Found vulnerability {} for {}:{}", cveId, dep.getName(),
-                            dep.getVersion()
+                            "Found vulnerability {} for {}:{}", cveId, dep.name(),
+                            dep.version()
                         );
                     }
                 }
@@ -125,7 +127,7 @@ public class NvdClientService {
             return matchingVulnerabilities;
 
         } catch (Exception e) {
-            log.error("Error fetching from NVD for {}:{}", dep.getName(), dep.getVersion(), e);
+            log.error("Error fetching from NVD for {}:{}", dep.name(), dep.version(), e);
             return Collections.emptyList();
         }
     }
@@ -139,7 +141,7 @@ public class NvdClientService {
             if (configurations == null)
                 return false;
 
-            ComparableVersion current = new ComparableVersion(dep.getVersion());
+            ComparableVersion current = new ComparableVersion(dep.version());
             String packageName = extractPackageName(dep); // e.g., "snakeyaml"
 
             for (JsonNode config : configurations) {
@@ -175,9 +177,10 @@ public class NvdClientService {
                                     : null;
 
                                 // Log for debugging
-                                System.out.println("========> " + current + " " +
-                                    versionStartIncluding + " " + versionStartExcluding + " " +
-                                    versionEndIncluding + " " + versionEndExcluding
+                                System.out.println(
+                                    "========> " + current + " " +
+                                        versionStartIncluding + " " + versionStartExcluding + " " +
+                                        versionEndIncluding + " " + versionEndExcluding
                                 );
 
                                 // If all bounds are null, assume ALL versions are vulnerable
@@ -207,7 +210,7 @@ public class NvdClientService {
     }
 
     private String extractPackageName(ParsedDependency dep) {
-        String name = dep.getName();
+        String name = dep.name();
         // For Maven: "org.yaml:snakeyaml" -> "snakeyaml"
         if (name.contains(":")) {
             String[] parts = name.split(":");
@@ -246,7 +249,7 @@ public class NvdClientService {
     }
 
     private String extractKeywordForSearch(ParsedDependency dep) {
-        String name = dep.getName();
+        String name = dep.name();
         if (name.contains(":")) {
             String[] parts = name.split(":");
             return parts[parts.length - 1]; // Return artifactId only
@@ -331,12 +334,13 @@ public class NvdClientService {
     }
 
     public Map<ParsedDependency, List<CveVulnerability>> checkDependencies(
-        List<ParsedDependency> deps
+        List<ParsedDependency> deps,
+        String manifestFile
     ) {
         Map<ParsedDependency, List<CveVulnerability>> results = new HashMap<>();
 
         for (ParsedDependency dep : deps) {
-            List<CveVulnerability> vulns = checkDependency(dep);
+            List<CveVulnerability> vulns = checkDependency(dep, manifestFile);
             if (!vulns.isEmpty()) {
                 results.put(dep, vulns);
             }

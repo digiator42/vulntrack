@@ -90,9 +90,9 @@ public class DependencyParserService {
                     }
                 }
 
-                // Only add if we have a valid version
+                // Only add if we have a valid version (TODO: resolve parent inherited version)
                 if (version != null && !version.isEmpty()) {
-                    deps.add(new ParsedDependency(name, version, "MAVEN"));
+                    deps.add(new ParsedDependency(name, version, "MAVEN", ""));
                 }
             }
         }
@@ -105,9 +105,9 @@ public class DependencyParserService {
                 String version = dep.getVersion();
                 if (version != null && !version.isEmpty()) {
                     // Avoid duplicates
-                    boolean exists = deps.stream().anyMatch(d -> d.getName().equals(name));
+                    boolean exists = deps.stream().anyMatch(d -> d.name().equals(name));
                     if (!exists) {
-                        deps.add(new ParsedDependency(name, version, "MAVEN"));
+                        deps.add(new ParsedDependency(name, version, "MAVEN", ""));
                     }
                 }
             });
@@ -132,7 +132,7 @@ public class DependencyParserService {
         depsNode.fields().forEachRemaining(entry -> {
             String name = entry.getKey();
             String version = entry.getValue().asText();
-            out.add(new ParsedDependency(name, version, "NPM"));
+            out.add(new ParsedDependency(name, version, "NPM", ""));
         });
     }
 
@@ -161,7 +161,7 @@ public class DependencyParserService {
                 if (sep > 0) {
                     String name = line.substring(0, sep).trim();
                     String version = line.substring(sep + 2).trim();
-                    deps.add(new ParsedDependency(name, version, "PYPI"));
+                    deps.add(new ParsedDependency(name, version, "PYPI", ""));
                 } else {
                     // no version specified – skip or keep with null version? We'll skip.
                 }
@@ -194,7 +194,7 @@ public class DependencyParserService {
                 version = value.get("version").asText();
             }
             if (version != null && !version.isEmpty()) {
-                out.add(new ParsedDependency(name, version, "PYPI"));
+                out.add(new ParsedDependency(name, version, "PYPI", ""));
             }
         });
     }
@@ -217,7 +217,7 @@ public class DependencyParserService {
         while (m.find()) {
             String groupArtifact = m.group(1);
             String version = m.group(2);
-            deps.add(new ParsedDependency(groupArtifact, version, "GRADLE"));
+            deps.add(new ParsedDependency(groupArtifact, version, "GRADLE", ""));
         }
         // Pattern 2: implementation group: 'com.example', name: 'lib', version: '1.0.0'
         Pattern patternLong = Pattern.compile(
@@ -228,7 +228,7 @@ public class DependencyParserService {
             String group = m.group(1);
             String artifact = m.group(2);
             String version = m.group(3);
-            deps.add(new ParsedDependency(group + ":" + artifact, version, "GRADLE"));
+            deps.add(new ParsedDependency(group + ":" + artifact, version, "GRADLE", ""));
         }
         return deps;
     }
@@ -242,7 +242,7 @@ public class DependencyParserService {
             String name = ref.attr("Include");
             String version = ref.attr("Version");
             if (name != null && !name.isEmpty() && version != null && !version.isEmpty()) {
-                deps.add(new ParsedDependency(name, version, "NUGET"));
+                deps.add(new ParsedDependency(name, version, "NUGET", ""));
             }
         }
         return deps;

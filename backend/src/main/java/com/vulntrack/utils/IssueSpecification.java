@@ -21,9 +21,9 @@ public class IssueSpecification implements Specification<Issue> {
         CriteriaQuery<?> query,
         CriteriaBuilder builder
     ) {
-        String key = criteria.getKey();
-        String operation = criteria.getOperation();
-        Object value = criteria.getValue();
+        String key = criteria.key();
+        String operation = criteria.operation();
+        Object value = criteria.value();
 
         // Check if the field is an Enum dynamically
         if (isEnumField(root, key)) {
