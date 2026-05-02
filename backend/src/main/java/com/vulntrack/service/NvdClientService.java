@@ -1,31 +1,15 @@
 package com.vulntrack.service;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vulntrack.dto.CveVulnerability;
-import com.vulntrack.dto.NvdCpeResponse;
 import com.vulntrack.dto.ParsedDependency;
-import com.vulntrack.model.CpeCache;
-import com.vulntrack.model.DependencyVulnerabilityCache;
 import com.vulntrack.model.LocalCve;
-import com.vulntrack.repository.CpeCacheRepository;
-import com.vulntrack.repository.DependencyVulnerabilityCacheRepository;
 import com.vulntrack.repository.LocalCveRepository;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.maven.artifact.versioning.ComparableVersion;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
-import org.springframework.web.util.UriComponentsBuilder;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.time.LocalDateTime;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Service
@@ -35,37 +19,233 @@ public class NvdClientService {
 
     private final LocalCveRepository localCveRepository;
 
-    @Value("${nvd.api.url:https://services.nvd.nist.gov/rest/json/cves/2.0}")
-    private String nvdApiUrl;
-
-    private static final int CACHE_TTL_HOURS = 24;
-    private static final int CPE_CACHE_DAYS = 30; // CPE mappings don't change often
-
     /**
      * Check a dependency for vulnerabilities using local database
      */
     public List<CveVulnerability> checkDependency(ParsedDependency dep, String manifestFile) {
         String cleanVersion = cleanVersion(dep.version());
         String productName = extractPackageName(dep);
+        String ecosystem = dep.ecosystem();
 
-        // Query local database for vulnerabilities affecting this product/version
-        List<LocalCve> localCves = localCveRepository.findVulnerabilitiesForVersion(
-            productName.toLowerCase(),
-            cleanVersion
+        log.debug(
+            "Checking vulnerabilities for {}:{} (product: {}, ecosystem: {})",
+            dep.name(), cleanVersion, productName, ecosystem
         );
 
-        return localCves.stream()
-            .map(
-                cve -> new CveVulnerability(
-                    cve.getCveId(),
-                    cve.getDescription(),
-                    cve.getCvssScore(),
-                    cve.getSeverity(),
-                    cve.getPublishedDate() != null ? cve.getPublishedDate().toString() : null,
-                    cve.getVectorString()
-                )
-            )
-            .collect(Collectors.toList());
+        // Get ALL CVEs for this product
+        List<LocalCve> allCves = localCveRepository.findByCpeProduct(productName.toLowerCase());
+
+        if (allCves.isEmpty()) {
+            log.debug("No CVEs found for product: {}", productName);
+            return Collections.emptyList();
+        }
+
+        log.debug("Found {} total CVE records for product {}", allCves.size(), productName);
+
+        // Group by CVE ID and find the best matching CPE for each CVE
+        Map<String, Optional<LocalCve>> bestMatchPerCve = groupAndFindBestMatch(
+            allCves, productName, ecosystem, cleanVersion
+        );
+
+        // Convert to vulnerabilities, filtering out those not affected by version
+        List<CveVulnerability> vulnerabilities = new ArrayList<>();
+
+        for (Map.Entry<String, Optional<LocalCve>> entry : bestMatchPerCve.entrySet()) {
+            String cveId = entry.getKey();
+            Optional<LocalCve> bestMatch = entry.getValue();
+
+            if (bestMatch.isPresent()) {
+                LocalCve cve = bestMatch.get();
+
+                // Check if the version is affected by this CVE
+                if (isVersionAffected(cve, cleanVersion)) {
+                    vulnerabilities.add(
+                        new CveVulnerability(
+                            cve.getCveId(),
+                            cve.getDescription(),
+                            cve.getCvssScore(),
+                            cve.getSeverity(),
+                            cve.getPublishedDate() != null ? cve.getPublishedDate().toString()
+                                : null,
+                            cve.getVectorString(),
+                            cve.getVersionStartIncluding(),
+                            cve.getVersionStartExcluding(),
+                            cve.getVersionEndIncluding(),
+                            cve.getVersionEndExcluding()
+                        )
+                    );
+                    log.debug(
+                        "CVE {} affects version {} of {} (range: {}-{})",
+                        cveId, cleanVersion, productName,
+                        cve.getVersionStartIncluding() != null ? cve.getVersionStartIncluding()
+                            : "any",
+                        cve.getVersionEndExcluding() != null ? cve.getVersionEndExcluding() : "any"
+                    );
+                } else {
+                    log.debug(
+                        "CVE {} does NOT affect version {} of {} (version out of range)",
+                        cveId, cleanVersion, productName
+                    );
+                }
+            }
+        }
+
+        log.info(
+            "Found {} vulnerabilities for {}:{}", vulnerabilities.size(), dep.name(), cleanVersion
+        );
+        return vulnerabilities;
+    }
+
+    /**
+     * Group CVEs by ID and find the best matching CPE for each
+     */
+    private Map<String, Optional<LocalCve>> groupAndFindBestMatch(
+        List<LocalCve> allCves,
+        String productName,
+        String ecosystem,
+        String version
+    ) {
+
+        Map<String, List<LocalCve>> groupedByCveId = allCves.stream()
+            .collect(Collectors.groupingBy(LocalCve::getCveId));
+
+        Map<String, Optional<LocalCve>> bestMatches = new HashMap<>();
+
+        for (Map.Entry<String, List<LocalCve>> entry : groupedByCveId.entrySet()) {
+            String cveId = entry.getKey();
+            List<LocalCve> cveEntries = entry.getValue();
+
+            // Score and pick the best matching CPE for this CVE
+            Optional<LocalCve> bestMatch = cveEntries.stream()
+                .max((c1, c2) -> {
+                    int score1 = calculateMatchScore(c1, productName, ecosystem, version);
+                    int score2 = calculateMatchScore(c2, productName, ecosystem, version);
+                    return Integer.compare(score1, score2);
+                });
+
+            bestMatches.put(cveId, bestMatch);
+        }
+
+        return bestMatches;
+    }
+
+    /**
+     * Calculate how well a CVE entry matches our dependency Higher score = better
+     * match
+     */
+    private int calculateMatchScore(
+        LocalCve cve,
+        String productName,
+        String ecosystem,
+        String version
+    ) {
+        int score = 0;
+
+        // Exact product match (highest priority)
+        if (cve.getCpeProduct().equals(productName.toLowerCase())) {
+            score += 100;
+        } else if (cve.getCpeProduct().contains(productName.toLowerCase())) {
+            score += 50;
+        } else if (productName.toLowerCase().contains(cve.getCpeProduct())) {
+            score += 30;
+        }
+
+        // Vendor matching for Maven (groupId)
+        if ("MAVEN".equals(ecosystem)) {
+            String expectedVendor = extractGroupId(productName);
+            if (expectedVendor != null && cve.getCpeVendor().equals(expectedVendor.toLowerCase())) {
+                score += 40;
+            }
+        }
+
+        // Version range specificity - prefer entries with version bounds that match
+        boolean hasStartBound = cve.getVersionStartIncluding() != null
+            || cve.getVersionStartExcluding() != null;
+        boolean hasEndBound = cve.getVersionEndIncluding() != null
+            || cve.getVersionEndExcluding() != null;
+
+        if (hasStartBound && hasEndBound) {
+            score += 30; // Both bounds - very specific
+        } else if (hasStartBound || hasEndBound) {
+            score += 15; // One bound - moderately specific
+        }
+
+        // Bonus if the version actually falls within the range
+        if (isVersionAffected(cve, version)) {
+            score += 20;
+        }
+
+        return score;
+    }
+
+    /**
+     * Extract groupId from Maven dependency name e.g., "org.yaml:snakeyaml" ->
+     * "org.yaml"
+     */
+    private String extractGroupId(String productName) {
+        if (productName.contains(":")) {
+            return productName.split(":")[0];
+        }
+        return null;
+    }
+
+    /**
+     * Check if a specific version is affected by this CVE
+     */
+    private boolean isVersionAffected(LocalCve cve, String currentVersion) {
+        try {
+            ComparableVersion current = new ComparableVersion(currentVersion);
+
+            // Check lower bound
+            if (cve.getVersionStartIncluding() != null) {
+                ComparableVersion startInc = new ComparableVersion(cve.getVersionStartIncluding());
+                if (current.compareTo(startInc) < 0)
+                    return false;
+            }
+
+            if (cve.getVersionStartExcluding() != null) {
+                ComparableVersion startExc = new ComparableVersion(cve.getVersionStartExcluding());
+                if (current.compareTo(startExc) <= 0)
+                    return false;
+            }
+
+            // Check upper bound
+            if (cve.getVersionEndIncluding() != null) {
+                ComparableVersion endInc = new ComparableVersion(cve.getVersionEndIncluding());
+                // For exact version: current == 1.7.2 AND endInc == 1.7.2 → true only if
+                // current == 1.7.2
+                if (current.compareTo(endInc) > 0)
+                    return false;
+            }
+
+            if (cve.getVersionEndExcluding() != null) {
+                ComparableVersion endExc = new ComparableVersion(cve.getVersionEndExcluding());
+                if (current.compareTo(endExc) >= 0)
+                    return false;
+            }
+
+            // If no version bounds, check if this CVE is version-specific via description
+            if (cve.getVersionStartIncluding() == null && cve.getVersionStartExcluding() == null &&
+                cve.getVersionEndIncluding() == null && cve.getVersionEndExcluding() == null) {
+                // Check if description mentions a specific version
+                String description = cve.getDescription();
+                if (description != null
+                    && description.matches(".*\\b" + currentVersion + "\\b.*")) {
+                    return true;
+                }
+                log.warn(
+                    "CVE {} has no version bounds - manual review recommended for version {}",
+                    cve.getCveId(), currentVersion
+                );
+                return false; // Conservative: don't mark vulnerable without bounds
+            }
+
+            return true;
+
+        } catch (Exception e) {
+            log.error("Error checking version for CVE {}: {}", cve.getCveId(), e.getMessage());
+            return false;
+        }
     }
 
     private String cleanVersion(String version) {
@@ -93,115 +273,6 @@ public class NvdClientService {
         return name;
     }
 
-    private boolean isVersionInRange(
-        ComparableVersion current,
-        String startIncluding,
-        String startExcluding,
-        String endIncluding,
-        String endExcluding
-    ) {
-        if (startIncluding != null
-            && current.compareTo(new ComparableVersion(startIncluding)) < 0) {
-            return false;
-        }
-        if (startExcluding != null
-            && current.compareTo(new ComparableVersion(startExcluding)) <= 0) {
-            return false;
-        }
-        if (endIncluding != null && current.compareTo(new ComparableVersion(endIncluding)) > 0) {
-            return false;
-        }
-        if (endExcluding != null && current.compareTo(new ComparableVersion(endExcluding)) >= 0) {
-            return false;
-        }
-        return true;
-    }
-
-    private String extractKeywordForSearch(ParsedDependency dep) {
-        String name = dep.name();
-        if (name.contains(":")) {
-            String[] parts = name.split(":");
-            return parts[parts.length - 1]; // Return artifactId only
-        }
-        return name;
-    }
-
-    private String extractDescription(JsonNode cveNode) {
-        JsonNode descriptions = cveNode.get("descriptions");
-        if (descriptions != null && descriptions.isArray()) {
-            for (JsonNode desc : descriptions) {
-                if ("en".equals(desc.get("lang").asText())) {
-                    String value = desc.get("value").asText();
-                    return value.length() > 500 ? value.substring(0, 500) + "..." : value;
-                }
-            }
-        }
-        return "No description available";
-    }
-
-    private Double extractCvssScore(JsonNode cveNode) {
-        try {
-            JsonNode metrics = cveNode.get("metrics");
-            if (metrics != null) {
-                JsonNode cvssV31 = metrics.get("cvssMetricV31");
-                if (cvssV31 != null && cvssV31.isArray() && cvssV31.size() > 0) {
-                    return cvssV31.get(0).get("cvssData").get("baseScore").asDouble();
-                }
-                JsonNode cvssV3 = metrics.get("cvssMetricV30");
-                if (cvssV3 != null && cvssV3.isArray() && cvssV3.size() > 0) {
-                    return cvssV3.get(0).get("cvssData").get("baseScore").asDouble();
-                }
-            }
-        } catch (Exception e) {
-            log.debug("Could not extract CVSS score");
-        }
-        return null;
-    }
-
-    private String extractSeverity(JsonNode cveNode) {
-        try {
-            JsonNode metrics = cveNode.get("metrics");
-            if (metrics != null) {
-                JsonNode cvssV31 = metrics.get("cvssMetricV31");
-                if (cvssV31 != null && cvssV31.isArray() && cvssV31.size() > 0) {
-                    JsonNode cvssData = cvssV31.get(0).get("cvssData");
-                    if (cvssData != null && cvssData.has("baseSeverity")) {
-                        return cvssData.get("baseSeverity").asText();
-                    }
-                }
-            }
-        } catch (Exception e) {
-            log.debug("Could not extract severity");
-        }
-        return "UNKNOWN";
-    }
-
-    private String extractDate(JsonNode cveNode, String field) {
-        try {
-            if (cveNode.has(field)) {
-                return cveNode.get(field).asText();
-            }
-        } catch (Exception e) {
-            log.debug("Could not extract date for field: {}", field);
-        }
-        return null;
-    }
-
-    private String extractVectorString(JsonNode cveNode) {
-        try {
-            JsonNode metrics = cveNode.get("metrics");
-            if (metrics != null) {
-                JsonNode cvssV31 = metrics.get("cvssMetricV31");
-                if (cvssV31 != null && cvssV31.isArray() && cvssV31.size() > 0) {
-                    return cvssV31.get(0).get("cvssData").get("vectorString").asText();
-                }
-            }
-        } catch (Exception e) {
-            log.debug("Could not extract vector string");
-        }
-        return null;
-    }
-
     public Map<ParsedDependency, List<CveVulnerability>> checkDependencies(
         List<ParsedDependency> deps,
         String manifestFile
@@ -213,6 +284,10 @@ public class NvdClientService {
             List<CveVulnerability> vulns = checkDependency(dep, manifestFile);
             if (!vulns.isEmpty()) {
                 results.put(dep, vulns);
+                log.info(
+                    "Found {} vulnerabilities for dependency {}:{}",
+                    vulns.size(), dep.name(), dep.version()
+                );
             }
         }
 
