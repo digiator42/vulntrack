@@ -43,7 +43,7 @@ public class NvdSyncService {
      * Trigger initial sync on application startup
      */
     // @PostConstruct
-    @EventListener(ApplicationReadyEvent.class)
+    // @EventListener(ApplicationReadyEvent.class)
     public void initialize() {
         log.info("Checking if initial NVD sync is needed...");
 
@@ -88,7 +88,7 @@ public class NvdSyncService {
     }
 
     private void syncCves(LocalDateTime lastModStartDate) {
-        int startIndex = 0;
+        int startIndex = 92000;
         int totalResults = 0;
 
         do {
@@ -107,7 +107,7 @@ public class NvdSyncService {
                     for (JsonNode vulnNode : vulnerabilities) {
                         JsonNode cveNode = vulnNode.get("cve");
                         if (cveNode != null) {
-                            processCveNode(cveNode, cves);
+                            processCveNode(cveNode, cves, startIndex);
                         }
                     }
 
@@ -117,6 +117,9 @@ public class NvdSyncService {
                         "Saved {} CVEs (startIndex: {}, totalResults: {})",
                         cves.size(), startIndex, totalResults
                     );
+
+                    // save to file
+
                 }
 
                 startIndex += 1000; // Results per page
@@ -128,7 +131,7 @@ public class NvdSyncService {
         } while (startIndex < totalResults);
     }
 
-    private void processCveNode(JsonNode cveNode, List<LocalCve> cves) {
+    private void processCveNode(JsonNode cveNode, List<LocalCve> cves, int startIndex) {
         try {
             String cveId = cveNode.get("id").asText();
 
@@ -136,8 +139,9 @@ public class NvdSyncService {
             boolean alreadyExists = cves.stream().anyMatch(c -> c.getCveId().equals(cveId)) ||
                 localCveRepository.findByCveId(cveId).isPresent();
 
+            System.out.println("====> CVE ID: " + cveId);
             if (alreadyExists) {
-                log.debug("Skipping duplicate CVE: {}", cveId);
+                System.out.println("==============>>> Skipping duplicate CVE: " + cveId);
                 return;
             }
 
@@ -199,7 +203,7 @@ public class NvdSyncService {
                                 )
                                 .publishedDate(parseDate(cveNode, "published"))
                                 .lastModified(parseDate(cveNode, "lastModified"))
-                                .rawJson(objectMapper.writeValueAsString(cveNode))
+                                .rawJson(String.valueOf(startIndex))
                                 .syncedAt(LocalDateTime.now())
                                 .build();
 
