@@ -19,6 +19,33 @@ public class NvdClientService {
 
     private final LocalCveRepository localCveRepository;
 
+    public List<LocalCve> smartLookUp(
+        List<LocalCve> allCves,
+        String productName,
+        String ecosystem
+    ) {
+        // Strategy 2: If no results, try partial match (contains)
+        if (allCves.isEmpty()) {
+            System.out.println("No exact match for '" + productName + "', trying partial match...");
+            allCves
+                .addAll(localCveRepository.findByCpeProductContaining(productName.toLowerCase()));
+        }
+
+        // Strategy 3: Try the first part of the name (for multi-part names like
+        // "log4j-core" -> "log4j")
+        if (allCves.isEmpty() && productName.contains("-")) {
+            String simplifiedName = productName.split("-")[0];
+            System.out.println("Trying simplified name: '" + simplifiedName + "'");
+            allCves.addAll(localCveRepository.findByCpeProduct(simplifiedName.toLowerCase()));
+        }
+
+        if (allCves.isEmpty()) {
+            System.out.println("No CVEs found for product: " + productName);
+            return Collections.emptyList();
+        }
+        return allCves;
+    }
+
     /**
      * Check a dependency for vulnerabilities using local database
      */
@@ -27,20 +54,19 @@ public class NvdClientService {
         String productName = extractPackageName(dep);
         String ecosystem = dep.ecosystem();
 
-        log.debug(
-            "Checking vulnerabilities for {}:{} (product: {}, ecosystem: {})",
-            dep.name(), cleanVersion, productName, ecosystem
+        System.out.println(
+            "Checking vulnerabilities for " + dep.name() + ": " + cleanVersion + " product: " +
+                productName + ", ecosystem: " + ecosystem
         );
 
         // Get ALL CVEs for this product
         List<LocalCve> allCves = localCveRepository.findByCpeProduct(productName.toLowerCase());
 
-        if (allCves.isEmpty()) {
-            log.debug("No CVEs found for product: {}", productName);
-            return Collections.emptyList();
-        }
+        smartLookUp(allCves, productName, ecosystem);
 
-        log.debug("Found {} total CVE records for product {}", allCves.size(), productName);
+        System.out.println(
+            "FOUND ========> " + allCves.size() + " " + productName
+        );
 
         // Group by CVE ID and find the best matching CPE for each CVE
         Map<String, Optional<LocalCve>> bestMatchPerCve = groupAndFindBestMatch(
@@ -74,17 +100,19 @@ public class NvdClientService {
                             cve.getVersionEndExcluding()
                         )
                     );
-                    log.debug(
-                        "CVE {} affects version {} of {} (range: {}-{})",
-                        cveId, cleanVersion, productName,
-                        cve.getVersionStartIncluding() != null ? cve.getVersionStartIncluding()
-                            : "any",
-                        cve.getVersionEndExcluding() != null ? cve.getVersionEndExcluding() : "any"
+                    System.out.println(
+                        "CVE {} affects version {} of {} (range: {}-{})" + " " +
+                            cveId + " " + cleanVersion + " " + productName + " " +
+                            cve.getVersionStartIncluding() != null ? cve.getVersionStartIncluding()
+                                : "any" + " " +
+                                    cve.getVersionEndExcluding() != null
+                                        ? cve.getVersionEndExcluding()
+                                        : "any"
                     );
                 } else {
-                    log.debug(
-                        "CVE {} does NOT affect version {} of {} (version out of range)",
-                        cveId, cleanVersion, productName
+                    System.out.println(
+                        "CVE {} does NOT affect version {} of {} (version out of range)" + " " +
+                            cveId + " " + cleanVersion + " " + productName
                     );
                 }
             }
@@ -196,54 +224,65 @@ public class NvdClientService {
         try {
             ComparableVersion current = new ComparableVersion(currentVersion);
 
+            System.out.println("========== Checking CVE: " + cve.getCveId());
+            System.out.println("  Current version: " + currentVersion);
+            System.out.println("  versionStartIncluding: " + cve.getVersionStartIncluding());
+            System.out.println("  versionStartExcluding: " + cve.getVersionStartExcluding());
+            System.out.println("  versionEndIncluding: " + cve.getVersionEndIncluding());
+            System.out.println("  versionEndExcluding: " + cve.getVersionEndExcluding());
+
             // Check lower bound
             if (cve.getVersionStartIncluding() != null) {
                 ComparableVersion startInc = new ComparableVersion(cve.getVersionStartIncluding());
-                if (current.compareTo(startInc) < 0)
+                int cmp = current.compareTo(startInc);
+                System.out.println(
+                    "  startInc check: " + current + " >= " + startInc + "? " + (cmp >= 0)
+                );
+                if (cmp < 0) {
+                    System.out.println("  -> NOT affected (below start including)");
                     return false;
+                }
             }
 
             if (cve.getVersionStartExcluding() != null) {
                 ComparableVersion startExc = new ComparableVersion(cve.getVersionStartExcluding());
-                if (current.compareTo(startExc) <= 0)
+                int cmp = current.compareTo(startExc);
+                System.out
+                    .println("  startExc check: " + current + " > " + startExc + "? " + (cmp > 0));
+                if (cmp <= 0) {
+                    System.out.println("  -> NOT affected (below or equal start excluding)");
                     return false;
+                }
             }
 
             // Check upper bound
             if (cve.getVersionEndIncluding() != null) {
                 ComparableVersion endInc = new ComparableVersion(cve.getVersionEndIncluding());
-                // For exact version: current == 1.7.2 AND endInc == 1.7.2 → true only if
-                // current == 1.7.2
-                if (current.compareTo(endInc) > 0)
+                int cmp = current.compareTo(endInc);
+                System.out
+                    .println("  endInc check: " + current + " <= " + endInc + "? " + (cmp <= 0));
+                if (cmp > 0) {
+                    System.out.println("  -> NOT affected (above end including)");
                     return false;
+                }
             }
 
             if (cve.getVersionEndExcluding() != null) {
                 ComparableVersion endExc = new ComparableVersion(cve.getVersionEndExcluding());
-                if (current.compareTo(endExc) >= 0)
+                int cmp = current.compareTo(endExc);
+                System.out
+                    .println("  endExc check: " + current + " < " + endExc + "? " + (cmp < 0));
+                if (cmp >= 0) {
+                    System.out.println("  -> NOT affected (above or equal end excluding)");
                     return false;
-            }
-
-            // If no version bounds, check if this CVE is version-specific via description
-            if (cve.getVersionStartIncluding() == null && cve.getVersionStartExcluding() == null &&
-                cve.getVersionEndIncluding() == null && cve.getVersionEndExcluding() == null) {
-                // Check if description mentions a specific version
-                String description = cve.getDescription();
-                if (description != null
-                    && description.matches(".*\\b" + currentVersion + "\\b.*")) {
-                    return true;
                 }
-                log.warn(
-                    "CVE {} has no version bounds - manual review recommended for version {}",
-                    cve.getCveId(), currentVersion
-                );
-                return false; // Conservative: don't mark vulnerable without bounds
             }
 
+            System.out.println("  -> AFFECTED!");
             return true;
 
         } catch (Exception e) {
-            log.error("Error checking version for CVE {}: {}", cve.getCveId(), e.getMessage());
+            System.out.println("  Error: " + e.getMessage());
             return false;
         }
     }

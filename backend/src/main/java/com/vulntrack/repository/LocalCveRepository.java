@@ -33,4 +33,19 @@ public interface LocalCveRepository extends JpaRepository<LocalCve, Long> {
 
     @Query("SELECT MAX(c.lastModified) FROM LocalCve c")
     Optional<LocalDateTime> findLastModifiedDate();
+
+    // Contains match (case insensitive)
+    @Query("SELECT c FROM LocalCve c WHERE LOWER(c.cpeProduct) LIKE LOWER(CONCAT('%', :product, '%'))")
+    List<LocalCve> findByCpeProductContaining(@Param("product") String product);
+
+    // Match by product OR vendor
+    @Query("""
+            SELECT c FROM LocalCve c
+            WHERE LOWER(c.cpeProduct) LIKE LOWER(CONCAT('%', :keyword, '%'))
+            OR LOWER(c.cpeVendor) LIKE LOWER(CONCAT('%', :keyword, '%'))
+        """)
+    List<LocalCve> findByProductOrVendorContaining(@Param("keyword") String keyword);
+
+    long countByCpeProduct(String cpeProduct);
+
 }
