@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import IssueChat from "@/components/issues/IssueChat";
 import ActivityFeed from "@/components/issues/ActivityFeed";
+import MarkdownRenderer from "@/components/common/MarkdownRenderer";
 
 const IssueDetailPage: React.FC = () => {
   const router = useRouter();
@@ -366,9 +367,12 @@ const IssueDetailPage: React.FC = () => {
           </h3>
           <div className="prose max-w-none">
             {issue.description ? (
-              <p className="text-gray-700 whitespace-pre-wrap">
-                {issue.description}
-              </p>
+              <div className="p-6 border-b border-gray-200">
+                <h3 className="text-sm font-medium text-gray-500 mb-3">
+                  Description
+                </h3>
+                <MarkdownRenderer content={issue.description} />
+              </div>
             ) : (
               <p className="text-gray-400 italic">No description provided</p>
             )}
