@@ -36,4 +36,10 @@ public interface PackageCpeMappingRepository extends JpaRepository<PackageCpeMap
 
     @Query("SELECT m FROM PackageCpeMapping m WHERE m.enabled = true ORDER BY m.usageCount DESC")
     List<PackageCpeMapping> findMostUsedMappings();
+
+    @Query("SELECT m FROM PackageCpeMapping m WHERE LOWER(m.product) = LOWER(:product)")
+    List<PackageCpeMapping> findAllByProductCaseInsensitive(@Param("product") String product);
+
+    @Query("SELECT m FROM PackageCpeMapping m WHERE LOWER(m.vendor) IN :vendors")
+    List<PackageCpeMapping> findByVendorInCaseInsensitive(@Param("vendors") List<String> vendors);
 }

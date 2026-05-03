@@ -12,6 +12,21 @@ import org.springframework.stereotype.Service;
 import java.util.*;
 import java.util.stream.Collectors;
 
+/**
+ * Checks a parsed dependency against the local NVD CVE database.
+ *
+ * Architecture (no hardcoded vendor/product/ecosystem names anywhere):
+ *
+ * Phase 1 – Authoritative : DependencyNormalizer resolves dep → CPE
+ * vendor+product using the package_cpe_mapping table. Phase 2 – Fuzzy fallback
+ * : If Phase 1 yields no CVEs, token-based partial search is run; results are
+ * ranked by a generic scoring function that uses only string similarity and
+ * version range checks.
+ *
+ * The scoring function has NO ecosystem-specific branches. The fuzzy fallback
+ * has NO ecosystem-specific branches. All ecosystem-specific name decomposition
+ * lives solely in DependencyNormalizer.
+ */
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -20,429 +35,221 @@ public class NvdClientService2 {
     private final LocalCveRepository localCveRepository;
     private final DependencyNormalizer dependencyNormalizer;
 
-    /**
-     * THREE-LEVEL HYBRID ARCHITECTURE:
-     * 
-     * Level 1: Authoritative CPE Database (DependencyNormalizer with
-     * package_cpe_mapping) Level 2: Heuristic Generation (ecosystem-specific rules)
-     * Level 3: Fuzzy Fallback (scoring system + partial matching)
-     */
+    // ── public API ────────────────────────────────────────────────────────────
+
     public List<CveVulnerability> checkDependency(ParsedDependency dep, String manifestFile) {
-        String cleanVersion = cleanVersion(dep.version());
-        String ecosystem = dep.ecosystem();
-        String fullName = dep.name();
+        String version = cleanVersion(dep.version());
+        log.info("Checking {} @ {} [{}]", dep.name(), version, dep.ecosystem());
 
-        System.out.println("========================================");
-        System.out.println("Checking: " + fullName + " version: " + cleanVersion);
-        System.out.println("Ecosystem: " + ecosystem);
-
-        // == LEVEL 1: AUTHORITATIVE CPE DATABASE (via DependencyNormalizer) ==
-        var normalized = dependencyNormalizer.normalize(dep);
-
-        if (!normalized.cpeProduct().equals(normalized.originalName())) {
-            log.info(
-                "✓ Normalized: {} -> {}:{} via {}",
-                normalized.originalName(),
-                normalized.cpeVendor(),
-                normalized.cpeProduct(),
-                normalized.matchReason()
-            );
-        }
-
-        // Now lookup CVEs using the normalized vendor+product
-        List<LocalCve> matchedCves = localCveRepository.findByCpeVendorAndCpeProduct(
-            normalized.cpeVendor().toLowerCase(),
-            normalized.cpeProduct().toLowerCase()
+        // ── Phase 1: authoritative mapping ────────────────────────────────────
+        DependencyNormalizer.NormalizationResult norm = dependencyNormalizer.normalize(dep);
+        log.debug(
+            "Normalized: {} → {}:{} via {}", dep.name(), norm.cpeVendor(), norm.cpeProduct(),
+            norm.matchReason()
         );
 
-        // Fallback: if no exact vendor+product match, try product-only
-        // if (matchedCves.isEmpty()) {
-        // matchedCves = localCveRepository
-        // .findByCpeProduct(normalized.cpeProduct().toLowerCase());
-        // }
+        List<LocalCve> candidates = fetchByNormalized(norm);
 
-        // Deduplicate by CVE ID
-        matchedCves = matchedCves.stream()
-            .collect(Collectors.toMap(LocalCve::getCveId, c -> c, (c1, c2) -> c1))
-            .values()
-            .stream()
-            .collect(Collectors.toList());
-
-        // Group by CVE ID and find the best matching CPE using scoring system
-        Map<String, Optional<LocalCve>> bestMatchPerCve = groupAndFindBestMatch(
-            matchedCves, fullName, ecosystem, cleanVersion
-        );
-
-        // Convert to vulnerabilities
-        List<CveVulnerability> vulnerabilities = new ArrayList<>();
-
-        for (Map.Entry<String, Optional<LocalCve>> entry : bestMatchPerCve.entrySet()) {
-            Optional<LocalCve> bestMatch = entry.getValue();
-            if (bestMatch.isPresent() && isVersionAffected(bestMatch.get(), cleanVersion)) {
-                LocalCve cve = bestMatch.get();
-                vulnerabilities.add(
-                    new CveVulnerability(
-                        cve.getCveId(),
-                        cve.getDescription(),
-                        cve.getCvssScore(),
-                        cve.getSeverity(),
-                        cve.getPublishedDate() != null ? cve.getPublishedDate().toString() : null,
-                        cve.getVectorString(),
-                        cve.getVersionStartIncluding(),
-                        cve.getVersionStartExcluding(),
-                        cve.getVersionEndIncluding(),
-                        cve.getVersionEndExcluding()
-                    )
-                );
-            }
-        }
-
-        System.out.println("RESULT: " + vulnerabilities.size() + " vulnerabilities found");
-        System.out.println("========================================");
-
-        return vulnerabilities;
-    }
-
-    /**
-     * LEVEL 2: Heuristic Generation Ecosystem-specific rules without hardcoded
-     * product names
-     */
-    private List<LocalCve> lookupByHeuristics(String fullName, String ecosystem) {
-        List<LocalCve> results = new ArrayList<>();
-
-        switch (ecosystem.toUpperCase()) {
-        case "MAVEN":
-            if (fullName.contains(":")) {
-                String[] parts = fullName.split(":");
-                String groupId = parts[0];
-                String artifactId = parts[1];
-
-                // Heuristic 1: Try artifactId directly
-                List<LocalCve> artifactMatches = localCveRepository
-                    .findByCpeProduct(artifactId.toLowerCase());
-                if (!artifactMatches.isEmpty()) {
-                    results.addAll(artifactMatches);
-                    System.out.println("  Heuristic: artifactId '" + artifactId + "' matched");
-                }
-
-                // Heuristic 2: Try last part of groupId as vendor
-                String vendorHint = extractVendorFromGroupId(groupId);
-                if (!vendorHint.isEmpty() && results.isEmpty()) {
-                    List<LocalCve> vendorMatches = localCveRepository
-                        .findByCpeVendorContaining(vendorHint);
-                    if (!vendorMatches.isEmpty()) {
-                        results.addAll(vendorMatches);
-                        System.out.println("  Heuristic: vendor '" + vendorHint + "' matched");
-                    }
-                }
-            }
-            break;
-
-        case "NPM":
-            String npmName = fullName;
-            if (npmName.startsWith("@")) {
-                npmName = npmName.substring(1);
-                if (npmName.contains("/")) {
-                    npmName = npmName.split("/")[1];
-                }
-            }
-            List<LocalCve> npmMatches = localCveRepository.findByCpeProduct(npmName.toLowerCase());
-            if (!npmMatches.isEmpty()) {
-                results.addAll(npmMatches);
-                System.out.println("  Heuristic: npm package '" + npmName + "' matched");
-            }
-            break;
-
-        case "PYPI":
-            List<LocalCve> pypiMatches = localCveRepository
-                .findByCpeProduct(fullName.toLowerCase());
-            if (!pypiMatches.isEmpty()) {
-                results.addAll(pypiMatches);
-                System.out.println("  Heuristic: pypi package '" + fullName + "' matched");
-            }
-            break;
-        }
-
-        return results;
-    }
-
-    /**
-     * LEVEL 3: Fuzzy Fallback Uses partial matching and the calculateMatchScore
-     * scoring system
-     */
-    private List<LocalCve> lookupByFuzzyFallback(
-        String fullName,
-        String ecosystem,
-        String version
-    ) {
-        String searchKey = extractSearchKey(fullName, ecosystem);
-        List<LocalCve> results = new ArrayList<>();
-
-        System.out.println("  Fuzzy fallback for: '" + searchKey + "'");
-
-        // Get ALL potential CVEs by partial matching
-        List<LocalCve> candidates = new ArrayList<>();
-
-        // Strategy 1: Contains match on product
-        candidates.addAll(localCveRepository.findByCpeProductContaining(searchKey.toLowerCase()));
-
-        // Strategy 2: Match by product or vendor
-        candidates
-            .addAll(localCveRepository.findByProductOrVendorContaining(searchKey.toLowerCase()));
-
-        // Strategy 3: For multi-part names, try each part
-        if (searchKey.contains("-") || searchKey.contains("_")) {
-            String[] parts = searchKey.split("[-_]");
-            for (String part : parts) {
-                if (part.length() > 3) {
-                    candidates
-                        .addAll(localCveRepository.findByCpeProductContaining(part.toLowerCase()));
-                }
-            }
+        // ── Phase 2: fuzzy fallback ───────────────────────────────────────────
+        if (candidates.isEmpty()) {
+            log.debug("No authoritative hit for '{}', running fuzzy fallback", dep.name());
+            candidates = fetchByFuzzy(norm.cpeProduct());
         }
 
         if (candidates.isEmpty()) {
-            return results;
+            log.debug("No CVE candidates found for '{}'", dep.name());
+            return List.of();
         }
 
-        // Deduplicate by CVE ID
-        candidates = candidates.stream()
-            .collect(Collectors.toMap(LocalCve::getCveId, c -> c, (c1, c2) -> c1))
-            .values()
-            .stream()
+        // ── Deduplicate, score, filter by version ─────────────────────────────
+        List<CveVulnerability> results = deduplicateAndScore(candidates, norm.cpeProduct(), version)
+            .entrySet().stream()
+            .filter(e -> e.getValue().isPresent())
+            .filter(e -> isVersionAffected(e.getValue().get(), version))
+            .map(e -> toCveVulnerability(e.getValue().get()))
             .collect(Collectors.toList());
 
-        // Score each candidate and keep only those with positive score
-        for (LocalCve cve : candidates) {
-            int score = calculateMatchScore(cve, searchKey, ecosystem, version);
-            if (score > 0) {
-                results.add(cve);
-                System.out.println(
-                    "    Scored " + score + ": " + cve.getCveId() +
-                        " (product: " + cve.getCpeProduct() + ")"
-                );
-            }
-        }
-
-        System.out.println("    Fuzzy matches after scoring: " + results.size());
+        log.info("→ {} vulnerabilities for {}", results.size(), dep.name());
         return results;
-    }
-
-    /**
-     * Group CVEs by ID and find the best matching CPE for each using scoring
-     */
-    private Map<String, Optional<LocalCve>> groupAndFindBestMatch(
-        List<LocalCve> allCves,
-        String fullName,
-        String ecosystem,
-        String version
-    ) {
-
-        String searchKey = extractSearchKey(fullName, ecosystem);
-
-        Map<String, List<LocalCve>> groupedByCveId = allCves.stream()
-            .collect(Collectors.groupingBy(LocalCve::getCveId));
-
-        Map<String, Optional<LocalCve>> bestMatches = new HashMap<>();
-
-        for (Map.Entry<String, List<LocalCve>> entry : groupedByCveId.entrySet()) {
-            String cveId = entry.getKey();
-            List<LocalCve> cveEntries = entry.getValue();
-
-            // Score and pick the best matching CPE for this CVE
-            Optional<LocalCve> bestMatch = cveEntries.stream()
-                .max((c1, c2) -> {
-                    int score1 = calculateMatchScore(c1, searchKey, ecosystem, version);
-                    int score2 = calculateMatchScore(c2, searchKey, ecosystem, version);
-                    return Integer.compare(score1, score2);
-                });
-
-            bestMatches.put(cveId, bestMatch);
-        }
-
-        return bestMatches;
-    }
-
-    /**
-     * Calculate how well a CVE entry matches our dependency Higher score = better
-     * match This is the FALLBACK scoring system used in Level 3
-     */
-    private int calculateMatchScore(
-        LocalCve cve,
-        String searchKey,
-        String ecosystem,
-        String version
-    ) {
-        int score = 0;
-        String cveProduct = cve.getCpeProduct().toLowerCase();
-        String targetProduct = searchKey.toLowerCase();
-
-        // 1. Exact vs. Fuzzy Product Matching
-        if (cveProduct.equals(targetProduct)) {
-            score += 100;
-        } else if (targetProduct.replace("-", "_").equals(cveProduct)) {
-            score += 90;
-        } else if (cveProduct.contains(targetProduct) || targetProduct.contains(cveProduct)) {
-            score += 40;
-        }
-
-        // 2. Vendor matching for Maven
-        if ("MAVEN".equalsIgnoreCase(ecosystem)) {
-            String vendor = extractVendorFromGroupIdForScore(searchKey);
-            if (!vendor.isEmpty() && cve.getCpeVendor().toLowerCase().contains(vendor)) {
-                score += 50;
-            }
-        }
-
-        // 3. NPM scope matching
-        if ("NPM".equalsIgnoreCase(ecosystem) && searchKey.startsWith("@")) {
-            String scope = searchKey.split("/")[0].substring(1);
-            if (cve.getCpeVendor().toLowerCase().equals(scope)) {
-                score += 50;
-            }
-        }
-
-        // 4. Bonus if version falls within range
-        if (isVersionAffected(cve, version)) {
-            score += 20;
-        }
-
-        return score;
-    }
-
-    /**
-     * Extract search key from dependency name
-     */
-    private String extractSearchKey(String fullName, String ecosystem) {
-        switch (ecosystem.toUpperCase()) {
-        case "MAVEN":
-            if (fullName.contains(":")) {
-                return fullName.split(":")[1];
-            }
-            return fullName;
-        case "NPM":
-            if (fullName.startsWith("@")) {
-                String unscoped = fullName.substring(1);
-                if (unscoped.contains("/")) {
-                    return unscoped.split("/")[1];
-                }
-                return unscoped;
-            }
-            return fullName;
-        default:
-            return fullName;
-        }
-    }
-
-    /**
-     * Extract vendor from Maven groupId for scoring
-     */
-    private String extractVendorFromGroupIdForScore(String fullName) {
-        if (fullName.contains(":")) {
-            String groupId = fullName.split(":")[0];
-            String[] parts = groupId.split("\\.");
-            if (parts.length > 0) {
-                String lastPart = parts[parts.length - 1];
-                if (lastPart.equals("log4j") && groupId.contains("apache")) {
-                    return "apache";
-                }
-                if (lastPart.equals("springframework") || lastPart.equals("spring")) {
-                    return "spring";
-                }
-                return lastPart;
-            }
-        }
-        return "";
-    }
-
-    private String extractVendorFromGroupId(String groupId) {
-        String[] parts = groupId.split("\\.");
-        if (parts.length == 0)
-            return "";
-        String lastPart = parts[parts.length - 1];
-        if (lastPart.equals("log4j") && groupId.contains("apache")) {
-            return "apache";
-        }
-        if (lastPart.equals("springframework") || lastPart.equals("spring")) {
-            return "spring";
-        }
-        return lastPart;
-    }
-
-    /**
-     * Check if a specific version is affected by this CVE
-     */
-    private boolean isVersionAffected(LocalCve cve, String currentVersion) {
-        try {
-            ComparableVersion current = new ComparableVersion(currentVersion);
-
-            if (cve.getVersionStartIncluding() == null &&
-                cve.getVersionStartExcluding() == null &&
-                cve.getVersionEndIncluding() == null &&
-                cve.getVersionEndExcluding() == null) {
-                return true;
-            }
-
-            if (cve.getVersionStartIncluding() != null) {
-                ComparableVersion startInc = new ComparableVersion(cve.getVersionStartIncluding());
-                if (current.compareTo(startInc) < 0)
-                    return false;
-            }
-
-            if (cve.getVersionStartExcluding() != null) {
-                ComparableVersion startExc = new ComparableVersion(cve.getVersionStartExcluding());
-                if (current.compareTo(startExc) <= 0)
-                    return false;
-            }
-
-            if (cve.getVersionEndIncluding() != null) {
-                ComparableVersion endInc = new ComparableVersion(cve.getVersionEndIncluding());
-                if (current.compareTo(endInc) > 0)
-                    return false;
-            }
-
-            if (cve.getVersionEndExcluding() != null) {
-                ComparableVersion endExc = new ComparableVersion(cve.getVersionEndExcluding());
-                if (current.compareTo(endExc) >= 0)
-                    return false;
-            }
-
-            return true;
-        } catch (Exception e) {
-            return false;
-        }
-    }
-
-    private String cleanVersion(String version) {
-        if (version == null)
-            return null;
-        String cleaned = version.replaceFirst("^[\\^~><=]", "");
-        if (cleaned.contains(" ")) {
-            String[] parts = cleaned.split("\\s+");
-            for (String part : parts) {
-                if (part.matches("\\d+(\\.\\d+)*.*")) {
-                    cleaned = part;
-                    break;
-                }
-            }
-        }
-        return cleaned;
     }
 
     public Map<ParsedDependency, List<CveVulnerability>> checkDependencies(
         List<ParsedDependency> deps,
         String manifestFile
     ) {
-
-        Map<ParsedDependency, List<CveVulnerability>> results = new HashMap<>();
-
+        Map<ParsedDependency, List<CveVulnerability>> out = new LinkedHashMap<>();
         for (ParsedDependency dep : deps) {
             List<CveVulnerability> vulns = checkDependency(dep, manifestFile);
-            if (!vulns.isEmpty()) {
-                results.put(dep, vulns);
-            }
+            if (!vulns.isEmpty())
+                out.put(dep, vulns);
+        }
+        return out;
+    }
+
+    // ── Phase 1: authoritative lookup ─────────────────────────────────────────
+
+    private List<LocalCve> fetchByNormalized(DependencyNormalizer.NormalizationResult norm) {
+        // Try vendor + product first (most precise)
+        List<LocalCve> hits = localCveRepository.findByCpeVendorAndCpeProduct(
+            norm.cpeVendor().toLowerCase(),
+            norm.cpeProduct().toLowerCase()
+        );
+
+        // If vendor resolved to the same thing as product (L5 pass-through),
+        // fall back to product-only search.
+        if (hits.isEmpty() && !norm.cpeVendor().equals(norm.cpeProduct())) {
+            hits = localCveRepository.findByCpeProduct(norm.cpeProduct().toLowerCase());
         }
 
-        return results;
+        return hits;
+    }
+
+    // ── Phase 2: fuzzy fallback ───────────────────────────────────────────────
+
+    /**
+     * No ecosystem switch-cases here. We search by partial product match and also
+     * try each dash/underscore segment of the search key individually. Results are
+     * de-duplicated then ranked by the generic score function.
+     */
+    private List<LocalCve> fetchByFuzzy(String searchKey) {
+        Set<LocalCve> bag = new LinkedHashSet<>();
+
+        // Partial product name match
+        bag.addAll(localCveRepository.findByCpeProductContaining(searchKey.toLowerCase()));
+        bag.addAll(localCveRepository.findByProductOrVendorContaining(searchKey.toLowerCase()));
+
+        // Try each meaningful segment of the search key
+        for (String part : meaningfulParts(searchKey)) {
+            bag.addAll(localCveRepository.findByCpeProductContaining(part));
+        }
+
+        return new ArrayList<>(bag);
+    }
+
+    // ── scoring & deduplication ───────────────────────────────────────────────
+
+    /**
+     * Groups CVE rows by CVE-ID, picks the best-scoring row per group. The score
+     * function is purely string-similarity + version-range based; it has no
+     * knowledge of ecosystems.
+     */
+    private Map<String, Optional<LocalCve>> deduplicateAndScore(
+        List<LocalCve> rows,
+        String searchKey,
+        String version
+    ) {
+        return rows.stream()
+            .collect(Collectors.groupingBy(LocalCve::getCveId))
+            .entrySet().stream()
+            .collect(
+                Collectors.toMap(
+                    Map.Entry::getKey,
+                    e -> e.getValue().stream()
+                        .max(Comparator.comparingInt(c -> score(c, searchKey, version)))
+                )
+            );
+    }
+
+    /**
+     * Generic scoring — no ecosystem logic.
+     *
+     * +100 exact product match + 90 match after normalising separators (- vs _) +
+     * 40 one string contains the other + 20 version falls within the affected range
+     */
+    private int score(LocalCve cve, String searchKey, String version) {
+        String cp = cve.getCpeProduct().toLowerCase();
+        String sk = searchKey.toLowerCase();
+
+        int s = 0;
+        if (cp.equals(sk))
+            s += 100;
+        else if (cp.equals(sk.replace("-", "_")))
+            s += 90;
+        else if (cp.equals(sk.replace("_", "-")))
+            s += 90;
+        else if (cp.contains(sk) || sk.contains(cp))
+            s += 40;
+
+        if (isVersionAffected(cve, version))
+            s += 20;
+
+        return s;
+    }
+
+    // ── version range check ───────────────────────────────────────────────────
+
+    private boolean isVersionAffected(LocalCve cve, String version) {
+        if (version == null)
+            return false;
+        try {
+            ComparableVersion v = new ComparableVersion(version);
+
+            boolean hasRange = cve.getVersionStartIncluding() != null ||
+                cve.getVersionStartExcluding() != null ||
+                cve.getVersionEndIncluding() != null ||
+                cve.getVersionEndExcluding() != null;
+
+            if (!hasRange)
+                return true; // no range = affects all versions
+
+            if (cve.getVersionStartIncluding() != null &&
+                v.compareTo(new ComparableVersion(cve.getVersionStartIncluding())) < 0)
+                return false;
+
+            if (cve.getVersionStartExcluding() != null &&
+                v.compareTo(new ComparableVersion(cve.getVersionStartExcluding())) <= 0)
+                return false;
+
+            if (cve.getVersionEndIncluding() != null &&
+                v.compareTo(new ComparableVersion(cve.getVersionEndIncluding())) > 0)
+                return false;
+
+            if (cve.getVersionEndExcluding() != null &&
+                v.compareTo(new ComparableVersion(cve.getVersionEndExcluding())) >= 0)
+                return false;
+
+            return true;
+        } catch (Exception e) {
+            log.warn("Version comparison failed for '{}': {}", version, e.getMessage());
+            return false;
+        }
+    }
+
+    // ── utilities ─────────────────────────────────────────────────────────────
+
+    /** Strips leading semver operators and takes the first numeric token. */
+    private String cleanVersion(String raw) {
+        if (raw == null)
+            return null;
+        String v = raw.replaceAll("^[\\^~><=!*]+", "").trim();
+        // ">=1.0 <2.0" → take first numeric group
+        return Arrays.stream(v.split("\\s+"))
+            .filter(t -> t.matches("\\d.*"))
+            .findFirst()
+            .orElse(v);
+    }
+
+    /** Splits on [-_.] and keeps tokens longer than 3 chars (avoids noise). */
+    private List<String> meaningfulParts(String name) {
+        return Arrays.stream(name.split("[-_.]"))
+            .map(String::toLowerCase)
+            .filter(p -> p.length() > 3)
+            .distinct()
+            .collect(Collectors.toList());
+    }
+
+    private CveVulnerability toCveVulnerability(LocalCve cve) {
+        return new CveVulnerability(
+            cve.getCveId(),
+            cve.getDescription(),
+            cve.getCvssScore(),
+            cve.getSeverity(),
+            cve.getPublishedDate() != null ? cve.getPublishedDate().toString() : null,
+            cve.getVectorString(),
+            cve.getVersionStartIncluding(),
+            cve.getVersionStartExcluding(),
+            cve.getVersionEndIncluding(),
+            cve.getVersionEndExcluding()
+        );
     }
 }
