@@ -18,6 +18,7 @@ import com.vulntrack.dto.DependencyScanResult;
 import com.vulntrack.dto.ParsedDependency;
 import com.vulntrack.service.DependencyParserService;
 import com.vulntrack.service.NvdClientService;
+import com.vulntrack.service.NvdClientService2;
 import com.vulntrack.service.VulnerabilityIssueService;
 
 import lombok.RequiredArgsConstructor;
@@ -29,7 +30,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class DependencyScanController {
     private final DependencyParserService dependencyParserService;
-    private final NvdClientService nvdClientService;
+    private final NvdClientService2 nvdClientService;
     private final VulnerabilityIssueService vulnerabilityIssueService;
 
     @PostMapping("/parse")
@@ -83,7 +84,7 @@ public class DependencyScanController {
     @PreAuthorize("hasRole('ROLE_ADMIN') or hasRole('ROLE_SECURITY_ADMIN')")
     public ResponseEntity<DependencyScanResult> scanAndCreateIssues(
         @RequestParam("file") MultipartFile file,
-        @RequestParam(defaultValue = "true") boolean autoCreateIssues
+        @RequestParam(defaultValue = "false") boolean autoCreateIssues
     ) {
 
         try {

@@ -164,6 +164,19 @@
             <version>2.15.2</version>
         </dependency>
 
+        <dependency>
+            <groupId>com.fasterxml.jackson.dataformat</groupId>
+            <artifactId>jackson-dataformat-csv</artifactId>
+            <version>2.17.0</version>
+        </dependency>
+
+        <!-- Apache Commons CSV for robust CSV parsing -->
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-csv</artifactId>
+            <version>1.10.0</version>
+        </dependency>
+
         <!-- For XML parsing (csproj) -->
         <dependency>
             <groupId>org.jsoup</groupId>
@@ -176,6 +189,7 @@
             <artifactId>maven-artifact</artifactId>
             <version>3.9.6</version>
         </dependency>
+
         
     </dependencies>
 

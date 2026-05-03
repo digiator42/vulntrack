@@ -46,8 +46,11 @@ public interface LocalCveRepository extends JpaRepository<LocalCve, Long> {
         """)
     List<LocalCve> findByProductOrVendorContaining(@Param("keyword") String keyword);
 
+    List<LocalCve> findByCpeVendorContaining(String vendor);
 
     List<LocalCve> findByDescriptionContaining(String keyword);
+
+    List<LocalCve> findByCpeVendorAndCpeProduct(String vendor, String product);
 
     long countByCpeProduct(String cpeProduct);
 
