@@ -43,10 +43,17 @@ public class NvdClientService2 {
 
         // ── Phase 1: authoritative mapping ────────────────────────────────────
         DependencyNormalizer.NormalizationResult norm = dependencyNormalizer.normalize(dep);
+        
+        if (norm == null) {
+            log.debug("No mapping for '{}', skipping", dep.name());
+            return List.of();
+        }
+        
         log.debug(
             "Normalized: {} → {}:{} via {}", dep.name(), norm.cpeVendor(), norm.cpeProduct(),
             norm.matchReason()
         );
+
 
         List<LocalCve> candidates = fetchByNormalized(norm);
 

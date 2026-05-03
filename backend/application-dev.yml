@@ -15,8 +15,11 @@ spring:
     enabled: true
     baseline-on-migrate: true
 
-# logging:
-#   level:
+logging:
+  level:
+    com.vulntrack.service.DependencyNormalizer: DEBUG
+    com.vulntrack.service.NvdClientService2: DEBUG
+    root: INFO
     # org.springframework.security: DEBUG
     # org.hibernate.SQL: DEBUG
     # org.hibernate.orm.jdbc.bind: TRACE

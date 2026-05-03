@@ -53,7 +53,8 @@ public class DependencyNormalizer {
         // Decompose the raw dependency name into searchable tokens.
         NameTokens tokens = decompose(dep);
 
-        log.error("Normalizing: {} -> tokens={}", dep.name(), tokens);
+        log.debug("Normalizing: {} -> tokens={}", dep.name(), tokens);
+        System.out.println("======>> " + dep.name() + tokens);
 
         // L1: exact product match on the primary artifact token
         // Pass scope tokens so that when multiple vendors share the product name,
@@ -79,19 +80,39 @@ public class DependencyNormalizer {
                 return buildResult(hit.get(), dep.name(), "L3b:vendor+stripped:" + candidate);
         }
 
-        // L4: token-by-token — try each word segment that is long enough
+        // L4: token-by-token — ONLY accept if the matched vendor is plausible for this
+        // dependency. A bare token like "starter" exists in CPE under vendor "siemens",
+        // which has zero relationship to groupId "org.springdoc". Without this guard,
+        // any generic word that happens to be a CPE product name becomes a false
+        // positive.
+        //
+        // Plausibility rule: the matched vendor must share a substring with at least
+        // one
+        // scope token (groupId segments, NPM scope) OR with the artifact name itself.
+        // "siemens" shares nothing with ["org","springdoc"] or "springdoc-openapi-..."
+        // → rejected.
+        // "apache" shares with ["org","apache","commons"] → accepted.
         for (String part : meaningfulParts(tokens.artifact())) {
             hit = exactProduct(part, tokens.scopeTokens());
-            if (hit.isPresent())
+            if (hit.isPresent() && isVendorPlausible(hit.get().getVendor(), tokens)) {
+                System.out.println("---> vendor is ***plausible***");
                 return buildResult(hit.get(), dep.name(), "L4:token:" + part);
+            }
+            if (hit.isPresent()) {
+                log.debug(
+                    "L4 rejected '{}' → {}:{} — vendor not plausible for scope {}",
+                    part, hit.get().getVendor(), hit.get().getProduct(), tokens.scopeTokens()
+                );
+            }
         }
 
         // L5: pass-through — no mapping found; return clean name for fuzzy fallback
         String clean = tokens.artifact();
         log.debug("No mapping for '{}', passing through as '{}'", dep.name(), clean);
-        return new NormalizationResult(
-            clean, clean, dep.name(), dep.ecosystem(), "L5:pass-through"
-        );
+        return null;
+        // return new NormalizationResult(
+        //     clean, clean, dep.name(), dep.ecosystem(), "L5:pass-through"
+        // );
     }
 
     // ── decomposition ─────────────────────────────────────────────────────────
@@ -147,7 +168,7 @@ public class DependencyNormalizer {
         // Repository now returns List — no unique-result constraint
         List<PackageCpeMapping> rows = mappingRepository.findAllByProductCaseInsensitive(name);
 
-        System.out.println("======>> " + rows);
+        System.out.println("=====> " + rows);
 
         if (rows.isEmpty())
             return Optional.empty();
@@ -301,6 +322,41 @@ public class DependencyNormalizer {
         int longer = Math.max(p.length(), a.length());
         double ratio = (double) shorter / longer;
         return ratio >= MIN_OVERLAP_RATIO;
+    }
+
+    /**
+     * Returns true when the CPE vendor has a plausible relationship to the
+     * dependency's namespace — i.e. the vendor string and at least one scope token
+     * share a common substring, OR the vendor appears in the artifact name.
+     *
+     * This is the primary guard against cross-domain false positives such as:
+     * artifact: "springdoc-openapi-starter-webmvc-ui" (groupId: org.springdoc)
+     * matched vendor: "siemens" → "siemens" shares nothing with ["org","springdoc"]
+     * or the artifact → REJECTED
+     *
+     * artifact: "commons-csv" (groupId: org.apache.commons) matched vendor:
+     * "apache" → "apache" is contained in scope token "apache" → ACCEPTED
+     *
+     * Used at L4 (token-by-token) where vendor context is weakest. L1/L2/L3 already
+     * use scope-preferred selection, so the risk there is lower, but this method
+     * can be applied to them too if false positives appear.
+     */
+    private boolean isVendorPlausible(String vendor, NameTokens tokens) {
+        String v = vendor.toLowerCase();
+
+        System.out.println("=======>>> " + vendor);
+
+        // Check against each scope token
+        for (String scopeToken : tokens.scopeTokens()) {
+            String s = scopeToken.toLowerCase();
+            if (s.contains(v) || v.contains(s)) {
+                System.out.println("====> YES " + s + " " + v);
+                return true;
+            }
+        }
+
+        // Check against the artifact name itself
+        return tokens.artifact().contains(v);
     }
 
     private NormalizationResult buildResult(PackageCpeMapping m, String original, String reason) {
