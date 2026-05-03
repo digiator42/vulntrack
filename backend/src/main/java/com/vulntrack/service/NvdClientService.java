@@ -24,12 +24,9 @@ public class NvdClientService {
         String productName,
         String ecosystem
     ) {
-        // Strategy 2: If no results, try partial match (contains)
-        if (allCves.isEmpty()) {
-            System.out.println("No exact match for '" + productName + "', trying partial match...");
-            allCves
-                .addAll(localCveRepository.findByCpeProductContaining(productName.toLowerCase()));
-        }
+        // Strategy 2: try partial match (contains)
+        allCves
+            .addAll(localCveRepository.findByCpeProductContaining(productName.toLowerCase()));
 
         // Strategy 3: Try the first part of the name (for multi-part names like
         // "log4j-core" -> "log4j")
@@ -37,6 +34,16 @@ public class NvdClientService {
             String simplifiedName = productName.split("-")[0];
             System.out.println("Trying simplified name: '" + simplifiedName + "'");
             allCves.addAll(localCveRepository.findByCpeProduct(simplifiedName.toLowerCase()));
+        }
+
+        allCves.addAll(
+            localCveRepository.findByProductOrVendorContaining(productName.toLowerCase())
+        );
+
+        // Strategy 4: checking if the product name appears in description
+        if (allCves.isEmpty()) {
+            allCves
+                .addAll(localCveRepository.findByDescriptionContaining(productName.toLowerCase()));
         }
 
         if (allCves.isEmpty()) {
@@ -168,34 +175,40 @@ public class NvdClientService {
         String version
     ) {
         int score = 0;
+        String cveProduct = cve.getCpeProduct().toLowerCase();
+        String targetProduct = productName.toLowerCase();
 
-        // Exact product match (highest priority)
-        if (cve.getCpeProduct().equals(productName.toLowerCase())) {
+        // 1. Exact vs. Fuzzy Product Matching
+        if (cveProduct.equals(targetProduct)) {
             score += 100;
-        } else if (cve.getCpeProduct().contains(productName.toLowerCase())) {
-            score += 50;
-        } else if (productName.toLowerCase().contains(cve.getCpeProduct())) {
-            score += 30;
+        } else if (targetProduct.replace("-", "_").equals(cveProduct)) {
+            score += 90; // Handles Python/NPM naming variations
+        } else if (cveProduct.contains(targetProduct) || targetProduct.contains(cveProduct)) {
+            score += 40; // Partial match
         }
 
-        // Vendor matching for Maven (groupId)
-        if ("MAVEN".equals(ecosystem)) {
-            String expectedVendor = extractGroupId(productName);
-            if (expectedVendor != null && cve.getCpeVendor().equals(expectedVendor.toLowerCase())) {
-                score += 40;
+        // 2. Ecosystem-Specific Vendor Confidence
+        switch (ecosystem.toUpperCase()) {
+        case "MAVEN":
+            String groupId = extractGroupId(productName); // e.g., org.apache.logging.log4j
+            if (groupId != null && cve.getCpeVendor().equalsIgnoreCase(groupId)) {
+                score += 50;
             }
-        }
-
-        // Version range specificity - prefer entries with version bounds that match
-        boolean hasStartBound = cve.getVersionStartIncluding() != null
-            || cve.getVersionStartExcluding() != null;
-        boolean hasEndBound = cve.getVersionEndIncluding() != null
-            || cve.getVersionEndExcluding() != null;
-
-        if (hasStartBound && hasEndBound) {
-            score += 30; // Both bounds - very specific
-        } else if (hasStartBound || hasEndBound) {
-            score += 15; // One bound - moderately specific
+            break;
+        case "NPM":
+            if (productName.startsWith("@")) {
+                String scope = productName.split("/")[0].substring(1);
+                if (cve.getCpeVendor().equalsIgnoreCase(scope)) {
+                    score += 50; // High confidence if scope matches NVD vendor
+                }
+            }
+            break;
+        case "PYPI":
+            // PyPI vendors are often just the product name or the author
+            if (cve.getCpeVendor().equalsIgnoreCase(targetProduct)) {
+                score += 30;
+            }
+            break;
         }
 
         // Bonus if the version actually falls within the range
@@ -230,6 +243,20 @@ public class NvdClientService {
             System.out.println("  versionStartExcluding: " + cve.getVersionStartExcluding());
             System.out.println("  versionEndIncluding: " + cve.getVersionEndIncluding());
             System.out.println("  versionEndExcluding: " + cve.getVersionEndExcluding());
+
+            if (cve.getVersionStartIncluding() == null &&
+                cve.getVersionStartExcluding() == null &&
+                cve.getVersionEndIncluding() == null &&
+                cve.getVersionEndExcluding() == null) {
+
+                // LOGIC: If it's an exact match on product name and no ranges exist,
+                // we flag it as vulnerable to avoid a false negative.
+                System.out.println(
+                    "CVE {" + cve.getCveId()
+                        + "} has no version ranges. Flagging as potentially vulnerable."
+                );
+                return true;
+            }
 
             // Check lower bound
             if (cve.getVersionStartIncluding() != null) {
