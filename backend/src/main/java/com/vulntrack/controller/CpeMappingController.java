@@ -17,14 +17,7 @@ public class CpeMappingController {
 
     private final PackageCpeMappingRepository mappingRepository;
 
-    @GetMapping
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
-    public ResponseEntity<List<PackageCpeMapping>> getAllMappings() {
-        return ResponseEntity.ok(mappingRepository.findAll());
-    }
-
     @GetMapping("/search")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
     public ResponseEntity<PackageCpeMapping> findByProduct(@RequestParam String product) {
         return mappingRepository.findByProductCaseInsensitive(product)
             .map(ResponseEntity::ok)

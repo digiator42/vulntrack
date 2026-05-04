@@ -7,6 +7,7 @@ import {
   PlusCircleIcon,
   DocumentTextIcon,
   UsersIcon,
+  DocumentMagnifyingGlassIcon,
 } from "@heroicons/react/24/outline";
 
 const Navbar: React.FC = () => {
@@ -28,6 +29,12 @@ const Navbar: React.FC = () => {
         { name: "Dashboard", href: "/dashboard", icon: ChartBarIcon },
         { name: "Issues", href: "/issues", icon: BugAntIcon },
         { name: "Create Issue", href: "/issues/create", icon: PlusCircleIcon },
+        // In Navbar.tsx, add to admin navigation
+        {
+          name: "Dependency Scanner",
+          href: "/admin/dependency-scanner",
+          icon: DocumentMagnifyingGlassIcon,
+        },
         { name: "Reports", href: "/reports", icon: DocumentTextIcon },
         { name: "Users", href: "/users", icon: UsersIcon },
       ];

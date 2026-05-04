@@ -34,7 +34,6 @@ public class DependencyScanController {
     private final VulnerabilityIssueService vulnerabilityIssueService;
 
     @PostMapping("/parse")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
     public ResponseEntity<List<ParsedDependency>> parseManifest(
         @RequestParam("file") MultipartFile file
     ) {
@@ -51,10 +50,8 @@ public class DependencyScanController {
     }
 
     @PostMapping("/nvd")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
     public ResponseEntity<Map<String, Object>> scanDependenciesAgainstNvd(
-        @RequestParam("file") MultipartFile file,
-        @RequestParam(defaultValue = "true") boolean autoCreateIssues
+        @RequestParam("file") MultipartFile file
     ) {
         try {
             String fileName = file.getOriginalFilename();
