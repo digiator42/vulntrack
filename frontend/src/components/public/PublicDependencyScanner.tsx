@@ -35,7 +35,7 @@ const PublicDependencyScanner: React.FC<PublicDependencyScannerProps> = ({
   const [result, setResult] = useState<PublicScanResult | null>(null);
   const [expandedCves, setExpandedCves] = useState<Record<string, boolean>>({});
   const [searchProduct, setSearchProduct] = useState("");
-  const [cpeResult, setCpeResult] = useState<any>(null);
+  const [cpeResults, setCpeResult] = useState<any[]>([]);
   const [searchingCpe, setSearchingCpe] = useState(false);
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
@@ -98,7 +98,7 @@ const PublicDependencyScanner: React.FC<PublicDependencyScannerProps> = ({
         setCpeResult(result);
         toast.success("CPE mapping found");
       } else {
-        setCpeResult(null);
+        setCpeResult([]);
         toast.error("No CPE mapping found for this product");
       }
     } catch (error) {
@@ -147,8 +147,8 @@ const PublicDependencyScanner: React.FC<PublicDependencyScannerProps> = ({
           </h1>
         </div>
         <p className="text-blue-100 mb-6">
-          Upload your manifest file to identify security
-          vulnerabilities in your dependencies.
+          Upload your manifest file to identify security vulnerabilities in your
+          dependencies.
         </p>
         <div className="flex flex-wrap gap-4 text-sm">
           <div className="flex items-center gap-2">
@@ -204,32 +204,93 @@ const PublicDependencyScanner: React.FC<PublicDependencyScannerProps> = ({
             </button>
           </div>
 
-          {cpeResult && (
-            <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-md">
-              <div className="flex items-start justify-between">
-                <div>
-                  <h4 className="font-semibold text-green-900">
-                    CPE Mapping Found
-                  </h4>
-                  <p className="text-sm text-green-700 mt-1">
-                    <strong>Product:</strong> {cpeResult.product}
-                  </p>
-                  <p className="text-sm text-green-700">
-                    <strong>CPE Name:</strong>{" "}
-                    <code className="bg-green-100 px-1 py-0.5 rounded">
-                      {cpeResult.rawCpeName}
-                    </code>
-                  </p>
-                  <p className="text-sm text-green-700">
-                    <strong>Vendor:</strong> {cpeResult.vendor}
-                  </p>
-                  {cpeResult.notes && (
-                    <p className="text-sm text-green-700 mt-2">
-                      <strong>Notes:</strong> {cpeResult.notes}
-                    </p>
-                  )}
+          {cpeResults.length > 0 ? (
+            <div className="mt-4 space-y-3">
+              <h4 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                <ShieldCheckIcon className="h-4 w-4 text-green-600" />
+                Found {cpeResults.length} CPE Mapping
+                {cpeResults.length > 1 ? "s" : ""}
+              </h4>
+              {cpeResults.map((cpe, index) => (
+                <div
+                  key={cpe.id || index}
+                  className="p-4 bg-green-50 border border-green-200 rounded-md hover:shadow-md transition-shadow"
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-xs font-mono bg-green-100 px-2 py-0.5 rounded text-green-800">
+                          #{index + 1}
+                        </span>
+                        <h4 className="font-semibold text-green-900">
+                          {cpe.product}
+                        </h4>
+                        {cpe.enabled !== undefined && (
+                          <span
+                            className={`text-xs px-2 py-0.5 rounded-full ${cpe.enabled ? "bg-green-200 text-green-800" : "bg-gray-200 text-gray-600"}`}
+                          >
+                            {cpe.enabled ? "Active" : "Inactive"}
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
+                        <div>
+                          <p className="text-xs text-green-700 font-medium">
+                            CPE Name
+                          </p>
+                          <code className="text-sm bg-green-100 px-2 py-1 rounded block mt-1 break-all">
+                            {cpe.cpeName || cpe.rawCpeName}
+                          </code>
+                        </div>
+                        <div>
+                          <p className="text-xs text-green-700 font-medium">
+                            Vendor
+                          </p>
+                          <p className="text-sm text-green-800 mt-1">
+                            {cpe.vendor || "N/A"}
+                          </p>
+                        </div>
+                      </div>
+
+                      {cpe.notes && (
+                        <div className="mt-3 pt-2 border-t border-green-200">
+                          <p className="text-xs text-green-700 font-medium">
+                            Notes
+                          </p>
+                          <p className="text-sm text-green-700 mt-1">
+                            {cpe.notes}
+                          </p>
+                        </div>
+                      )}
+
+                      {cpe.usageCount !== undefined && (
+                        <div className="mt-2">
+                          <p className="text-xs text-green-600">
+                            Usage count: {cpe.usageCount}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                    <ShieldCheckIcon className="h-6 w-6 text-green-600 flex-shrink-0 ml-3" />
+                  </div>
                 </div>
-                <ShieldCheckIcon className="h-6 w-6 text-green-600" />
+              ))}
+            </div>
+          ) : (
+            <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-md">
+              <div className="flex items-start gap-3">
+                <InformationCircleIcon className="h-5 w-5 text-yellow-600 mt-0.5" />
+                <div>
+                  <p className="text-sm text-yellow-800 font-medium">
+                    No CPE mappings found
+                  </p>
+                  <p className="text-xs text-yellow-700 mt-1">
+                    No Common Platform Enumeration (CPE) mappings exist for "
+                    {searchProduct}". This product may not be in the NVD
+                    database or the name might be different.
+                  </p>
+                </div>
               </div>
             </div>
           )}

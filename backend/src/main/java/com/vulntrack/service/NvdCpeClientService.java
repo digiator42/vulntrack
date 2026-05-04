@@ -21,27 +21,45 @@ public class NvdCpeClientService {
         .baseUrl("https://services.nvd.nist.gov/rest/json/cpes/2.0")
         .build();
 
-    /**
-     * Searches NVD CPE Dictionary for a given product keyword. Returns the first
-     * match's CPE Name (e.g., cpe:2.3:a:apache:log4j:*:*:*:*:*:*:*:*)
-     */
-    public String searchCpeInNvd(String productKeyword) {
+    public List<String> searchCpeInNvd(String productKeyword) {
         try {
             NvdCpeResponse response = restClient.get()
                 .uri(
                     uriBuilder -> uriBuilder
                         .queryParam("keywordSearch", productKeyword)
+
                         .build()
                 )
                 .retrieve()
                 .body(NvdCpeResponse.class);
 
-            if (response != null && !response.products().isEmpty()) {
-                return response.products().get(0).cpe().cpeName();
-            }
+            if (response == null || response.products() == null)
+                return List.of();
+
+            return response.products().stream()
+                .map(p -> resolveActiveCpeName(p.cpe()))
+                .filter(name -> name != null && !name.isBlank())
+                .distinct() // multiple deprecated CPEs may share the same deprecatedBy
+                .collect(java.util.stream.Collectors.toList());
+
         } catch (Exception e) {
-            log.error("NVD API Error: {}", e.getMessage());
+            log.error("NVD CPE API error for '{}': {}", productKeyword, e.getMessage());
         }
+        return List.of();
+    }
+
+    private String resolveActiveCpeName(NvdCpeResponse.Cpe cpe) {
+        if (!cpe.deprecated()) {
+            return cpe.cpeName();
+        }
+        // Prefer the first deprecatedBy entry (NVD typically provides exactly one)
+        if (cpe.deprecatedBy() != null && !cpe.deprecatedBy().isEmpty()) {
+            String replacement = cpe.deprecatedBy().get(0).cpeName();
+            log.debug("CPE deprecated: '{}' → resolved to '{}'", cpe.cpeName(), replacement);
+            return replacement;
+        }
+        // Deprecated with no known replacement — discard
+        log.debug("CPE deprecated with no replacement, discarding: '{}'", cpe.cpeName());
         return null;
     }
 }

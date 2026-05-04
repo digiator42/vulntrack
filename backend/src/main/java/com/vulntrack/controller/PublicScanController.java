@@ -10,18 +10,24 @@ import com.vulntrack.service.NvdClientService2;
 import com.vulntrack.service.NvdCpeClientService;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/public")
 @RequiredArgsConstructor
+@Slf4j
 public class PublicScanController {
 
     private final DependencyParserService dependencyParserService;
@@ -74,32 +80,102 @@ public class PublicScanController {
         }
     }
 
+    /**
+     * Search for CPE mappings by product name.
+     *
+     * Flow: 1. Load all DB rows for the product (there may be multiple vendors). 2.
+     * If EVERY row is already enriched (rawCpeName set), return immediately — no
+     * NVD API call needed. 3. Otherwise call NVD to get all matching CPE names for
+     * this keyword. 4. For each CPE returned by NVD, parse vendor+product and
+     * either update the matching existing DB row or create a new one. 5. Any DB
+     * rows that NVD had no match for keep their existing data unchanged. 6. Return
+     * the full merged list so the user can pick the right CPE.
+     */
     @GetMapping("/cpe/search")
     public ResponseEntity<?> searchCpe(@RequestParam String product) {
 
-        // Fetch existing mapping or prepare for a new one
-        List<PackageCpeMapping> mappings = mappingRepository.findByProductCaseInsensitive(product);
+        List<PackageCpeMapping> existingRows = mappingRepository
+            .findAllByProductCaseInsensitive(product);
 
-        // If we already have the CPE name cached, just return it
-        if (!mappings.isEmpty() && mappings.get(0).getRawCpeName() != null) {
-            return ResponseEntity.ok(mappings.get(0));
+        // ── Fast path: all rows already enriched ──────────────────────────────
+        // Only skip the API if every known row has a rawCpeName — not just one.
+        // A product like "spring_boot" may have one enriched pivotal row and one
+        // unenriched vmware row; we still want to fill in the missing one.
+        boolean allEnriched = !existingRows.isEmpty()
+            && existingRows.stream().allMatch(m -> m.getRawCpeName() != null);
+
+        if (allEnriched) {
+            log.debug(
+                "CPE search '{}': all {} rows already enriched, skipping NVD",
+                product, existingRows.size()
+            );
+            return ResponseEntity.ok(existingRows);
         }
 
-        // Fallback: Search NVD CPE Dictionary API
-        String nvdCpeName = nvdCpeClient.searchCpeInNvd(product);
+        // ── NVD enrichment path ───────────────────────────────────────────────
+        List<String> nvdCpeNames = nvdCpeClient.searchCpeInNvd(product);
 
-        if (nvdCpeName != null) {
-            String[] parts = nvdCpeName.split(":");
-            if (parts.length >= 5) {
-                // Update the existing/new object with NVD data
-                if (mappings.get(0) != null) {
-                    mappings.get(0).setRawCpeName(nvdCpeName);
-                    mappingRepository.save(mappings.get(0));
-                }
-                return ResponseEntity.ok(mappings.get(0));
+        if (nvdCpeNames.isEmpty()) {
+            // NVD returned nothing — return whatever we have (may be empty)
+            return existingRows.isEmpty()
+                ? ResponseEntity.notFound().build()
+                : ResponseEntity.ok(existingRows);
+        }
+
+        // Build a mutable map of existing rows keyed by vendor (lowercase) for O(1)
+        // lookup
+        Map<String, PackageCpeMapping> existingByVendor = existingRows.stream()
+            .collect(
+                Collectors.toMap(
+                    m -> m.getVendor().toLowerCase(),
+                    m -> m,
+                    (a, b) -> a // keep first on duplicate vendor (shouldn't happen)
+                )
+            );
+
+        List<PackageCpeMapping> toSave = new ArrayList<>();
+
+        for (String cpeName : nvdCpeNames) {
+            // cpe:2.3:a:<vendor>:<product>:<version>:...
+            String[] parts = cpeName.split(":");
+            if (parts.length < 5) {
+                log.warn("Unexpected CPE format, skipping: {}", cpeName);
+                continue;
+            }
+            String nvdVendor = parts[3].toLowerCase();
+
+            // Only enrich rows that already exist in the curated mapping table.
+            // If NVD returns a vendor we don't recognise, we skip it — we never
+            // create rows from API data, as the mapping table is human-curated.
+            PackageCpeMapping existing = existingByVendor.get(nvdVendor);
+            if (existing == null) {
+                log.debug(
+                    "CPE search '{}': NVD vendor '{}' has no curated row, skipping",
+                    product, nvdVendor
+                );
+                continue;
+            }
+
+            // Preserve manual overrides — only write if rawCpeName is not yet set
+            if (existing.getRawCpeName() == null) {
+                existing.setRawCpeName(cpeName);
+                toSave.add(existing);
             }
         }
 
-        return ResponseEntity.notFound().build();
+        if (!toSave.isEmpty()) {
+            mappingRepository.saveAll(toSave);
+        }
+
+        // Always return the full set of curated rows (enriched or not),
+        // so the user sees every known vendor and can pick the right one.
+        log.info(
+            "CPE search '{}': {} NVD hits enriched {} curated rows, returning {} total",
+            product, nvdCpeNames.size(), toSave.size(), existingRows.size()
+        );
+
+        return existingRows.isEmpty()
+            ? ResponseEntity.notFound().build()
+            : ResponseEntity.ok(existingRows);
     }
 }

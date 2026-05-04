@@ -1,27 +1,32 @@
 package com.vulntrack.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import java.util.List;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public record NvdCpeResponse(
-    List<ProductWrapper> products,
-    int totalResults
+    List<Product> products
 ) {
-    public record ProductWrapper(
-        CpeDetails cpe
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record Product(
+        Cpe cpe
     ) {
     }
 
-    public record CpeDetails(
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record Cpe(
         String cpeName,
-        String lastModified,
-        String created,
-        List<Title> titles
+        String cpeNameId,
+        boolean deprecated,
+        List<DeprecatedBy> deprecatedBy
     ) {
     }
 
-    public record Title(
-        String title,
-        String lang
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record DeprecatedBy(
+        String cpeName,
+        String cpeNameId
     ) {
     }
 }
