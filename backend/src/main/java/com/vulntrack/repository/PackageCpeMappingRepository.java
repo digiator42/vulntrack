@@ -15,7 +15,7 @@ public interface PackageCpeMappingRepository extends JpaRepository<PackageCpeMap
 
     // Level 1: Exact product match (case-insensitive)
     @Query("SELECT m FROM PackageCpeMapping m WHERE LOWER(m.product) = LOWER(:product)")
-    Optional<PackageCpeMapping> findByProductCaseInsensitive(@Param("product") String product);
+    List<PackageCpeMapping> findByProductCaseInsensitive(String product);
 
     // Level 2: Exact vendor match (case-insensitive)
     @Query("SELECT m FROM PackageCpeMapping m WHERE LOWER(m.vendor) = LOWER(:vendor)")

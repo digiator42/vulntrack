@@ -57,7 +57,9 @@ public class SecurityConfig {
                     // Allow the handshake
                     .requestMatchers("/ws/**").permitAll()
                     // Allow public resources
-                    .requestMatchers("/api/auth/**", "/v3/api-docs/**", "/swagger-ui/**").permitAll()
+                    .requestMatchers(
+                        "/public/**", "/api/auth/**", "/v3/api-docs/**", "/swagger-ui/**"
+                    ).permitAll()
                     // API endpoints require authentication
                     .requestMatchers("/api/**").authenticated()
                     // DELETE requires ADMIN role

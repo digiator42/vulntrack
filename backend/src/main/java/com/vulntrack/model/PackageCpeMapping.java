@@ -30,6 +30,9 @@ public class PackageCpeMapping {
     @Column(nullable = false, length = 255)
     private String product;
 
+    @Column(name = "raw_cpe_name")
+    private String rawCpeName; // Store "cpe:2.3:a:apache:log4j:*:*:*:*:*:*:*:*"
+
     @Column(length = 50)
     private String ecosystem; // MAVEN, NPM, PYPI, etc.
 

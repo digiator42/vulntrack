@@ -18,10 +18,8 @@ public class CpeMappingController {
     private final PackageCpeMappingRepository mappingRepository;
 
     @GetMapping("/search")
-    public ResponseEntity<PackageCpeMapping> findByProduct(@RequestParam String product) {
-        return mappingRepository.findByProductCaseInsensitive(product)
-            .map(ResponseEntity::ok)
-            .orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<List<PackageCpeMapping>> findByProduct(@RequestParam String product) {
+        return ResponseEntity.ok(mappingRepository.findByProductCaseInsensitive(product));
     }
 
     @PostMapping
