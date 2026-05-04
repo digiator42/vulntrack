@@ -83,53 +83,76 @@ public class PublicScanController {
     /**
      * Search for CPE mappings by product name.
      *
-     * Flow: 1. Load all DB rows for the product (there may be multiple vendors). 2.
-     * If EVERY row is already enriched (rawCpeName set), return immediately — no
-     * NVD API call needed. 3. Otherwise call NVD to get all matching CPE names for
-     * this keyword. 4. For each CPE returned by NVD, parse vendor+product and
-     * either update the matching existing DB row or create a new one. 5. Any DB
-     * rows that NVD had no match for keep their existing data unchanged. 6. Return
-     * the full merged list so the user can pick the right CPE.
+     * Flow: 1. Exact match in curated table → enrich via NVD if needed, return
+     * results. 2. No exact match → fuzzy LIKE search in the 64k table → return
+     * suggestions. The caller should re-invoke with the chosen product name from
+     * the suggestions. We never forward an ambiguous user keyword to NVD directly —
+     * "spring" would return hundreds of unrelated CPEs. The curated table is the
+     * disambiguation layer. 3. No fuzzy match either → 404.
+     *
+     * Response shape: { "type": "results", "results": [ ...PackageCpeMapping... ] }
+     * <- exact hit { "type": "suggestions", "query": "...", "suggestions": [ ... ]
+     * } <- needs refinement
      */
     @GetMapping("/cpe/search")
     public ResponseEntity<?> searchCpe(@RequestParam String product) {
 
-        List<PackageCpeMapping> existingRows = mappingRepository
+        List<PackageCpeMapping> exactRows = mappingRepository
             .findAllByProductCaseInsensitive(product);
 
+        // ── No exact match: return fuzzy suggestions from the 64k table ───────
+        // The user typed "spring" but the canonical product is "spring_framework".
+        // We let the user pick the right product name from our curated table first,
+        // then they re-call this endpoint with the confirmed name.
+        if (exactRows.isEmpty()) {
+            List<PackageCpeMapping> suggestions = mappingRepository
+                .findByProductContainingIgnoreCase(product);
+
+            if (suggestions.isEmpty()) {
+                return ResponseEntity.notFound().build();
+            }
+
+            log.debug(
+                "CPE search '{}': no exact match, returning {} suggestions",
+                product, suggestions.size()
+            );
+
+            return ResponseEntity.ok(
+                Map.of(
+                    "type", "suggestions",
+                    "query", product,
+                    "suggestions", suggestions
+                )
+            );
+        }
+
         // ── Fast path: all rows already enriched ──────────────────────────────
-        // Only skip the API if every known row has a rawCpeName — not just one.
-        // A product like "spring_boot" may have one enriched pivotal row and one
-        // unenriched vmware row; we still want to fill in the missing one.
-        boolean allEnriched = !existingRows.isEmpty()
-            && existingRows.stream().allMatch(m -> m.getRawCpeName() != null);
+        boolean allEnriched = exactRows.stream()
+            .allMatch(m -> m.getRawCpeName() != null);
 
         if (allEnriched) {
             log.debug(
                 "CPE search '{}': all {} rows already enriched, skipping NVD",
-                product, existingRows.size()
+                product, exactRows.size()
             );
-            return ResponseEntity.ok(existingRows);
+            return ResponseEntity.ok(Map.of("type", "results", "results", exactRows));
         }
 
         // ── NVD enrichment path ───────────────────────────────────────────────
+        // We reach here with a confirmed canonical product name (exact DB match),
+        // so NVD will return precise results rather than a broad keyword dump.
         List<String> nvdCpeNames = nvdCpeClient.searchCpeInNvd(product);
 
         if (nvdCpeNames.isEmpty()) {
-            // NVD returned nothing — return whatever we have (may be empty)
-            return existingRows.isEmpty()
-                ? ResponseEntity.notFound().build()
-                : ResponseEntity.ok(existingRows);
+            return ResponseEntity.ok(Map.of("type", "results", "results", exactRows));
         }
 
-        // Build a mutable map of existing rows keyed by vendor (lowercase) for O(1)
-        // lookup
-        Map<String, PackageCpeMapping> existingByVendor = existingRows.stream()
+        Map<String, PackageCpeMapping> existingByVendor = exactRows.stream()
             .collect(
                 Collectors.toMap(
                     m -> m.getVendor().toLowerCase(),
                     m -> m,
-                    (a, b) -> a // keep first on duplicate vendor (shouldn't happen)
+                    (a, b) -> a
                 )
             );
 
@@ -145,8 +168,7 @@ public class PublicScanController {
             String nvdVendor = parts[3].toLowerCase();
 
             // Only enrich rows that already exist in the curated mapping table.
-            // If NVD returns a vendor we don't recognise, we skip it — we never
-            // create rows from API data, as the mapping table is human-curated.
+            // Never create rows from API data — the mapping table is human-curated.
             PackageCpeMapping existing = existingByVendor.get(nvdVendor);
             if (existing == null) {
                 log.debug(
@@ -167,15 +189,11 @@ public class PublicScanController {
             mappingRepository.saveAll(toSave);
         }
 
-        // Always return the full set of curated rows (enriched or not),
-        // so the user sees every known vendor and can pick the right one.
         log.info(
             "CPE search '{}': {} NVD hits enriched {} curated rows, returning {} total",
-            product, nvdCpeNames.size(), toSave.size(), existingRows.size()
+            product, nvdCpeNames.size(), toSave.size(), exactRows.size()
         );
 
-        return existingRows.isEmpty()
-            ? ResponseEntity.notFound().build()
-            : ResponseEntity.ok(existingRows);
-    }
+        return ResponseEntity.ok(Map.of("type", "results", "results", exactRows));
+    }   
 }

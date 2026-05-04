@@ -13,6 +13,8 @@ public interface PackageCpeMappingRepository extends JpaRepository<PackageCpeMap
 
     Optional<PackageCpeMapping> findByProductAndEcosystem(String product, String ecosystem);
 
+    List<PackageCpeMapping> findByProductContainingIgnoreCase(String product);
+
     // Level 1: Exact product match (case-insensitive)
     @Query("SELECT m FROM PackageCpeMapping m WHERE LOWER(m.product) = LOWER(:product)")
     List<PackageCpeMapping> findByProductCaseInsensitive(String product);

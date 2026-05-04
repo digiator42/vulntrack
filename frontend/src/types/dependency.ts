@@ -41,4 +41,6 @@ export interface PackageCpeMapping {
   createdAt: string;
   usageCount: number;
   enabled: boolean;
+  ecosystem: 'MAVEN' | 'NPM' | 'PYPI' | 'NUGET' | 'GRADLE';
+  rawCpeName: string; // The original CPE name from NVD
 }
