@@ -3,6 +3,7 @@ package com.vulntrack.controller;
 import java.util.Map;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -54,6 +55,7 @@ public class AuthController {
     }
 
     @PostMapping("/register")
+    @PreAuthorize("hasRole('ROLE_ADMIN')") // Only admins can register new users
     public ResponseEntity<?> register(@RequestBody RegisterRequest req) {
         // Check if user already exists
         if (userRepository.existsByUsername(req.username())) {

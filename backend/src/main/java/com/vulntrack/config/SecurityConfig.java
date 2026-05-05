@@ -58,7 +58,7 @@ public class SecurityConfig {
                     .requestMatchers("/ws/**").permitAll()
                     // Allow public resources
                     .requestMatchers(
-                        "/public/**", "/api/auth/**", "/v3/api-docs/**", "/swagger-ui/**"
+                        "/public/**", "/api/auth/**", "/api/nvd/**", "/v3/api-docs/**", "/swagger-ui/**"
                     ).permitAll()
                     // API endpoints require authentication
                     .requestMatchers("/api/**").authenticated()
