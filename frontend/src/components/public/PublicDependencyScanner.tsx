@@ -326,7 +326,7 @@ const PublicDependencyScanner: React.FC = () => {
             cpeResponse.suggestions &&
             cpeResponse.suggestions.length > 0 && (
               <div className="mt-4 space-y-3">
-                <div className="p-4 bg-blue-50 border border-blue-200 rounded-md">
+                <div className="p-4 bg-orange-100 border border-blue-200 rounded-md">
                   <div className="flex items-start gap-3">
                     <LightBulbIcon className="h-5 w-5 text-blue-600 mt-0.5" />
                     <div className="flex-1">
@@ -566,8 +566,7 @@ const PublicDependencyScanner: React.FC = () => {
                 </p>
                 <p className="text-xs text-yellow-700 mt-1">
                   This scan uses public NVD data. Results are for informational
-                  purposes only. To create and track issues, please sign up for
-                  a free account.
+                  purposes only.
                 </p>
               </div>
             </div>
@@ -713,24 +712,6 @@ const PublicDependencyScanner: React.FC = () => {
                 ))
               )}
             </div>
-          </div>
-
-          {/* Call to Action */}
-          <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-6 text-center border border-blue-200">
-            <h4 className="text-lg font-semibold text-gray-900 mb-2">
-              Want to track these vulnerabilities?
-            </h4>
-            <p className="text-gray-600 mb-4">
-              Create a free account to turn these findings into actionable
-              security issues, assign them to developers, and track remediation
-              progress.
-            </p>
-            <button
-              onClick={() => (window.location.href = "/register")}
-              className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-            >
-              Sign Up Free
-            </button>
           </div>
         </div>
       )}

@@ -50,11 +50,15 @@ const Navbar: React.FC = () => {
       ];
     }
 
+    if (role === "ROLE_DEVELOPER") {
+      return [
+        { name: "Dashboard", href: "/dashboard", icon: ChartBarIcon },
+        { name: "My Issues", href: "/issues", icon: BugAntIcon },
+      ];
+    }
+
     // Developer sees only issues (no create issue)
-    return [
-      { name: "Dashboard", href: "/dashboard", icon: ChartBarIcon },
-      { name: "My Issues", href: "/issues", icon: BugAntIcon },
-    ];
+    return [];
   };
 
   const navigation = getNavigation();
@@ -93,7 +97,9 @@ const Navbar: React.FC = () => {
                 ))}
               </div>
             </div>
-            <div className="flex items-center space-x-4">
+            {/* User Info */}
+            {user ? (
+              <div className="flex items-center space-x-4">
               <span className="text-sm text-gray-600">
                 👤 {user?.username || "User"} (
                 {user?.role?.replace("ROLE_", "")})
@@ -105,6 +111,16 @@ const Navbar: React.FC = () => {
                 Logout
               </button>
             </div>
+            ) : (
+              <div className="flex items-center space-x-4">
+                <Link
+                  href="/login"
+                  className="inline-flex items-center border rounded border-white px-6 py-1.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-800"
+                >
+                  Login
+                </Link>
+              </div>
+            )}
           </div>
         </div>
       </nav>

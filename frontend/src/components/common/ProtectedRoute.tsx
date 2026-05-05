@@ -16,12 +16,12 @@ export function withAuth<P extends object>(
   return function WithAuthComponent(props: P) {
     const { isAuthenticated, loading, user } = useAuth();
     const router = useRouter();
-    const { allowedRoles, redirectTo = "/" } = options;
+    const { allowedRoles, redirectTo = "/scan" } = options;
 
     useEffect(() => {
       if (!loading) {
         if (!isAuthenticated) {
-          router.push("/login");
+          router.push("/scan");
           return;
         }
 
