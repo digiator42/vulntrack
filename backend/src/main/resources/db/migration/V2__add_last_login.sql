@@ -1,4 +1,3 @@
-ALTER TABLE users 
-    ADD COLUMN last_login TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    ADD COLUMN email VARCHAR(255) NOT NULL DEFAULT '____@example.com' UNIQUE,
-    ADD COLUMN token VARCHAR(255) NOT NULL DEFAULT '____';
+version https://git-lfs.github.com/spec/v1
+oid sha256:966c0d35b7d6596d330a251fbd15f6bb60483478a8882603edfc6f206ee33af9
+size 248
