@@ -104,16 +104,20 @@ const PublicDependencyScanner: React.FC = () => {
     }
   };
 
-  const handleSearchCpe = async () => {
-    if (!searchProduct.trim()) {
+  const handleSearchCpe = async (searchTerm?: string) => {
+      const productToSearch = searchTerm || searchProduct;
+
+    if (!productToSearch?.trim()) {
       toast.error("Please enter a product name");
       return;
     }
 
     setSearchingCpe(true);
     try {
-      const response = await publicSearchCpe(searchProduct);
+      const response = await publicSearchCpe(productToSearch);
       setCpeResponse(response);
+
+      console.log("CPE Search Response:", productToSearch);
 
       if (
         response.type === "results" &&
@@ -177,7 +181,7 @@ const PublicDependencyScanner: React.FC = () => {
         <div className="flex items-center gap-3 mb-3">
           <ShieldCheckIcon className="h-8 w-8" />
           <h1 className="text-xl font-bold">
-            Free Dependency Vulnerability Scanner
+            Dependency Vulnerability Scanner
           </h1>
         </div>
         <p className="text-blue-100 mb-4 text-sm">
@@ -221,7 +225,7 @@ const PublicDependencyScanner: React.FC = () => {
               onKeyPress={(e) => e.key === "Enter" && handleSearchCpe()}
             />
             <button
-              onClick={handleSearchCpe}
+              onClick={() => handleSearchCpe()}
               disabled={searchingCpe}
               className="px-3 py-1.5 bg-purple-600 text-white text-sm rounded-md hover:bg-purple-700 disabled:opacity-50 flex items-center gap-1"
             >
@@ -316,7 +320,7 @@ const PublicDependencyScanner: React.FC = () => {
                       className="p-2 bg-blue-50 border border-blue-200 rounded-md cursor-pointer hover:bg-blue-100"
                       onClick={() => {
                         setSearchProduct(cpe.product);
-                        handleSearchCpe();
+                        handleSearchCpe(cpe.product);
                       }}
                     >
                       <div className="flex items-center justify-between">

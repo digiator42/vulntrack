@@ -36,84 +36,84 @@ api.interceptors.response.use(
 );
 
 export const createIssue = async (data: any): Promise<Issue> => {
-  const response = await api.post('/issues', data);
+  const response = await api.post('/api/issues', data);
   return response.data;
 };
 
 export const getIssues = async (page: number = 0, size: number = 10, sort?: string): Promise<PageableResponse<Issue>> => {
-  const response = await api.get('/issues', { params: { page, size, sort } });
+  const response = await api.get('/api/issues', { params: { page, size, sort } });
   return response.data;
 };
 
 export const getIssueById = async (id: number): Promise<Issue> => {
-  const response = await api.get(`/issues/${id}`);
+  const response = await api.get(`/api/issues/${id}`);
   return response.data;
 };
 
 export const updateIssue = async (id: number, data: { title: string; description: string; severity: string }): Promise<Issue> => {
-  const response = await api.put(`/issues/${id}`, data);
+  const response = await api.put(`/api/issues/${id}`, data);
   return response.data;
 };
 
 export const patchIssue = async (id: number, data: { status?: string; title?: string; description?: string }): Promise<Issue> => {
-  const response = await api.patch(`/issues/${id}`, data);
+  const response = await api.patch(`/api/issues/${id}`, data);
   return response.data;
 };
 
 export const deleteIssue = async (id: number): Promise<void> => {
-  await api.delete(`/issues/${id}`);
+  await api.delete(`/api/issues/${id}`);
 };
 
 export const searchIssues = async (criteria: any[], page: number, size: number): Promise<PageableResponse<Issue>> => {
-  const response = await api.post(`/issues/search?page=${page}&size=${size}`, criteria);
+  const response = await api.post(`/api/issues/search?page=${page}&size=${size}`, criteria);
   return response.data;
 };
 
 export const getDashboardMetrics = async (): Promise<any> => {
-  const response = await api.get('/dashboard/metrics');
+  const response = await api.get('/api/dashboard/metrics');
   return response.data;
 };
 
 export const getCWEList = async (): Promise<any[]> => {
-  const response = await api.get('/cwe');
+  const response = await api.get('/api/cwe');
   return response.data;
 };
 
 export const getCWEDetails = async (id: string): Promise<any> => {
-  const response = await api.get(`/cwe/${id}`);
+  const response = await api.get(`/api/cwe/${id}`);
   return response.data;
 };
 
 export const getMyIssues = async (page: number = 0, size: number = 10): Promise<PageableResponse<Issue>> => {
-  const response = await api.get('/issues/me', { params: { page, size } });
+  const response = await api.get('/api/issues/me', { params: { page, size } });
   return response.data;
 };
 
 // Get all users (admin only)
 export const getUsers = async (): Promise<User[]> => {
-  const response = await api.get('/admin/users');
+  const response = await api.get('/api/admin/users');
   return response.data;
 };
 
 // Update user role (admin only)
 export const updateUserRole = async (userId: number, role: {newRole: String}): Promise<void> => {
-  await api.patch(`/admin/users/${userId}/role?newRole=${role.newRole}`, JSON.stringify(role));
+  await api.patch(`/api/admin/users/${userId}/role?newRole=${role.newRole}`, JSON.stringify(role));
 };
 
 // Assign issue to developer (admin only)
 export const assignIssue = async (issueId: number, assigneeId: number): Promise<Issue> => {
-  const response = await api.post(`/admin/issues/${issueId}/assign?assigneeId=${assigneeId}`);
+  const response = await api.post(`/api/admin/issues/${issueId}/assign?assigneeId=${assigneeId}`);
   return response.data;
 };
 
 // Unassign issue (admin only)
 export const unassignIssue = async (issueId: number): Promise<Issue> => {
-  const response = await api.delete(`/admin/issues/${issueId}/assign`);
+  const response = await api.delete(`/api/admin/issues/${issueId}/assign`);
   return response.data;
 };
 
 export const getActivities = async (issueId: number): Promise<any> => {
-  const response = await api.get(`/collaborate/${issueId}/activity`);
+  const response = await api.get(`/api/collaborate/${issueId}/activity`);
   return response.data;
 };
 

@@ -121,7 +121,7 @@ public class PublicScanController {
                 Map.of(
                     "type", "suggestions",
                     "query", product,
-                    "suggestions", suggestions
+                    "suggestions", suggestions.subList(0, Math.min(suggestions.size(), 100))
                 )
             );
         }

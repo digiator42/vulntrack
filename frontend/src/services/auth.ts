@@ -13,21 +13,21 @@ interface User {
 }
 
 export const login = async (username: string, password: string): Promise<LoginResponse> => {
-  const response = await api.post('/auth/login', { username, password });
+  const response = await api.post('/api/auth/login', { username, password });
   return response.data;
 };
 
 export const logout = async (): Promise<string> => {
-  const response = await api.post('/auth/logout');
+  const response = await api.post('/api/auth/logout');
   return response.data;
 };
 
 export const register = async (username: string, password: string, email: string): Promise<string> => {
-  const response = await api.post('/auth/register', { username, password, email });
+  const response = await api.post('/api/auth/register', { username, password, email });
   return response.data;
 };
 
 export const getCurrentUser = async (): Promise<User> => {
-  const response = await api.get('/auth/me');
+  const response = await api.get('/api/auth/me');
   return response.data;
 };
