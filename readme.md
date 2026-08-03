@@ -33,7 +33,15 @@ One of the biggest challenges in vulnerability management is **CPE (Common Plat
 ### VulunTrack Solution
 
 We integrated **[TII's CPEdict](https://github.com/tiiuae/cpedict)** - a curated CPE dictionary with over **64,000 mappings**. This solves the CPE naming ambiguity problem:
-
+```mermaid
+graph LR
+    A["User Searches #quot;spring#quot;"] --> B{"Exact Match?"}
+    B -->|"No"| C["Fuzzy Suggestions"]
+    C --> D["User Selects Correct Product"]
+    D --> E["Auto-Enrich from NVD"]
+    B -->|"Yes"| E
+    E --> F["Show CVEs for that CPE"]
+```
 ---
 ## 🏗️ Architecture Overview
 
@@ -52,7 +60,7 @@ We integrated **[TII's CPEdict](https://github.com/tiiuae/cpedict)** - a curat
 │                        Backend (Spring Boot)                    │
 │  ┌─────────────┐ ┌─────────────────┐ ┌────────────────────┐     │ 
 │  │   RBAC      │ │  Local NVD DB   │ │  CPE Mapping Engine│     │
-│  │ (3 Roles)   │ │  (800k+ CVEs)   │ │  (64k+ CPEs)       │     │
+│  │ (3 Roles)   │ │  (300k+ CVEs)   │ │  (64k+ CPEs)       │     │
 │  └─────────────┘ └─────────────────┘ └────────────────────┘     │
 └─────────────────────────────────────────────────────────────────┘
                               │
@@ -154,7 +162,7 @@ Dev2 creds  -> dev2 : password
 ```
 
 ## PG database
-- You can find PG database backup in root, add it to your current databases, name it with vuluntrack_dev, so spring boot can make a connection with it.
+- You can find PG database backup in root, add it to your current databases, name it with vuluntrack_dev, so spring boot can connect to it.
 
 ```
 psql -U username -d database_name -f path/to/file.sql
