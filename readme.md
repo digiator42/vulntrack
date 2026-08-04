@@ -79,7 +79,7 @@ graph LR
 
 Instead of making **live API calls** to NVD (slow, rate-limited, unreliable):
 
-- ✅ **800,000+ CVEs** pre-populated locally (saved with multiple vendors(A vendor could have multiple CVES))
+- ✅ **300,000+ CVEs / 800k rows** pre-populated locally (A vendor could have multiple CVES)
     
 - ✅ **Raw JSON Storage** - Store the complete NVD JSON for each CVE
     
