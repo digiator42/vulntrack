@@ -29,7 +29,7 @@ RUN mvn -B -ntp package -DskipTests
 
 FROM eclipse-temurin:21-jre
 RUN apt-get update \
- && apt-get install -y --no-install-recommends ca-certificates curl \
+ && apt-get install -y --no-install-recommends ca-certificates curl postgresql-client \
  && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 # The artifact is vuluntrack-0.0.1-SNAPSHOT.jar; ship it under a

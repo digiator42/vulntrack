@@ -78,5 +78,32 @@ if [ -z "$SPRING_DATASOURCE_URL" ] && [ -n "$DATABASE_URL" ]; then
     esac
 fi
 
+# Neon (free tier) auto-suspends its compute after a few idle minutes.
+# If the container boots while the DB sleeps, Hikari (1ms init timeout)
+# fails the datasource and the whole app fails to start. Rather than
+# tuning pool properties (Hikari's config is sealed once started, and
+# those properties cannot be env-bound after the fact), wait here until
+# the database answers a real query, then start the JVM.
+if [ -n "$SPRING_DATASOURCE_URL" ] && command -v psql >/dev/null 2>&1; then
+    WAIT_DB_URL="$DATABASE_URL"
+    if [ -z "$WAIT_DB_URL" ]; then
+        # Rebuild a libpq URI from the already-parsed Spring properties.
+        WAIT_DB_URL="postgresql://${SPRING_DATASOURCE_USERNAME}:${SPRING_DATASOURCE_PASSWORD}@${SPRING_DATASOURCE_URL#jdbc:postgresql://}"
+        WAIT_DB_URL="${WAIT_DB_URL%\?*}"
+        [ "${WAIT_DB_URL#*\?}" != "$WAIT_DB_URL" ] || WAIT_DB_URL="${WAIT_DB_URL}?sslmode=require"
+    fi
+    echo "[entrypoint] waiting for database to accept connections..."
+    waited=0
+    until psql "$WAIT_DB_URL" -tAc 'SELECT 1' >/dev/null 2>&1; do
+        waited=$((waited + 1))
+        if [ "$waited" -ge 40 ]; then
+            echo "[entrypoint] database still unreachable after 200s; starting anyway"
+            break
+        fi
+        sleep 5
+    done
+    [ "$waited" -ge 40 ] || echo "[entrypoint] database reachable"
+fi
+
 # Vercel injects PORT; Spring reads SERVER_PORT, so translate it here too.
 exec java $JAVA_OPTS -jar /app/vuluntrack-backend.jar --server.port="${PORT:-8080}"
