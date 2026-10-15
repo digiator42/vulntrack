@@ -1,0 +1,43 @@
+# vuluntrack backend on Vercel (container service).
+#
+# Spring Boot 3.3.5 / Java 21. Deployed with `vercel deploy --prod` from
+# backend/ (see vercel.json).
+#
+# Runtime config comes from the environment:
+#   - PORT is injected by Vercel and translated to Spring's server.port
+#     in the CMD below (Spring does not read PORT itself).
+#   - SERVER_ADDRESS=0.0.0.0 is baked in so the JVM listens on all
+#     interfaces inside the container.
+#   - Postgres is REQUIRED: Flyway runs the migrations in
+#     src/main/resources/db/migration (packaged inside the jar), and
+#     they are Postgres-flavoured SQL (BIGSERIAL, etc.), so the default
+#     in-memory H2 fallback in application.yml will fail to boot.
+#     Set SPRING_DATASOURCE_URL / SPRING_DATASOURCE_USERNAME /
+#     SPRING_DATASOURCE_PASSWORD to a real Postgres (e.g. Neon), as a
+#     JDBC URL: jdbc:postgresql://host:5432/dbname
+#     Vercel's Postgres env var DATABASE_URL is NOT read by Spring —
+#     convert it to the JDBC form above.
+#   - Without a datasource the app falls back to ephemeral in-memory
+#     H2 (and Flyway will likely fail on the Postgres-only DDL).
+FROM maven:3.9-eclipse-temurin-21 AS builder
+WORKDIR /src
+# pom first for dependency-layer caching
+COPY pom.xml ./
+RUN mvn -B -ntp dependency:go-offline -DskipTests
+COPY src ./src
+RUN mvn -B -ntp package -DskipTests
+
+FROM eclipse-temurin:21-jre
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends ca-certificates curl \
+ && rm -rf /var/lib/apt/lists/*
+WORKDIR /app
+# The artifact is vuluntrack-0.0.1-SNAPSHOT.jar; ship it under a
+# meaningful name. Migrations are already inside the jar
+# (src/main/resources/db/migration), so no extra COPY is needed.
+COPY --from=builder /src/target/vuluntrack-0.0.1-SNAPSHOT.jar /app/vuluntrack-backend.jar
+ENV SERVER_ADDRESS=0.0.0.0 \
+    SERVER_PORT=8080
+EXPOSE 8080
+# Vercel injects PORT; Spring reads SERVER_PORT, so translate it here.
+CMD ["sh", "-c", "exec java $JAVA_OPTS -jar /app/vuluntrack-backend.jar --server.port=${PORT:-8080}"]
