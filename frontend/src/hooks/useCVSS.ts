@@ -13,7 +13,7 @@ interface CVSSMetrics {
 }
 
 export const useCVSS = (initialVector?: string) => {
-  const [metrics, setMetrics] = useState({
+  const [metrics, setMetrics] = useState<CVSSMetrics>({
     AV: 'N',
     AC: 'L',
     PR: 'N',
@@ -63,9 +63,9 @@ export const useCVSS = (initialVector?: string) => {
     return Math.ceil(baseScore * 10) / 10;
   }, []);
 
-  const updateMetric = useCallback((key: keyof CVSSMetrics, value: string) => {
+  const updateMetric = useCallback(<K extends keyof CVSSMetrics>(key: K, value: CVSSMetrics[K]) => {
     setMetrics(prev => {
-      const ms: CVSSMetrics = { ...prev, [key]: value };
+      const ms = { ...prev, [key]: value } as CVSSMetrics;
       const newScore = calculateScore(ms);
       setScore(newScore);
       
