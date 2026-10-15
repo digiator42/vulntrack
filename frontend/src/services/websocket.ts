@@ -2,6 +2,23 @@
 import { Client, Stomp } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 
+// Resolve the STOMP/SockJS endpoint from the environment:
+//   1. NEXT_PUBLIC_WS_URL        - explicit full URL (e.g. https://host/ws)
+//   2. NEXT_PUBLIC_API_URL + /ws - API base is a bare origin; /ws sits at
+//                                   the backend root, not under /api
+//   3. http://localhost:8080/ws  - local dev fallback
+function resolveWsUrl(): string {
+  const explicit = process.env.NEXT_PUBLIC_WS_URL;
+  if (explicit) {
+    return explicit;
+  }
+  const apiBase = process.env.NEXT_PUBLIC_API_URL;
+  if (apiBase) {
+    return `${apiBase.replace(/\/+$/, '')}/ws`;
+  }
+  return 'http://localhost:8080/ws';
+}
+
 class WebSocketService {
   private client: Client | null = null;
   private subscriptions: Map<string, any> = new Map();
@@ -10,7 +27,7 @@ class WebSocketService {
     return new Promise((resolve, reject) => {
         console.log("===> ");
       this.client = new Client({
-        webSocketFactory: () => new SockJS(`http://localhost:8080/ws`),
+        webSocketFactory: () => new SockJS(resolveWsUrl()),
         connectHeaders: {
           Authorization: `Bearer ${localStorage.getItem('token')}`,
         },
