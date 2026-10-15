@@ -4,14 +4,16 @@ import com.vulntrack.model.PackageCpeMapping;
 import com.vulntrack.repository.PackageCpeMappingRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.ApplicationArguments;
+import org.springframework.boot.ApplicationRunner;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-import jakarta.annotation.PostConstruct;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -19,12 +21,23 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class CpeMappingImportService {
+public class CpeMappingImportService implements ApplicationRunner {
 
     private final PackageCpeMappingRepository mappingRepository;
+    private final JdbcTemplate jdbcTemplate;
 
-    @PostConstruct
-    @Transactional
+    // Multi-row INSERT chunk size. With JPA IDENTITY ids Hibernate cannot
+    // batch, so saveAll() issued one INSERT per row -- an hours-long import
+    // over a remote (Neon) database. 500 rows => 7 params x 500 values.
+    private static final int CHUNK = 500;
+
+    // Runs after Tomcat has bound the port (was @PostConstruct, which
+    // blocked context refresh and kept the port closed during the import).
+    @Override
+    public void run(ApplicationArguments args) {
+        importCsvMappings();
+    }
+
     public void importCsvMappings() {
         if (mappingRepository.count() > 0) {
             log.info(
@@ -81,9 +94,9 @@ public class CpeMappingImportService {
                         }
                     }
 
-                    // Batch save every 1000 records
-                    if (mappings.size() >= 1000) {
-                        mappingRepository.saveAll(mappings);
+                    // Flush every CHUNK rows as a single multi-row INSERT
+                    if (mappings.size() >= CHUNK) {
+                        bulkInsert(mappings);
                         log.info("Saved {} mappings so far...", count);
                         mappings.clear();
                     }
@@ -99,7 +112,7 @@ public class CpeMappingImportService {
 
             // Save remaining
             if (!mappings.isEmpty()) {
-                mappingRepository.saveAll(mappings);
+                bulkInsert(mappings);
             }
 
             reader.close();
@@ -111,6 +124,41 @@ public class CpeMappingImportService {
         } catch (Exception e) {
             log.error("Failed to import CPE mappings", e);
         }
+    }
+
+    /**
+     * Insert a chunk of mappings with a single multi-row INSERT statement.
+     * repository.saveAll() cannot batch here: with IDENTITY generation
+     * Hibernate must execute each INSERT separately, which is one network
+     * round trip per row and unbearably slow against a remote database.
+     */
+    private void bulkInsert(List<PackageCpeMapping> mappings) {
+        if (mappings.isEmpty()) {
+            return;
+        }
+
+        StringBuilder sql = new StringBuilder(
+            "INSERT INTO package_cpe_mapping "
+            + "(vendor, product, raw_cpe_name, ecosystem, created_at, usage_count, enabled) VALUES ");
+        List<Object> params = new ArrayList<>();
+
+        for (int i = 0; i < mappings.size(); i++) {
+            if (i > 0) {
+                sql.append(", ");
+            }
+            sql.append("(?, ?, ?, ?, ?, ?, ?)");
+
+            PackageCpeMapping m = mappings.get(i);
+            params.add(m.getVendor());
+            params.add(m.getProduct());
+            params.add(m.getRawCpeName());
+            params.add(m.getEcosystem());
+            params.add(Timestamp.valueOf(m.getCreatedAt()));
+            params.add(m.getUsageCount());
+            params.add(m.isEnabled());
+        }
+
+        jdbcTemplate.update(sql.toString(), params.toArray());
     }
 
     /**

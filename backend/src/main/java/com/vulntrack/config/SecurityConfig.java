@@ -1,5 +1,6 @@
 package com.vulntrack.config;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -23,6 +24,7 @@ import com.vulntrack.filter.JwtAuthFilter;
 import lombok.RequiredArgsConstructor;
 
 import java.util.Arrays;
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity
@@ -73,6 +75,12 @@ public class SecurityConfig {
         return http.build();
     }
 
+    // Allow requests from Next.js frontend. Comma-separated list via the
+    // CORS_ALLOWED_ORIGINS env var (e.g. for the Vercel frontend domain);
+    // defaults to the local dev origins.
+    @Value("${cors.allowed-origins:http://localhost:3000,http://127.0.0.1:3000}")
+    private List<String> allowedOrigins;
+
     @Bean
     CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
@@ -80,13 +88,7 @@ public class SecurityConfig {
         // Allow credentials (cookies, authorization headers, etc.)
         configuration.setAllowCredentials(true);
 
-        // Allow requests from Next.js frontend
-        configuration.setAllowedOrigins(
-            Arrays.asList(
-                "http://localhost:3000",
-                "http://127.0.0.1:3000"
-            )
-        );
+        configuration.setAllowedOrigins(allowedOrigins);
 
         // Allow all headers
         configuration.setAllowedHeaders(Arrays.asList("*"));
