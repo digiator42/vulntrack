@@ -1,3 +1,7 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:51aa509a1b19dcf1b0b377b171f21cc3ec90c617baff6044d390a3e90be528ed
-size 389
+-- Allow NULL tokens: POST /api/auth/logout clears the stored token on
+-- logout (user.setToken(null)), but V2 declared the column NOT NULL, so
+-- every logout fails with a constraint violation. The token column is
+-- informational only (JWTs are validated cryptographically), so NULL
+-- simply means "logged out / no active token".
+ALTER TABLE users
+    ALTER COLUMN token DROP NOT NULL;

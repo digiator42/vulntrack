@@ -1,1 +1,5 @@
 *.sql filter=lfs diff=lfs merge=lfs -text
+# Flyway migrations must be plain text: the Vercel Docker build copies the
+# working tree WITHOUT Git-LFS smudging, so an LFS pointer here would be
+# parsed as SQL and crash the boot migration (see V7 incident).
+backend/src/main/resources/db/migration/*.sql -filter -diff -merge text eol=lf
