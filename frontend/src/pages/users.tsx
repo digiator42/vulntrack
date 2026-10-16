@@ -1,7 +1,7 @@
 // src/pages/users.tsx
 import React, { useState, useEffect } from "react";
 import { withAuth } from "@/components/common/ProtectedRoute";
-import LoadingSpinner from "@/components/common/LoadingSpinner";
+import { TableShimmer } from "@/components/common/Shimmer";
 import { toast } from "sonner";
 import {
   UserGroupIcon,
@@ -157,11 +157,7 @@ const UsersPage: React.FC = () => {
   };
 
   if (loading) {
-    return (
-      <div className="flex justify-center items-center h-96">
-        <LoadingSpinner />
-      </div>
-    );
+    return <TableShimmer />;
   }
 
   const developers = users.filter((u) => u.role === "ROLE_DEVELOPER");

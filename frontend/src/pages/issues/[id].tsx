@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import { withAuth } from "@/components/common/ProtectedRoute";
-import LoadingSpinner from "@/components/common/LoadingSpinner";
+import { PageShimmer } from "@/components/common/Shimmer";
 import {
   getIssueById,
   updateIssue,
@@ -168,11 +168,7 @@ const IssueDetailPage: React.FC = () => {
   };
 
   if (loading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <LoadingSpinner />
-      </div>
-    );
+    return <PageShimmer />;
   }
 
   if (error || !issue) {

@@ -2,7 +2,7 @@
 import React, { useEffect } from "react";
 import { useRouter } from "next/router";
 import { useAuth } from "@/hooks/useAuth";
-import LoadingSpinner from "./LoadingSpinner";
+import { PageShimmer } from "./Shimmer";
 
 interface WithAuthOptions {
   allowedRoles?: string[];
@@ -37,11 +37,7 @@ export function withAuth<P extends object>(
     }, [isAuthenticated, loading, user, router, allowedRoles, redirectTo]);
 
     if (loading) {
-      return (
-        <div className="flex justify-center items-center min-h-screen">
-          <LoadingSpinner />
-        </div>
-      );
+      return <PageShimmer />;
     }
 
     if (!isAuthenticated) {

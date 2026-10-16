@@ -1,7 +1,7 @@
 // src/pages/reports.tsx
 import React, { useState, useEffect } from "react";
 import { withAuth } from "@/components/common/ProtectedRoute";
-import LoadingSpinner from "@/components/common/LoadingSpinner";
+import { PageShimmer } from "@/components/common/Shimmer";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import {
@@ -84,11 +84,7 @@ const ReportsPage: React.FC = () => {
   };
 
   if (loading) {
-    return (
-      <div className="flex justify-center items-center h-96">
-        <LoadingSpinner />
-      </div>
-    );
+    return <PageShimmer />;
   }
 
   if (!data) {

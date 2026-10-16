@@ -20,7 +20,6 @@ import {
   CveVulnerability,
 } from "@/types/dependency";
 import { createIssue } from "@/services/api";
-import LoadingSpinner from "@/components/common/LoadingSpinner";
 import MarkdownRenderer from "@/components/common/MarkdownRenderer";
 
 interface DependencyScannerProps {

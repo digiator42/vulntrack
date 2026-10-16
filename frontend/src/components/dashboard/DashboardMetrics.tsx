@@ -1,7 +1,7 @@
 // components/dashboard/DashboardMetrics.tsx
 import React, { useEffect, useState } from "react";
 import { getDashboardMetrics } from "@/services/api";
-import LoadingSpinner from "@/components/common/LoadingSpinner";
+import { CardShimmer } from "@/components/common/Shimmer";
 
 import {
   ClipboardDocumentListIcon,
@@ -38,7 +38,7 @@ const DashboardMetrics: React.FC = () => {
   };
 
   if (loading) {
-    return <LoadingSpinner />;
+    return <CardShimmer />;
   }
 
   if (!metrics) {

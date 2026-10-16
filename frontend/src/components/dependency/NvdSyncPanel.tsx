@@ -8,7 +8,6 @@ import {
 } from "@heroicons/react/24/outline";
 import { useAuth } from "@/hooks/useAuth";
 import { triggerNvdSync, getNvdSyncStatus } from "@/services/dependencyScanner";
-import LoadingSpinner from "@/components/common/LoadingSpinner";
 
 /**
  * Admin-only NVD cache panel. Scans read from the local CVE cache, so an
@@ -93,7 +92,7 @@ const NvdSyncPanel: React.FC = () => {
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           {running ? (
-            <LoadingSpinner />
+            <span className="animate-shimmer h-6 w-6 rounded-full" aria-label="Syncing" />
           ) : (
             <CheckCircleIcon className="h-6 w-6 text-green-600" />
           )}

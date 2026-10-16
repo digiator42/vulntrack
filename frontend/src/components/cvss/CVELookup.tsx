@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { searchCVE, getCVEDetails } from '../../services/cve';
 import { CVEEntry } from '../../types';
-import LoadingSpinner from '@/components/common/LoadingSpinner';
+import { ButtonShimmer } from '@/components/common/Shimmer';
 
 interface CVELookupProps {
   onCVESelect: (cveData: CVEEntry) => void;
@@ -93,7 +93,7 @@ const CVELookup: React.FC<CVELookupProps> = ({ onCVESelect }) => {
             disabled={loading}
             className="absolute right-2 top-1/2 transform -translate-y-1/2 px-3 py-1 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 disabled:opacity-50"
           >
-            {loading ? <LoadingSpinner size="small" /> : 'Lookup'}
+            {loading ? <ButtonShimmer /> : 'Lookup'}
           </button>
           
           {/* Suggestions dropdown */}

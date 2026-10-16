@@ -6,7 +6,7 @@ import { getIssues, searchIssues, getMyIssues } from "../../services/api";
 import { Issue } from "../../types";
 import { withAuth } from "@/components/common/ProtectedRoute";
 import { useAuth } from "@/hooks/useAuth";
-import LoadingSpinner from "@/components/common/LoadingSpinner";
+import { TableShimmer } from "@/components/common/Shimmer";
 
 const IssuesPage: React.FC = () => {
   const { user } = useAuth();
@@ -82,9 +82,7 @@ const IssuesPage: React.FC = () => {
       {!isDeveloper && <IssueSearch onSearch={handleSearch} />}
 
       {loading ? (
-        <div className="flex justify-center py-12">
-          <LoadingSpinner />
-        </div>
+        <TableShimmer />
       ) : (
         <>
           {issues.length === 0 && isDeveloper && (

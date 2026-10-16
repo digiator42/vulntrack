@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useAuth } from "@/hooks/useAuth";
+import AccountMenu from "./AccountMenu";
 import {
   ChartBarIcon,
   BugAntIcon,
@@ -11,13 +12,8 @@ import {
 } from "@heroicons/react/24/outline";
 
 const Navbar: React.FC = () => {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const router = useRouter();
-
-  const handleLogout = () => {
-    logout();
-    router.push("/login");
-  };
 
   // Define navigation based on user role
   const getNavigation = () => {
@@ -63,6 +59,20 @@ const Navbar: React.FC = () => {
 
   const navigation = getNavigation();
 
+  // Highlight only the best match: on /issues/create both "/issues" and
+  // "/issues/create" prefix-match, so pick the longest href.
+  const activeHref = navigation
+    .filter(
+      (item) =>
+        router.pathname === item.href ||
+        router.pathname.startsWith(item.href + "/"),
+    )
+    .reduce<string | null>(
+      (best, item) =>
+        best === null || item.href.length > best.length ? item.href : best,
+      null,
+    );
+
   return (
     <>
       <nav className="bg-white shadow-sm border-b border-gray-200">
@@ -83,8 +93,7 @@ const Navbar: React.FC = () => {
                     key={item.name}
                     href={item.href}
                     className={`inline-flex items-center px-1 pt-1 text-sm font-medium ${
-                      router.pathname === item.href ||
-                      router.pathname.startsWith(item.href + "/")
+                      activeHref === item.href
                         ? "text-blue-600 border-b-2 border-blue-600"
                         : "text-gray-500 hover:text-gray-700 hover:border-b-2 hover:border-gray-300"
                     }`}
@@ -97,20 +106,11 @@ const Navbar: React.FC = () => {
                 ))}
               </div>
             </div>
-            {/* User Info */}
+            {/* Account */}
             {user ? (
-              <div className="flex items-center space-x-4">
-              <span className="text-sm text-gray-600">
-                👤 {user?.username || "User"} (
-                {user?.role?.replace("ROLE_", "")})
-              </span>
-              <button
-                onClick={handleLogout}
-                className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-red-600 hover:text-red-700"
-              >
-                Logout
-              </button>
-            </div>
+              <div className="flex items-center">
+                <AccountMenu />
+              </div>
             ) : (
               <div className="flex items-center space-x-4">
                 <Link

@@ -5,7 +5,7 @@ import CVSSCalculator from "../cvss/CVSSCalculator";
 import CVELookup from "../cvss/CVELookup";
 import { createIssue } from "../../services/api";
 import { CVEEntry, Issue } from "../../types";
-import LoadingSpinner from "@/components/common/LoadingSpinner";
+import { ButtonShimmer } from "@/components/common/Shimmer";
 import MarkdownEditor from "@/components/common/MarkdownEditor";
 
 interface FormData {
@@ -176,7 +176,7 @@ const CreateIssueForm: React.FC = () => {
           disabled={loading}
           className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
         >
-          {loading ? <LoadingSpinner size="small" /> : "Create Issue"}
+          {loading ? <ButtonShimmer /> : "Create Issue"}
         </button>
       </div>
     </form>

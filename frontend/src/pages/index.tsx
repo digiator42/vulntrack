@@ -2,7 +2,7 @@
 import React, { useEffect } from "react";
 import { useRouter } from "next/router";
 import { useAuth } from "@/hooks/useAuth";
-import LoadingSpinner from "@/components/common/LoadingSpinner";
+import { PageShimmer } from "@/components/common/Shimmer";
 
 export default function Home() {
   const { isAuthenticated, loading } = useAuth();
@@ -18,9 +18,5 @@ export default function Home() {
     }
   }, [isAuthenticated, loading, router]);
 
-  return (
-    <div className="flex justify-center items-center min-h-screen">
-      <LoadingSpinner />
-    </div>
-  );
+  return <PageShimmer />;
 }
