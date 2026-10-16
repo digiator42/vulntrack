@@ -25,12 +25,16 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 @Service
 @RequiredArgsConstructor
@@ -87,6 +91,22 @@ public class NvdSyncService {
             t.setDaemon(true);
             return t;
         });
+
+    /**
+     * In-JVM liveness of the sync thread. Liveness ONLY — mutual exclusion
+     * stays on the database lease. Lets the watchdog tell "wedged here"
+     * from "running elsewhere".
+     */
+    private final AtomicReference<Future<?>> syncFuture = new AtomicReference<>();
+
+    /** Deployed revision, for telling which build answers the status call. */
+    public String getBuildRevision() {
+        String sha = System.getenv("VERCEL_GIT_COMMIT_SHA");
+        if (sha != null && sha.length() >= 7) {
+            return sha.substring(0, 7);
+        }
+        return "local";
+    }
 
     /** True while a sync holds a fresh lease (i.e. actually running). */
     public boolean isSyncRunning() {
@@ -171,15 +191,16 @@ public class NvdSyncService {
             return false;
         }
         int resumeFrom = (from != null && from >= 0) ? from : loadResumeIndex();
-        CompletableFuture.runAsync(() -> {
+        syncFuture.set(CompletableFuture.runAsync(() -> {
             try {
                 doFullSyncFrom(resumeFrom);
             } catch (Exception e) {
                 log.error("Manual NVD full sync failed", e);
             } finally {
                 releaseLease();
+                syncFuture.set(null);
             }
-        });
+        }));
         return true;
     }
 
@@ -188,10 +209,33 @@ public class NvdSyncService {
     }
 
     /**
-     * Crash recovery: if a previous run died mid-sync (deploy, recycle),
-     * its last state row is still RUNNING — resume it on boot instead of
-     * losing the progress.
+     * Stall watchdog: runs every 2 minutes and resumes a sync that died
+     * without a trace (frozen container, killed thread) — the case no abort
+     * handler can record. It only acts when nothing is alive anywhere: a
+     * live local thread or a fresh lease heartbeat both stand it down, and
+     * the lease steal keeps it mutually exclusive across instances.
      */
+    @Scheduled(fixedDelay = 120000)
+    public void watchSyncStall() {
+        Future<?> local = syncFuture.get();
+        if (local != null && !local.isDone()) {
+            return;
+        }
+        NvdSyncState state = getSyncState();
+        if (state == null || !"RUNNING".equals(state.getStatus())) {
+            return;
+        }
+        if (state.getUpdatedAt() != null && state.getUpdatedAt()
+            .isAfter(LocalDateTime.now().minusMinutes(LEASE_STALE_AFTER_MINUTES))) {
+            return;
+        }
+        log.info(
+            "Watchdog: no live thread and stale heartbeat; resuming sync from startIndex {}",
+            state.getLastStartIndex()
+        );
+        tryStartFullSync();
+    }
+    /** Crash recovery on boot; see watchSyncStall for the steady-state guard. */
     @EventListener(ApplicationReadyEvent.class)
     public void resumeInterruptedSync() {
         NvdSyncState state = getSyncState();
@@ -357,12 +401,23 @@ public class NvdSyncService {
                 JsonNode vulnerabilities = root.get("vulnerabilities");
 
                 if (vulnerabilities != null && vulnerabilities.isArray()) {
-                    List<LocalCve> cves = new ArrayList<>();
+                    // One existence query per page (not per CVE): collect the
+                    // page's ids first, then skip known ones in memory.
+                    List<JsonNode> cveNodes = new ArrayList<>();
+                    List<String> pageIds = new ArrayList<>();
                     for (JsonNode vulnNode : vulnerabilities) {
                         JsonNode cveNode = vulnNode.get("cve");
-                        if (cveNode != null) {
-                            processCveNode(cveNode, cves, startIndex);
+                        if (cveNode != null && cveNode.has("id")) {
+                            cveNodes.add(cveNode);
+                            pageIds.add(cveNode.get("id").asText());
                         }
+                    }
+                    Set<String> knownIds = pageIds.isEmpty() ? Set.of()
+                        : new HashSet<>(localCveRepository.findExistingIds(pageIds));
+
+                    List<LocalCve> cves = new ArrayList<>();
+                    for (JsonNode cveNode : cveNodes) {
+                        processCveNode(cveNode, cves, knownIds);
                     }
 
                     // Bulk save
@@ -442,13 +497,14 @@ public class NvdSyncService {
         }
     }
 
-    private void processCveNode(JsonNode cveNode, List<LocalCve> cves, int startIndex) {
+    private void processCveNode(JsonNode cveNode, List<LocalCve> cves, Set<String> knownIds) {
         try {
             String cveId = cveNode.get("id").asText();
 
             // Check if CVE already exists in the current batch or database
+            // (database side answered once per page into knownIds).
             boolean alreadyExists = cves.stream().anyMatch(c -> c.getCveId().equals(cveId)) ||
-                localCveRepository.findByCveId(cveId).isPresent();
+                knownIds.contains(cveId);
 
             if (alreadyExists) {
                 log.debug("Skipping duplicate CVE: {}", cveId);

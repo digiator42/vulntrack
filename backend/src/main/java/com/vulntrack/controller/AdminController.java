@@ -139,7 +139,8 @@ public class AdminController {
                 "state", state != null && state.getStatus() != null
                     ? state.getStatus() : "IDLE",
                 "lastError", state != null && state.getLastError() != null
-                    ? state.getLastError() : ""
+                    ? state.getLastError() : "",
+                "build", nvdSyncService.getBuildRevision()
             )
         );
     }

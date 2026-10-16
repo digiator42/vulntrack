@@ -5,12 +5,17 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
 public interface LocalCveRepository extends JpaRepository<LocalCve, Long> {
 
     Optional<LocalCve> findByCveId(String cveId);
+
+    /** Batch existence check: one query per page instead of one per CVE. */
+    @Query("SELECT c.cveId FROM LocalCve c WHERE c.cveId IN :ids")
+    List<String> findExistingIds(@Param("ids") Collection<String> ids);
 
     List<LocalCve> findByCpeProduct(String cpeProduct);
 
