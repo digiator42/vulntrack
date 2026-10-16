@@ -78,7 +78,7 @@ public class DependencyScanController {
     }
 
     @PostMapping("/scan")
-    @PreAuthorize("hasRole('ROLE_ADMIN') or hasRole('ROLE_SECURITY_ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('SECURITY_ADMIN')")
     public ResponseEntity<DependencyScanResult> scanAndCreateIssues(
         @RequestParam("file") MultipartFile file,
         @RequestParam(defaultValue = "false") boolean autoCreateIssues

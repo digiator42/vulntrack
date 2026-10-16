@@ -55,7 +55,7 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    @PreAuthorize("hasRole('ROLE_ADMIN')") // Only admins can register new users
+    @PreAuthorize("hasRole('ADMIN')") // Only admins can register new users
     public ResponseEntity<?> register(@RequestBody RegisterRequest req) {
         // Check if user already exists
         if (userRepository.existsByUsername(req.username())) {

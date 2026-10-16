@@ -39,7 +39,7 @@ const ReportsPage: React.FC = () => {
 
   const fetchSummary = async () => {
     try {
-      const response = await fetch("http://localhost:8080/api/report/summary", {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/report/summary`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
@@ -57,7 +57,7 @@ const ReportsPage: React.FC = () => {
   const downloadPDF = async () => {
     setDownloading(true);
     try {
-      const response = await fetch("http://localhost:8080/api/report/pdf", {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/report/pdf`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },

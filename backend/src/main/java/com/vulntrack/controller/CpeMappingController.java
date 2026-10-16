@@ -23,7 +23,7 @@ public class CpeMappingController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<PackageCpeMapping> addMapping(@RequestBody PackageCpeMapping mapping) {
         mapping.setCreatedAt(LocalDateTime.now());
         mapping.setUsageCount(0);
@@ -32,7 +32,7 @@ public class CpeMappingController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteMapping(@PathVariable Long id) {
         mappingRepository.deleteById(id);
         return ResponseEntity.ok().build();

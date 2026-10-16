@@ -5,7 +5,7 @@ import { ParsedDependency, DependencyScanResult, PackageCpeMapping } from '@/typ
 export const parseManifest = async (file: File): Promise<ParsedDependency[]> => {
   const formData = new FormData();
   formData.append('file', file);
-  const response = await api.post('/admin/dependency/scan/parse', formData, {
+  const response = await api.post('/api/admin/dependency/scan/parse', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
   });
   return response.data;
@@ -15,19 +15,19 @@ export const scanDependencies = async (file: File, autoCreateIssues: boolean = f
   const formData = new FormData();
   formData.append('file', file);
   formData.append('autoCreateIssues', String(autoCreateIssues));
-  const response = await api.post('/admin/dependency/scan/scan', formData, {
+  const response = await api.post('/api/admin/dependency/scan/scan', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
   });
   return response.data;
 };
 
 export const getCpeMappings = async (): Promise<PackageCpeMapping[]> => {
-  const response = await api.get('/admin/cpe-mappings');
+  const response = await api.get('/api/admin/cpe-mappings');
   return response.data;
 };
 
 export const addCpeMapping = async (mapping: Partial<PackageCpeMapping>): Promise<PackageCpeMapping> => {
-  const response = await api.post('/admin/cpe-mappings', mapping);
+  const response = await api.post('/api/admin/cpe-mappings', mapping);
   return response.data;
 };
 

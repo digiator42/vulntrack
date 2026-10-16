@@ -29,7 +29,7 @@ import jakarta.validation.constraints.NotNull;
 
 @RestController
 @RequestMapping("/api/admin")
-@PreAuthorize("hasRole('ROLE_ADMIN')") // Only admins can access this controller
+@PreAuthorize("hasRole('ADMIN')") // Only admins can access this controller
 @RequiredArgsConstructor
 public class AdminController {
 

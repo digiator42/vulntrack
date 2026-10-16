@@ -44,7 +44,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({ issueId }) => {
     console.log("===> ", token);
     try {
       const response = await fetch(
-        `http://localhost:8080/api/collaborate/${issueId}/activity`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/collaborate/${issueId}/activity`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,

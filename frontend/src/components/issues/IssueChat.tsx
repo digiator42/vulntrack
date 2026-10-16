@@ -92,7 +92,7 @@ const IssueChat: React.FC<IssueChatProps> = ({ issueId, onNewComment }) => {
   const fetchComments = async () => {
     try {
       const response = await fetch(
-        `http://localhost:8080/api/collaborate/${issueId}/comments`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/collaborate/${issueId}/comments`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -115,7 +115,7 @@ const IssueChat: React.FC<IssueChatProps> = ({ issueId, onNewComment }) => {
     setSending(true);
     try {
       const response = await fetch(
-        `http://localhost:8080/api/collaborate/${issueId}/comments?content=${encodeURIComponent(newComment)}`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/collaborate/${issueId}/comments?content=${encodeURIComponent(newComment)}`,
         {
           method: "POST",
           headers: {
