@@ -55,9 +55,6 @@ public class LocalCve {
 
     private LocalDateTime lastModified;
 
-    @Column(columnDefinition = "TEXT")
-    private String rawJson; // Store original JSON for reference
-
     @Column(nullable = false)
     private LocalDateTime syncedAt;
 }

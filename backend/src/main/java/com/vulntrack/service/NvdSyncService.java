@@ -424,7 +424,6 @@ public class NvdSyncService {
                                 )
                                 .publishedDate(parseDate(cveNode, "published"))
                                 .lastModified(parseDate(cveNode, "lastModified"))
-                                .rawJson(cveNode.toString())
                                 .syncedAt(LocalDateTime.now())
                                 .build();
 
