@@ -113,7 +113,10 @@ curl https://<backend>/api/admin/nvd/sync/status \
 ```
 
 Overlapping runs (scheduled vs. manual) are rejected, so the cache can never
-be double-filled.
+be double-filled. A unique identity index on
+`(cve_id, vendor, product, version bounds)` also guarantees no duplicate
+rows — same product with *different* version ranges stays as separate rows
+on purpose, since version matching needs them.
 
 The sync is resumable: every fetched page persists its position to the
 `nvd_sync_state` table, so an interrupted run (deploy, recycle) continues
