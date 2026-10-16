@@ -28,6 +28,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 @Service
 @RequiredArgsConstructor
@@ -76,6 +79,14 @@ public class NvdSyncService {
      * resumes instead of watching a dead row for half an hour.
      */
     private static final long LEASE_STALE_AFTER_MINUTES = 5L;
+
+    /** One-shot timer for a deferred boot-resume retry (see below). */
+    private final ScheduledExecutorService bootRecoveryExecutor =
+        Executors.newSingleThreadScheduledExecutor(r -> {
+            Thread t = new Thread(r, "nvd-boot-recovery");
+            t.setDaemon(true);
+            return t;
+        });
 
     /** True while a sync holds a fresh lease (i.e. actually running). */
     public boolean isSyncRunning() {
@@ -184,14 +195,39 @@ public class NvdSyncService {
     @EventListener(ApplicationReadyEvent.class)
     public void resumeInterruptedSync() {
         NvdSyncState state = getSyncState();
-        if (state != null && ("RUNNING".equals(state.getStatus())
-            || state.getLastError() != null)) {
+        if (state == null) {
+            return;
+        }
+        boolean needsResume = "RUNNING".equals(state.getStatus())
+            || state.getLastError() != null;
+        if (!needsResume) {
+            return;
+        }
+        if (tryStartFullSync()) {
             log.info(
-                "Resuming interrupted NVD sync from startIndex {}",
+                "Resumed interrupted NVD sync from startIndex {}",
                 state.getLastStartIndex()
             );
-            tryStartFullSync();
+            return;
         }
+        // Lease still fresh = the previous owner may be draining after a
+        // redeploy. Retry once past the staleness window: by then it is
+        // either heartbeating (alive — we stand down) or stealable.
+        long delayMinutes = LEASE_STALE_AFTER_MINUTES + 1;
+        log.info(
+            "NVD sync lease held by another instance; retrying resume in {} minutes",
+            delayMinutes
+        );
+        bootRecoveryExecutor.schedule(
+            () -> {
+                if (tryStartFullSync()) {
+                    log.info("Resumed interrupted NVD sync on retry");
+                } else {
+                    log.info("NVD sync still held by a live instance; leaving it alone");
+                }
+            },
+            delayMinutes, TimeUnit.MINUTES
+        );
     }
 
     private int loadResumeIndex() {
