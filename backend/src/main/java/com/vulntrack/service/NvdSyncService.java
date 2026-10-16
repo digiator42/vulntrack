@@ -18,6 +18,8 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @Service
 @RequiredArgsConstructor
@@ -33,6 +35,39 @@ public class NvdSyncService {
 
     private static final DateTimeFormatter NVD_DATE_FORMAT = DateTimeFormatter
         .ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS");
+
+    /**
+     * Guards overlapping syncs (scheduled vs. manually triggered). A full NVD
+     * sync pages through ~250k CVEs, so concurrent runs would duplicate work
+     * and rows (cve_id is not unique).
+     */
+    private final AtomicBoolean syncRunning = new AtomicBoolean(false);
+
+    /** True while a full or incremental sync is in progress. */
+    public boolean isSyncRunning() {
+        return syncRunning.get();
+    }
+
+    /**
+     * Fire-and-forget full sync for the admin trigger endpoint. Returns false
+     * when a sync is already running. The download outlasts any HTTP
+     * timeout, so it always runs on a background thread.
+     */
+    public boolean tryStartFullSync() {
+        if (!syncRunning.compareAndSet(false, true)) {
+            return false;
+        }
+        CompletableFuture.runAsync(() -> {
+            try {
+                doFullSync();
+            } catch (Exception e) {
+                log.error("Manual NVD full sync failed", e);
+            } finally {
+                syncRunning.set(false);
+            }
+        });
+        return true;
+    }
 
     /**
      * Trigger initial sync on application startup
@@ -60,6 +95,18 @@ public class NvdSyncService {
     @Scheduled(cron = "0 0 2 * * SUN")
     @Transactional
     public void fullSync() {
+        if (!syncRunning.compareAndSet(false, true)) {
+            log.info("NVD sync already running; skipping scheduled full sync");
+            return;
+        }
+        try {
+            doFullSync();
+        } finally {
+            syncRunning.set(false);
+        }
+    }
+
+    private void doFullSync() {
         log.info("Starting full NVD sync");
         syncCves(null); // null means fetch all
         log.info("Completed full NVD sync");
@@ -71,15 +118,23 @@ public class NvdSyncService {
     @Scheduled(cron = "0 0 2 * * *")
     @Transactional
     public void incrementalSync() {
-        log.info("Starting incremental NVD sync");
+        if (!syncRunning.compareAndSet(false, true)) {
+            log.info("NVD sync already running; skipping scheduled incremental sync");
+            return;
+        }
+        try {
+            log.info("Starting incremental NVD sync");
 
-        LocalDateTime lastModified = localCveRepository.findLastModifiedDate()
-            .orElse(LocalDateTime.now().minusDays(1));
+            LocalDateTime lastModified = localCveRepository.findLastModifiedDate()
+                .orElse(LocalDateTime.now().minusDays(1));
 
-        // Add 1 second to avoid duplicates
-        syncCves(lastModified.plusSeconds(3));
+            // Add 1 second to avoid duplicates
+            syncCves(lastModified.plusSeconds(3));
 
-        log.info("Completed incremental NVD sync");
+            log.info("Completed incremental NVD sync");
+        } finally {
+            syncRunning.set(false);
+        }
     }
 
     private void syncCves(LocalDateTime lastModStartDate) {

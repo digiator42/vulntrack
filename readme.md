@@ -84,6 +84,37 @@ Instead of making **live API calls** to NVD (slow, rate-limited, unreliable):
 - ✅ **Raw JSON Storage** - Store the complete NVD JSON for each CVE
     
 
+### 🔄 CVE Cache Sync (showcase)
+
+Dependency scans read from the local `local_cve` cache — never from the live
+NVD API — so the cache is kept fresh on its own schedule (`NvdSyncService`):
+
+| Job | Schedule | Scope |
+| --- | --- | --- |
+| Incremental sync | Daily 02:00 | CVEs modified since the last run |
+| Full sync | Sundays 02:00 | Entire NVD catalog |
+
+Need data *now* (e.g. right after a fresh deploy, when the cache is still
+empty)? Admins can trigger a full sync on demand. A full sync pages through
+~250k CVEs and outlasts any HTTP timeout, so it runs on a background thread
+and returns `202 Accepted` immediately — poll the status endpoint until
+`running` is `false`:
+
+```shell
+# Start a full sync (admin JWT required)
+curl -X POST https://<backend>/api/admin/nvd/sync \
+  -H "Authorization: Bearer $TOKEN"
+# {"status":"started", ...} | {"status":"already_running", ...}
+
+# Poll progress
+curl https://<backend>/api/admin/nvd/sync/status \
+  -H "Authorization: Bearer $TOKEN"
+# {"running":true}
+```
+
+Overlapping runs (scheduled vs. manual) are rejected, so the cache can never
+be double-filled.
+
 ---
 
 ## Features

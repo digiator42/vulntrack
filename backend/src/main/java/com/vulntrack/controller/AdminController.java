@@ -21,6 +21,7 @@ import com.vulntrack.model.User;
 import com.vulntrack.repository.UserRepository;
 import com.vulntrack.service.IssueService;
 import com.vulntrack.service.JwtService;
+import com.vulntrack.service.NvdSyncService;
 
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import lombok.RequiredArgsConstructor;
@@ -36,6 +37,7 @@ public class AdminController {
     private final JwtService jwtService;
     private final UserRepository userRepository;
     private final IssueService issueService;
+    private final NvdSyncService nvdSyncService;
 
     public record UpdateRoleRequest(
         @NotNull Role newRole
@@ -85,6 +87,41 @@ public class AdminController {
             userRepository.findAll().stream()
                 .map(UserResponse::from)
                 .toList()
+        );
+    }
+
+    /**
+     * Manually trigger a full NVD sync. POST /api/admin/nvd/sync
+     *
+     * A full sync pages through the whole NVD catalog and outlasts any HTTP
+     * timeout, so it runs on a background thread and this call returns 202
+     * immediately. Overlapping runs are rejected (status: already_running).
+     */
+    @PostMapping("/nvd/sync")
+    public ResponseEntity<?> triggerNvdSync() {
+        if (!nvdSyncService.tryStartFullSync()) {
+            return ResponseEntity.accepted().body(
+                Map.of(
+                    "status", "already_running",
+                    "detail", "An NVD sync is already in progress"
+                )
+            );
+        }
+        return ResponseEntity.accepted().body(
+            Map.of(
+                "status", "started",
+                "detail", "Full NVD sync running in background; poll GET /api/admin/nvd/sync/status"
+            )
+        );
+    }
+
+    /**
+     * NVD sync status for polling. GET /api/admin/nvd/sync/status
+     */
+    @GetMapping("/nvd/sync/status")
+    public ResponseEntity<?> nvdSyncStatus() {
+        return ResponseEntity.ok(
+            Map.of("running", nvdSyncService.isSyncRunning())
         );
     }
 
