@@ -137,7 +137,9 @@ public class AdminController {
                 "totalResults", state != null && state.getTotalResults() != null
                     ? state.getTotalResults() : 0,
                 "state", state != null && state.getStatus() != null
-                    ? state.getStatus() : "IDLE"
+                    ? state.getStatus() : "IDLE",
+                "lastError", state != null && state.getLastError() != null
+                    ? state.getLastError() : ""
             )
         );
     }

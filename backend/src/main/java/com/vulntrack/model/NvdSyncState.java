@@ -30,4 +30,8 @@ public class NvdSyncState {
 
     @Column(nullable = false)
     private LocalDateTime updatedAt;
+
+    /** Last failure reason (rate limit, network, ...); cleared on start. */
+    @Column(columnDefinition = "TEXT")
+    private String lastError;
 }

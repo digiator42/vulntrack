@@ -19,6 +19,7 @@ const NvdSyncPanel: React.FC = () => {
   const { user } = useAuth();
   const [running, setRunning] = useState(false);
   const [position, setPosition] = useState({ lastStartIndex: 0, totalResults: 0 });
+  const [lastError, setLastError] = useState("");
   const [starting, setStarting] = useState(false);
   const pollRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -27,6 +28,7 @@ const NvdSyncPanel: React.FC = () => {
       const s = await getNvdSyncStatus();
       setRunning(s.running);
       setPosition({ lastStartIndex: s.lastStartIndex ?? 0, totalResults: s.totalResults ?? 0 });
+      setLastError(s.lastError ?? "");
       return s.running;
     } catch {
       return null;
@@ -138,6 +140,11 @@ const NvdSyncPanel: React.FC = () => {
           {interrupted
             ? "Sync stopped before finishing — press Sync now to resume from the saved position."
             : "Empty results on a fresh install usually mean the cache hasn't been filled yet — run a sync first."}
+        </p>
+      )}
+      {!running && lastError && (
+        <p className="mt-1 rounded-md bg-red-50 px-2 py-1 font-mono text-[11px] text-red-800">
+          Last failure: {lastError}
         </p>
       )}
     </div>

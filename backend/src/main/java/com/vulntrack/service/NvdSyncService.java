@@ -9,6 +9,7 @@ import com.vulntrack.repository.NvdSyncStateRepository;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
@@ -51,8 +52,7 @@ public class NvdSyncService {
     /** Delay between pages without a key: 5 req/30 s -> one page per ~6.5 s. */
     private static final long PAGE_DELAY_NO_KEY_MS = 6500L;
     /** Delay between pages with a key: 50 req/30 s -> comfortable margin. */
-    private static final long PAGE_DELAY_WITH_KEY_MS = 1000L;
-    /** Backoff when NVD rate-limits us (403 without key / 429 with key). */
+    private static final long PAGE_DELAY_WITH_KEY_MS = 1000L;    /** Backoff when NVD rate-limits us (403 without key / 429 with key). */
     private static final long RATE_LIMIT_BACKOFF_MS = 35000L;
     private static final int MAX_RATE_LIMIT_RETRIES = 3;
 
@@ -65,6 +65,21 @@ public class NvdSyncService {
      * and rows (cve_id is not unique).
      */
     private final AtomicBoolean syncRunning = new AtomicBoolean(false);
+
+    /**
+     * NVD throttles/bans anonymous-looking datacenter clients aggressively.
+     * Identify ourselves on every call (NVD etiquette + fewer 403s).
+     */
+    @PostConstruct
+    public void initRestTemplate() {
+        restTemplate.getInterceptors().add((request, body, execution) -> {
+            request.getHeaders().set(
+                "User-Agent",
+                "VulnTrack/1.0 (local NVD cache sync; admin-triggered)"
+            );
+            return execution.execute(request, body);
+        });
+    }
 
     /** True while a full or incremental sync is in progress. */
     public boolean isSyncRunning() {
@@ -201,6 +216,13 @@ public class NvdSyncService {
 
     /** Persist the next page to fetch so a crash/recycle can resume. */
     private void saveProgress(int nextStartIndex, Integer totalResults, String status) {
+        saveProgress(nextStartIndex, totalResults, status, null);
+    }
+
+    /** Same, additionally recording why a run stopped. */
+    private void saveProgress(
+        int nextStartIndex, Integer totalResults, String status, String error
+    ) {
         try {
             NvdSyncState state = getSyncState();
             if (state == null) {
@@ -209,6 +231,7 @@ public class NvdSyncService {
             state.setLastStartIndex(nextStartIndex);
             state.setTotalResults(totalResults);
             state.setStatus(status);
+            state.setLastError(error);
             state.setUpdatedAt(LocalDateTime.now());
             syncStateRepository.save(state);
         } catch (Exception e) {
@@ -225,6 +248,8 @@ public class NvdSyncService {
         if (trackProgress) {
             saveProgress(startIndex, null, "RUNNING");
         }
+
+        String abortError = null;
 
         do {
             try {
@@ -267,7 +292,9 @@ public class NvdSyncService {
             } catch (HttpClientErrorException.TooManyRequests e) {
                 // NVD rate limit with an API key.
                 if (++rateLimitRetries > MAX_RATE_LIMIT_RETRIES) {
-                    log.error("NVD rate limit hit repeatedly; aborting sync");
+                    abortError = "Aborted: NVD rate limit (429) hit repeatedly at startIndex "
+                        + startIndex;
+                    log.error(abortError);
                     break;
                 }
                 log.warn(
@@ -278,7 +305,10 @@ public class NvdSyncService {
             } catch (HttpClientErrorException.Forbidden e) {
                 // NVD answers 403 when the keyless quota is exceeded.
                 if (++rateLimitRetries > MAX_RATE_LIMIT_RETRIES) {
-                    log.error("NVD quota exceeded repeatedly; aborting sync");
+                    abortError = "Aborted: NVD quota exceeded (403) repeatedly at startIndex "
+                        + startIndex + " — datacenter IPs may need an API key (NVD_API_KEY is "
+                        + (hasApiKey() ? "set" : "NOT set") + ")";
+                    log.error(abortError);
                     break;
                 }
                 log.warn(
@@ -287,13 +317,21 @@ public class NvdSyncService {
                 );
                 sleepQuietly(RATE_LIMIT_BACKOFF_MS);
             } catch (Exception e) {
+                abortError = "Aborted at startIndex " + startIndex + ": "
+                    + e.getClass().getSimpleName() + ": " + e.getMessage();
                 log.error("Error syncing CVEs at startIndex {}: {}", startIndex, e.getMessage());
                 break;
             }
         } while (startIndex < totalResults);
 
         if (trackProgress) {
-            saveProgress(startIndex, totalResults, "IDLE");
+            if (abortError != null) {
+                // Stay resumable: keep RUNNING + reason so the next trigger
+                // (or boot recovery) continues from the saved page.
+                saveProgress(startIndex, totalResults, "RUNNING", abortError);
+            } else {
+                saveProgress(startIndex, totalResults, "IDLE");
+            }
         }
     }
 
