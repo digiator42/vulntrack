@@ -91,15 +91,23 @@ public class AdminController {
     }
 
     /**
-     * Manually trigger a full NVD sync. POST /api/admin/nvd/sync
+     * Manually trigger a full NVD sync. POST /api/admin/nvd/sync[?from=23000]
      *
      * A full sync pages through the whole NVD catalog and outlasts any HTTP
      * timeout, so it runs on a background thread and this call returns 202
-     * immediately. Overlapping runs are rejected (status: already_running).
+     * immediately. Without ?from=, it resumes from the last saved page;
+     * overlapping runs are rejected (status: already_running).
      */
     @PostMapping("/nvd/sync")
-    public ResponseEntity<?> triggerNvdSync() {
-        if (!nvdSyncService.tryStartFullSync()) {
+    public ResponseEntity<?> triggerNvdSync(
+        @RequestParam(required = false) Integer from
+    ) {
+        if (from != null && from < 0) {
+            return ResponseEntity.badRequest().body(
+                Map.of("status", "error", "detail", "?from= must be >= 0")
+            );
+        }
+        if (!nvdSyncService.tryStartFullSync(from)) {
             return ResponseEntity.accepted().body(
                 Map.of(
                     "status", "already_running",
@@ -120,8 +128,17 @@ public class AdminController {
      */
     @GetMapping("/nvd/sync/status")
     public ResponseEntity<?> nvdSyncStatus() {
+        var state = nvdSyncService.getSyncState();
         return ResponseEntity.ok(
-            Map.of("running", nvdSyncService.isSyncRunning())
+            Map.of(
+                "running", nvdSyncService.isSyncRunning(),
+                "lastStartIndex", state != null && state.getLastStartIndex() != null
+                    ? state.getLastStartIndex() : 0,
+                "totalResults", state != null && state.getTotalResults() != null
+                    ? state.getTotalResults() : 0,
+                "state", state != null && state.getStatus() != null
+                    ? state.getStatus() : "IDLE"
+            )
         );
     }
 

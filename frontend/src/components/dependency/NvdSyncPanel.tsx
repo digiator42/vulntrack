@@ -18,6 +18,7 @@ import LoadingSpinner from "@/components/common/LoadingSpinner";
 const NvdSyncPanel: React.FC = () => {
   const { user } = useAuth();
   const [running, setRunning] = useState(false);
+  const [position, setPosition] = useState({ lastStartIndex: 0, totalResults: 0 });
   const [starting, setStarting] = useState(false);
   const pollRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -25,6 +26,7 @@ const NvdSyncPanel: React.FC = () => {
     try {
       const s = await getNvdSyncStatus();
       setRunning(s.running);
+      setPosition({ lastStartIndex: s.lastStartIndex ?? 0, totalResults: s.totalResults ?? 0 });
       return s.running;
     } catch {
       return null;
@@ -56,6 +58,11 @@ const NvdSyncPanel: React.FC = () => {
   }, [running, refreshStatus]);
 
   if (user?.role !== "ROLE_ADMIN") return null;
+
+  const { lastStartIndex, totalResults } = position;
+  const hasProgress = totalResults > 0 && lastStartIndex > 0;
+  const interrupted = !running && hasProgress && lastStartIndex < totalResults;
+  const complete = !running && hasProgress && lastStartIndex >= totalResults;
 
   const handleSync = async () => {
     setStarting(true);
@@ -95,10 +102,18 @@ const NvdSyncPanel: React.FC = () => {
                 className={`ml-1 rounded-full px-2 py-0.5 text-xs font-medium ${
                   running
                     ? "bg-amber-100 text-amber-800"
-                    : "bg-green-100 text-green-800"
+                    : interrupted
+                      ? "bg-red-100 text-red-800"
+                      : "bg-green-100 text-green-800"
                 }`}
               >
-                {running ? "syncing…" : "ready"}
+                {running
+                  ? `syncing… ${lastStartIndex.toLocaleString()} / ${totalResults.toLocaleString()}`
+                  : interrupted
+                    ? `interrupted at ${lastStartIndex.toLocaleString()} / ${totalResults.toLocaleString()}`
+                    : complete
+                      ? `complete (${totalResults.toLocaleString()} pages fetched)`
+                      : "ready"}
               </span>
             </p>
             <p className="text-xs text-gray-500">
@@ -120,8 +135,9 @@ const NvdSyncPanel: React.FC = () => {
       {!running && (
         <p className="mt-2 flex items-center gap-1 text-xs text-amber-700">
           <ExclamationTriangleIcon className="h-4 w-4" />
-          Empty results on a fresh install usually mean the cache hasn&apos;t
-          been filled yet — run a sync first.
+          {interrupted
+            ? "Sync stopped before finishing — press Sync now to resume from the saved position."
+            : "Empty results on a fresh install usually mean the cache hasn't been filled yet — run a sync first."}
         </p>
       )}
     </div>

@@ -115,6 +115,18 @@ curl https://<backend>/api/admin/nvd/sync/status \
 Overlapping runs (scheduled vs. manual) are rejected, so the cache can never
 be double-filled.
 
+The sync is resumable: every fetched page persists its position to the
+`nvd_sync_state` table, so an interrupted run (deploy, recycle) continues
+where it stopped instead of starting over — a reboot even auto-resumes it.
+`GET /api/admin/nvd/sync/status` reports the live position
+(`lastStartIndex` / `totalResults`), and the scanner page shows it as a
+progress badge. To jump to an explicit page instead of the saved position:
+
+```shell
+curl -X POST "https://<backend>/api/admin/nvd/sync?from=23000" \
+  -H "Authorization: Bearer $TOKEN"
+```
+
 ---
 
 ## Features

@@ -3,11 +3,15 @@ package com.vulntrack.service;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vulntrack.model.LocalCve;
+import com.vulntrack.model.NvdSyncState;
 import com.vulntrack.repository.LocalCveRepository;
+import com.vulntrack.repository.NvdSyncStateRepository;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,6 +34,7 @@ public class NvdSyncService {
     private final RestTemplate restTemplate = new RestTemplate();
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final LocalCveRepository localCveRepository;
+    private final NvdSyncStateRepository syncStateRepository;
 
     @Value("${nvd.api.url:https://services.nvd.nist.gov/rest/json/cves/2.0}")
     private String nvdApiUrl;
@@ -66,18 +71,26 @@ public class NvdSyncService {
         return syncRunning.get();
     }
 
+    /** Snapshot of the persisted sync position for the status endpoint. */
+    public NvdSyncState getSyncState() {
+        return syncStateRepository.findById(1).orElse(null);
+    }
+
     /**
-     * Fire-and-forget full sync for the admin trigger endpoint. Returns false
-     * when a sync is already running. The download outlasts any HTTP
-     * timeout, so it always runs on a background thread.
+     * Fire-and-forget full sync for the admin trigger endpoint. Resumes from
+     * the last saved page (or from {@code from} when given) instead of
+     * starting over. Returns false when a sync is already running. The
+     * download outlasts any HTTP timeout, so it always runs on a background
+     * thread.
      */
-    public boolean tryStartFullSync() {
+    public boolean tryStartFullSync(Integer from) {
         if (!syncRunning.compareAndSet(false, true)) {
             return false;
         }
+        int resumeFrom = (from != null && from >= 0) ? from : loadResumeIndex();
         CompletableFuture.runAsync(() -> {
             try {
-                doFullSync();
+                doFullSyncFrom(resumeFrom);
             } catch (Exception e) {
                 log.error("Manual NVD full sync failed", e);
             } finally {
@@ -85,6 +98,37 @@ public class NvdSyncService {
             }
         });
         return true;
+    }
+
+    public boolean tryStartFullSync() {
+        return tryStartFullSync(null);
+    }
+
+    /**
+     * Crash recovery: if a previous run died mid-sync (deploy, recycle),
+     * its last state row is still RUNNING — resume it on boot instead of
+     * losing the progress.
+     */
+    @EventListener(ApplicationReadyEvent.class)
+    public void resumeInterruptedSync() {
+        NvdSyncState state = getSyncState();
+        if (state != null && "RUNNING".equals(state.getStatus())) {
+            log.info(
+                "Resuming interrupted NVD sync from startIndex {}",
+                state.getLastStartIndex()
+            );
+            tryStartFullSync();
+        }
+    }
+
+    private int loadResumeIndex() {
+        NvdSyncState state = getSyncState();
+        if (state != null && state.getLastStartIndex() != null
+            && state.getLastStartIndex() > 0) {
+            log.info("Resuming NVD sync from saved startIndex {}", state.getLastStartIndex());
+            return state.getLastStartIndex();
+        }
+        return 0;
     }
 
     /**
@@ -118,15 +162,15 @@ public class NvdSyncService {
             return;
         }
         try {
-            doFullSync();
+            doFullSyncFrom(0);
         } finally {
             syncRunning.set(false);
         }
     }
 
-    private void doFullSync() {
-        log.info("Starting full NVD sync");
-        syncCves(null); // null means fetch all
+    private void doFullSyncFrom(int fromIndex) {
+        log.info("Starting full NVD sync from startIndex {}", fromIndex);
+        syncCves(null, fromIndex, true); // null means fetch all
         log.info("Completed full NVD sync");
     }
 
@@ -147,7 +191,7 @@ public class NvdSyncService {
                 .orElse(LocalDateTime.now().minusDays(1));
 
             // Add 1 second to avoid duplicates
-            syncCves(lastModified.plusSeconds(3));
+            syncCves(lastModified.plusSeconds(3), 0, false);
 
             log.info("Completed incremental NVD sync");
         } finally {
@@ -155,11 +199,32 @@ public class NvdSyncService {
         }
     }
 
-    private void syncCves(LocalDateTime lastModStartDate) {
-        int startIndex = 0;
+    /** Persist the next page to fetch so a crash/recycle can resume. */
+    private void saveProgress(int nextStartIndex, Integer totalResults, String status) {
+        try {
+            NvdSyncState state = getSyncState();
+            if (state == null) {
+                state = NvdSyncState.builder().id(1).build();
+            }
+            state.setLastStartIndex(nextStartIndex);
+            state.setTotalResults(totalResults);
+            state.setStatus(status);
+            state.setUpdatedAt(LocalDateTime.now());
+            syncStateRepository.save(state);
+        } catch (Exception e) {
+            log.warn("Could not persist NVD sync progress: {}", e.getMessage());
+        }
+    }
+
+    private void syncCves(LocalDateTime lastModStartDate, int fromIndex, boolean trackProgress) {
+        int startIndex = fromIndex;
         int totalResults = 0;
         int rateLimitRetries = 0;
         long pageDelayMs = hasApiKey() ? PAGE_DELAY_WITH_KEY_MS : PAGE_DELAY_NO_KEY_MS;
+
+        if (trackProgress) {
+            saveProgress(startIndex, null, "RUNNING");
+        }
 
         do {
             try {
@@ -194,6 +259,9 @@ public class NvdSyncService {
 
                 startIndex += PAGE_SIZE; // Results per page
                 rateLimitRetries = 0;
+                if (trackProgress) {
+                    saveProgress(startIndex, totalResults, "RUNNING");
+                }
                 sleepQuietly(pageDelayMs);
 
             } catch (HttpClientErrorException.TooManyRequests e) {
@@ -223,6 +291,10 @@ public class NvdSyncService {
                 break;
             }
         } while (startIndex < totalResults);
+
+        if (trackProgress) {
+            saveProgress(startIndex, totalResults, "IDLE");
+        }
     }
 
     private boolean hasApiKey() {

@@ -47,6 +47,9 @@ export interface NvdSyncState {
 
 export interface NvdSyncStatus {
   running: boolean;
+  lastStartIndex: number;
+  totalResults: number;
+  state: string;
 }
 
 /** Trigger a full NVD cache sync (admin only). Returns 202 immediately. */
