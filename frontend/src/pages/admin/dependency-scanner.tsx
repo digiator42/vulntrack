@@ -2,6 +2,7 @@
 import React from "react";
 import { withAuth } from "@/components/common/ProtectedRoute";
 import DependencyScanner from "@/components/dependency/DependencyScanner";
+import NvdSyncPanel from "@/components/dependency/NvdSyncPanel";
 import { useRouter } from "next/router";
 
 const AdminDependencyScannerPage: React.FC = () => {
@@ -22,6 +23,7 @@ const AdminDependencyScannerPage: React.FC = () => {
           and create security issues
         </p>
       </div>
+      <NvdSyncPanel />
       <DependencyScanner onIssueCreated={handleIssueCreated} />
     </div>
   );
