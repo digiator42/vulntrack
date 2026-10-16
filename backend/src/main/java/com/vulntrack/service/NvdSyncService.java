@@ -70,9 +70,12 @@ public class NvdSyncService {
      * the same pages into the unique index. The database row is the only
      * mutex all instances share. A RUNNING row with a fresh heartbeat means
      * a live sync elsewhere; a stale one means a dead container and may be
-     * stolen for resume.
+     * stolen for resume. The window is deliberately short: a live sync saves
+     * progress every few seconds, while any redeploy gap is minutes long —
+     * so a fresh container boot almost always finds a stealable lease and
+     * resumes instead of watching a dead row for half an hour.
      */
-    private static final long LEASE_STALE_AFTER_MINUTES = 30L;
+    private static final long LEASE_STALE_AFTER_MINUTES = 5L;
 
     /** True while a sync holds a fresh lease (i.e. actually running). */
     public boolean isSyncRunning() {
