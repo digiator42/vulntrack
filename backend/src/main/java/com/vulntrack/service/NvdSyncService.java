@@ -24,6 +24,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -391,37 +392,51 @@ public class NvdSyncService {
                         String[] cpeParts = criteria.split(":");
 
                         if (cpeParts.length >= 5) {
-                            String vendor = cpeParts[3];
-                            String product = cpeParts[4];
+                            String vendor = cpeParts[3].toLowerCase();
+                            String product = cpeParts[4].toLowerCase();
+                            String vsi = match.has("versionStartIncluding")
+                                ? match.get("versionStartIncluding").asText() : null;
+                            String vse = match.has("versionStartExcluding")
+                                ? match.get("versionStartExcluding").asText() : null;
+                            String vei = match.has("versionEndIncluding")
+                                ? match.get("versionEndIncluding").asText() : null;
+                            String vee = match.has("versionEndExcluding")
+                                ? match.get("versionEndExcluding").asText() : null;
+
+                            // One CVE node can list the same vendor/product (with
+                            // identical bounds) under several configuration
+                            // nodes. The cveId check above runs once per node,
+                            // so dedupe on the full identity here — otherwise
+                            // twin rows hit the unique index and fail the
+                            // whole page batch.
+                            boolean twinInBatch = cves.stream().anyMatch(existing ->
+                                existing.getCveId().equals(cveId)
+                                    && Objects.equals(existing.getCpeVendor(), vendor)
+                                    && Objects.equals(existing.getCpeProduct(), product)
+                                    && Objects.equals(existing.getVersionStartIncluding(), vsi)
+                                    && Objects.equals(existing.getVersionStartExcluding(), vse)
+                                    && Objects.equals(existing.getVersionEndIncluding(), vei)
+                                    && Objects.equals(existing.getVersionEndExcluding(), vee));
+                            if (twinInBatch) {
+                                log.debug(
+                                    "Skipping duplicate identity {}:{} for {}",
+                                    vendor, product, cveId
+                                );
+                                continue;
+                            }
 
                             LocalCve localCve = LocalCve.builder()
                                 .cveId(cveId)
-                                .cpeProduct(product.toLowerCase())
-                                .cpeVendor(vendor.toLowerCase())
+                                .cpeProduct(product)
+                                .cpeVendor(vendor)
                                 .description(extractDescription(cveNode))
                                 .cvssScore(extractCvssScore(cveNode))
                                 .severity(extractSeverity(cveNode))
                                 .vectorString(extractVectorString(cveNode))
-                                .versionStartIncluding(
-                                    match.has("versionStartIncluding")
-                                        ? match.get("versionStartIncluding").asText()
-                                        : null
-                                )
-                                .versionStartExcluding(
-                                    match.has("versionStartExcluding")
-                                        ? match.get("versionStartExcluding").asText()
-                                        : null
-                                )
-                                .versionEndIncluding(
-                                    match.has("versionEndIncluding")
-                                        ? match.get("versionEndIncluding").asText()
-                                        : null
-                                )
-                                .versionEndExcluding(
-                                    match.has("versionEndExcluding")
-                                        ? match.get("versionEndExcluding").asText()
-                                        : null
-                                )
+                                .versionStartIncluding(vsi)
+                                .versionStartExcluding(vse)
+                                .versionEndIncluding(vei)
+                                .versionEndExcluding(vee)
                                 .publishedDate(parseDate(cveNode, "published"))
                                 .lastModified(parseDate(cveNode, "lastModified"))
                                 .syncedAt(LocalDateTime.now())
