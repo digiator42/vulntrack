@@ -26,7 +26,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 @Service
 @RequiredArgsConstructor
@@ -61,11 +60,38 @@ public class NvdSyncService {
         .ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS");
 
     /**
-     * Guards overlapping syncs (scheduled vs. manually triggered). A full NVD
-     * sync pages through ~250k CVEs, so concurrent runs would duplicate work
-     * and rows (cve_id is not unique).
+     * Cross-instance mutual exclusion, persisted in nvd_sync_state.
+     *
+     * The in-memory flag of earlier revisions could not see sibling
+     * containers: a redeploy left the old instance draining its sync while
+     * the new instance's boot recovery started a second one, and both raced
+     * the same pages into the unique index. The database row is the only
+     * mutex all instances share. A RUNNING row with a fresh heartbeat means
+     * a live sync elsewhere; a stale one means a dead container and may be
+     * stolen for resume.
      */
-    private final AtomicBoolean syncRunning = new AtomicBoolean(false);
+    private static final long LEASE_STALE_AFTER_MINUTES = 30L;
+
+    /** True while a sync holds a fresh lease (i.e. actually running). */
+    public boolean isSyncRunning() {
+        NvdSyncState state = getSyncState();
+        return state != null && "RUNNING".equals(state.getStatus())
+            && state.getUpdatedAt() != null
+            && state.getUpdatedAt()
+                .isAfter(LocalDateTime.now().minusMinutes(LEASE_STALE_AFTER_MINUTES));
+    }
+
+    /** Atomically take the sync lease; false when another instance runs. */
+    private boolean tryAcquireLease() {
+        try {
+            return syncStateRepository.tryAcquireLease(
+                LocalDateTime.now().minusMinutes(LEASE_STALE_AFTER_MINUTES)
+            ) == 1;
+        } catch (Exception e) {
+            log.warn("Could not acquire NVD sync lease: {}", e.getMessage());
+            return false;
+        }
+    }
 
     /**
      * NVD throttles/bans anonymous-looking datacenter clients aggressively.
@@ -87,14 +113,26 @@ public class NvdSyncService {
         });
     }
 
-    /** True while a full or incremental sync is in progress. */
-    public boolean isSyncRunning() {
-        return syncRunning.get();
-    }
-
     /** Snapshot of the persisted sync position for the status endpoint. */
     public NvdSyncState getSyncState() {
         return syncStateRepository.findById(1).orElse(null);
+    }
+
+    /**
+     * Release the mutex after a run ends (success or abort) while keeping
+     * the saved position and failure reason, so the next trigger resumes.
+     */
+    private void releaseLease() {
+        try {
+            NvdSyncState state = getSyncState();
+            if (state != null) {
+                state.setStatus("IDLE");
+                state.setUpdatedAt(LocalDateTime.now());
+                syncStateRepository.save(state);
+            }
+        } catch (Exception e) {
+            log.warn("Could not release NVD sync lease: {}", e.getMessage());
+        }
     }
 
     /**
@@ -105,7 +143,7 @@ public class NvdSyncService {
      * thread.
      */
     public boolean tryStartFullSync(Integer from) {
-        if (!syncRunning.compareAndSet(false, true)) {
+        if (!tryAcquireLease()) {
             return false;
         }
         int resumeFrom = (from != null && from >= 0) ? from : loadResumeIndex();
@@ -115,7 +153,7 @@ public class NvdSyncService {
             } catch (Exception e) {
                 log.error("Manual NVD full sync failed", e);
             } finally {
-                syncRunning.set(false);
+                releaseLease();
             }
         });
         return true;
@@ -133,7 +171,8 @@ public class NvdSyncService {
     @EventListener(ApplicationReadyEvent.class)
     public void resumeInterruptedSync() {
         NvdSyncState state = getSyncState();
-        if (state != null && "RUNNING".equals(state.getStatus())) {
+        if (state != null && ("RUNNING".equals(state.getStatus())
+            || state.getLastError() != null)) {
             log.info(
                 "Resuming interrupted NVD sync from startIndex {}",
                 state.getLastStartIndex()
@@ -178,14 +217,14 @@ public class NvdSyncService {
     @Scheduled(cron = "0 0 2 * * SUN")
     @Transactional
     public void fullSync() {
-        if (!syncRunning.compareAndSet(false, true)) {
+        if (!tryAcquireLease()) {
             log.info("NVD sync already running; skipping scheduled full sync");
             return;
         }
         try {
             doFullSyncFrom(0);
         } finally {
-            syncRunning.set(false);
+            releaseLease();
         }
     }
 
@@ -201,7 +240,7 @@ public class NvdSyncService {
     @Scheduled(cron = "0 0 2 * * *")
     @Transactional
     public void incrementalSync() {
-        if (!syncRunning.compareAndSet(false, true)) {
+        if (!tryAcquireLease()) {
             log.info("NVD sync already running; skipping scheduled incremental sync");
             return;
         }
@@ -216,7 +255,7 @@ public class NvdSyncService {
 
             log.info("Completed incremental NVD sync");
         } finally {
-            syncRunning.set(false);
+            releaseLease();
         }
     }
 
