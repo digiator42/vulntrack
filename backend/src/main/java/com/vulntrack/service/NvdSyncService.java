@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -32,6 +33,23 @@ public class NvdSyncService {
 
     @Value("${nvd.api.url:https://services.nvd.nist.gov/rest/json/cves/2.0}")
     private String nvdApiUrl;
+
+    /**
+     * Optional NVD API key (env NVD_API_KEY). Without one NVD allows 5
+     * requests / 30 s; with a (free) key it allows 50 / 30 s. Paging is
+     * throttled accordingly below.
+     */
+    @Value("${nvd.api.key:}")
+    private String nvdApiKey = "";
+
+    private static final int PAGE_SIZE = 1000;
+    /** Delay between pages without a key: 5 req/30 s -> one page per ~6.5 s. */
+    private static final long PAGE_DELAY_NO_KEY_MS = 6500L;
+    /** Delay between pages with a key: 50 req/30 s -> comfortable margin. */
+    private static final long PAGE_DELAY_WITH_KEY_MS = 1000L;
+    /** Backoff when NVD rate-limits us (403 without key / 429 with key). */
+    private static final long RATE_LIMIT_BACKOFF_MS = 35000L;
+    private static final int MAX_RATE_LIMIT_RETRIES = 3;
 
     private static final DateTimeFormatter NVD_DATE_FORMAT = DateTimeFormatter
         .ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS");
@@ -138,8 +156,10 @@ public class NvdSyncService {
     }
 
     private void syncCves(LocalDateTime lastModStartDate) {
-        int startIndex = 92000;
+        int startIndex = 0;
         int totalResults = 0;
+        int rateLimitRetries = 0;
+        long pageDelayMs = hasApiKey() ? PAGE_DELAY_WITH_KEY_MS : PAGE_DELAY_NO_KEY_MS;
 
         do {
             try {
@@ -172,13 +192,50 @@ public class NvdSyncService {
 
                 }
 
-                startIndex += 1000; // Results per page
+                startIndex += PAGE_SIZE; // Results per page
+                rateLimitRetries = 0;
+                sleepQuietly(pageDelayMs);
 
+            } catch (HttpClientErrorException.TooManyRequests e) {
+                // NVD rate limit with an API key.
+                if (++rateLimitRetries > MAX_RATE_LIMIT_RETRIES) {
+                    log.error("NVD rate limit hit repeatedly; aborting sync");
+                    break;
+                }
+                log.warn(
+                    "NVD rate limit (429); backing off {} ms before retrying startIndex {}",
+                    RATE_LIMIT_BACKOFF_MS, startIndex
+                );
+                sleepQuietly(RATE_LIMIT_BACKOFF_MS);
+            } catch (HttpClientErrorException.Forbidden e) {
+                // NVD answers 403 when the keyless quota is exceeded.
+                if (++rateLimitRetries > MAX_RATE_LIMIT_RETRIES) {
+                    log.error("NVD quota exceeded repeatedly; aborting sync");
+                    break;
+                }
+                log.warn(
+                    "NVD quota exceeded (403); backing off {} ms before retrying startIndex {}",
+                    RATE_LIMIT_BACKOFF_MS, startIndex
+                );
+                sleepQuietly(RATE_LIMIT_BACKOFF_MS);
             } catch (Exception e) {
                 log.error("Error syncing CVEs at startIndex {}: {}", startIndex, e.getMessage());
                 break;
             }
         } while (startIndex < totalResults);
+    }
+
+    private boolean hasApiKey() {
+        return nvdApiKey != null && !nvdApiKey.isBlank();
+    }
+
+    private void sleepQuietly(long millis) {
+        try {
+            Thread.sleep(millis);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException("NVD sync interrupted", e);
+        }
     }
 
     private void processCveNode(JsonNode cveNode, List<LocalCve> cves, int startIndex) {
@@ -189,9 +246,8 @@ public class NvdSyncService {
             boolean alreadyExists = cves.stream().anyMatch(c -> c.getCveId().equals(cveId)) ||
                 localCveRepository.findByCveId(cveId).isPresent();
 
-            System.out.println("====> CVE ID: " + cveId);
             if (alreadyExists) {
-                System.out.println("==============>>> Skipping duplicate CVE: " + cveId);
+                log.debug("Skipping duplicate CVE: {}", cveId);
                 return;
             }
 
@@ -253,7 +309,7 @@ public class NvdSyncService {
                                 )
                                 .publishedDate(parseDate(cveNode, "published"))
                                 .lastModified(parseDate(cveNode, "lastModified"))
-                                .rawJson(String.valueOf(startIndex))
+                                .rawJson(cveNode.toString())
                                 .syncedAt(LocalDateTime.now())
                                 .build();
 
@@ -269,8 +325,12 @@ public class NvdSyncService {
 
     private String buildUrl(LocalDateTime lastModStartDate, int startIndex) {
         var builder = UriComponentsBuilder.fromHttpUrl(nvdApiUrl)
-            .queryParam("resultsPerPage", 1000)
+            .queryParam("resultsPerPage", PAGE_SIZE)
             .queryParam("startIndex", startIndex);
+
+        if (hasApiKey()) {
+            builder.queryParam("apiKey", nvdApiKey);
+        }
 
         if (lastModStartDate != null) {
             builder.queryParam(
