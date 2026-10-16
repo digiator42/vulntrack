@@ -90,7 +90,7 @@ const ReportsPage: React.FC = () => {
   if (!data) {
     return (
       <div className="text-center py-12">
-        <p className="text-gray-500">No report data available</p>
+        <p className="text-gray-500 dark:text-gray-400">No report data available</p>
       </div>
     );
   }
@@ -102,7 +102,7 @@ const ReportsPage: React.FC = () => {
       MEDIUM: "bg-yellow-500",
       LOW: "bg-blue-500",
     };
-    return colors[severity as keyof typeof colors] || "bg-gray-500";
+    return colors[severity as keyof typeof colors] || "bg-gray-50 dark:bg-gray-8000";
   };
 
   const getSeverityBgLight = (severity: string) => {
@@ -112,7 +112,7 @@ const ReportsPage: React.FC = () => {
       MEDIUM: "bg-yellow-50 border-yellow-200",
       LOW: "bg-blue-50 border-blue-200",
     };
-    return colors[severity as keyof typeof colors] || "bg-gray-50";
+    return colors[severity as keyof typeof colors] || "bg-gray-50 dark:bg-gray-800";
   };
 
   const getCVSSRating = (score: number) => {
@@ -162,13 +162,13 @@ const ReportsPage: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+      <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
               Security Posture Report
             </h1>
-            <p className="text-gray-600 mt-1">
+            <p className="text-gray-600 dark:text-gray-400 mt-1">
               Comprehensive vulnerability overview for{" "}
               {user?.role?.replace("ROLE_", "")}
             </p>
@@ -186,11 +186,11 @@ const ReportsPage: React.FC = () => {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+        <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500 font-medium">Total Issues</p>
-              <p className="text-3xl font-bold text-gray-900 mt-1">
+              <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">Total Issues</p>
+              <p className="text-3xl font-bold text-gray-900 dark:text-white mt-1">
                 {data.totalIssues}
               </p>
             </div>
@@ -199,21 +199,21 @@ const ReportsPage: React.FC = () => {
             </div>
           </div>
           <div className="mt-4 flex items-center gap-2">
-            <span className="text-xs text-gray-500">All vulnerabilities</span>
+            <span className="text-xs text-gray-500 dark:text-gray-400">All vulnerabilities</span>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+        <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500 font-medium">
+              <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">
                 Average CVSS Score
               </p>
               <div className="flex items-baseline gap-1 mt-1">
-                <p className="text-3xl font-bold text-gray-900">
+                <p className="text-3xl font-bold text-gray-900 dark:text-white">
                   {data.averageCvss.toFixed(1)}
                 </p>
-                <p className="text-sm text-gray-500">/ 10</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">/ 10</p>
               </div>
             </div>
             <div className={`${cvssRating.bg} rounded-full p-3`}>
@@ -231,10 +231,10 @@ const ReportsPage: React.FC = () => {
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+        <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500 font-medium">Open Issues</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">Open Issues</p>
               <p className="text-3xl font-bold text-orange-600 mt-1">
                 {data.openIssues}
               </p>
@@ -253,10 +253,10 @@ const ReportsPage: React.FC = () => {
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+        <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500 font-medium">
+              <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">
                 Resolved Issues
               </p>
               <p className="text-3xl font-bold text-green-600 mt-1">
@@ -281,9 +281,9 @@ const ReportsPage: React.FC = () => {
       {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Severity Distribution */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
           <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
               Severity Distribution
             </h3>
             <ChartBarIcon className="h-5 w-5 text-gray-400" />
@@ -296,10 +296,10 @@ const ReportsPage: React.FC = () => {
               return (
                 <div key={severity.name}>
                   <div className="flex justify-between text-sm mb-1">
-                    <span className="font-medium text-gray-700">
+                    <span className="font-medium text-gray-700 dark:text-gray-300">
                       {severity.name}
                     </span>
-                    <span className="text-gray-600">
+                    <span className="text-gray-600 dark:text-gray-400">
                       {count} ({percentage.toFixed(1)}%)
                     </span>
                   </div>
@@ -315,15 +315,15 @@ const ReportsPage: React.FC = () => {
           </div>
 
           {totalIssues > 0 && (
-            <div className="mt-6 pt-4 border-t border-gray-200">
+            <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
               <div className="flex justify-around">
                 {severityRatings.map((severity) => (
                   <div key={severity.name} className="text-center">
                     <div
                       className={`w-3 h-3 ${severity.color} rounded-full mx-auto mb-1`}
                     />
-                    <p className="text-xs text-gray-600">{severity.name}</p>
-                    <p className="text-sm font-bold text-gray-900">
+                    <p className="text-xs text-gray-600 dark:text-gray-400">{severity.name}</p>
+                    <p className="text-sm font-bold text-gray-900 dark:text-white">
                       {severity.count}
                     </p>
                   </div>
@@ -334,10 +334,10 @@ const ReportsPage: React.FC = () => {
         </div>
 
         {/* Top CWEs */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
           <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">Top CWEs</h3>
-            <span className="text-xs text-gray-500">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Top CWEs</h3>
+            <span className="text-xs text-gray-500 dark:text-gray-400">
               Most Common Weaknesses
             </span>
           </div>
@@ -346,18 +346,18 @@ const ReportsPage: React.FC = () => {
               {topCWEs.map(([cweId, count], index) => (
                 <div
                   key={cweId}
-                  className="group hover:bg-gray-50 p-2 rounded-lg transition-colors"
+                  className="group hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-800 p-2 rounded-lg transition-colors"
                 >
                   <div className="flex justify-between items-center mb-1">
                     <div className="flex items-center gap-3">
                       <span className="text-sm font-bold text-gray-400 w-6">
                         #{index + 1}
                       </span>
-                      <span className="font-mono text-sm text-gray-700">
+                      <span className="font-mono text-sm text-gray-700 dark:text-gray-300">
                         {cweId}
                       </span>
                     </div>
-                    <span className="text-sm font-semibold text-gray-900">
+                    <span className="text-sm font-semibold text-gray-900 dark:text-white">
                       {count}
                     </span>
                   </div>
@@ -389,11 +389,11 @@ const ReportsPage: React.FC = () => {
             >
               <div className="flex justify-between items-start">
                 <div>
-                  <h4 className="text-sm font-medium text-gray-700">
+                  <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">
                     Critical Risk Alert
                   </h4>
                   <p className="text-2xl font-bold mt-2">{severity.count}</p>
-                  <p className="text-sm text-gray-600 mt-1">
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                     {severity.name.toLowerCase()} severity vulnerabilities
                   </p>
                 </div>
@@ -414,7 +414,7 @@ const ReportsPage: React.FC = () => {
       </div>
 
       {/* Footer Info */}
-      <div className="bg-gray-50 rounded-lg p-4 text-center text-sm text-gray-500 border border-gray-200">
+      <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 text-center text-sm text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-gray-700">
         <p className="text-xs mt-1">
           {user?.role === "ROLE_ADMIN" || user?.role === "ROLE_SECURITY_ADMIN"
             ? "Global security metrics"

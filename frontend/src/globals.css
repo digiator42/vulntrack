@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --color-background: white;
   --color-foreground: black;
@@ -8,6 +10,13 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+ color-scheme: light;
+}
+
+.dark {
+  --background: #030712;
+  --foreground: #f3f4f6;
+  color-scheme: dark;
 }
 
 body {
@@ -54,4 +63,9 @@ body {
   );
   background-size: 800px 100%;
   animation: shimmer 1.3s linear infinite;
+}
+
+.dark .animate-shimmer {
+  background: linear-gradient(to right, #1f2937 8%, #374151 18%, #1f2937 33%);
+  background-size: 800px 100%;
 }

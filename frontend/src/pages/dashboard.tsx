@@ -6,7 +6,7 @@ import { withAuth } from "@/components/common/ProtectedRoute";
 const DashboardPage: React.FC = () => {
   return (
     <div className="py-8">
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">Dashboard</h1>
+      <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Dashboard</h1>
       <DashboardMetrics />
     </div>
   );

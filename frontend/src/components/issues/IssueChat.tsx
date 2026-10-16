@@ -196,12 +196,12 @@ const IssueChat: React.FC<IssueChatProps> = ({ issueId, onNewComment }) => {
       ROLE_SECURITY_ADMIN: "text-blue-600 bg-blue-100",
       ROLE_DEVELOPER: "text-green-600 bg-green-100",
     };
-    return colors[role as keyof typeof colors] || "text-gray-600 bg-gray-100";
+    return colors[role as keyof typeof colors] || "text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-700";
   };
 
   if (loading) {
     return (
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+      <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
         <div className="flex justify-center items-center h-64">
           <div className="animate-pulse text-gray-400">Loading comments...</div>
         </div>
@@ -211,13 +211,13 @@ const IssueChat: React.FC<IssueChatProps> = ({ issueId, onNewComment }) => {
 
   return (
     <>
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+      <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
         {/* Header */}
-        <div className="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-white">
+        <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-blue-50 to-white">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <ChatBubbleLeftRightIcon className="h-5 w-5 text-blue-600" />
-              <h3 className="text-lg font-semibold text-gray-900">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                 Discussion
               </h3>
               {wsConnected && (
@@ -226,11 +226,11 @@ const IssueChat: React.FC<IssueChatProps> = ({ issueId, onNewComment }) => {
                 </span>
               )}
             </div>
-            <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+            <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-full">
               {comments.length} {comments.length === 1 ? "comment" : "comments"}
             </span>
           </div>
-          <p className="text-sm text-gray-600 mt-1">
+          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
             Collaborate with team members
           </p>
         </div>
@@ -238,12 +238,12 @@ const IssueChat: React.FC<IssueChatProps> = ({ issueId, onNewComment }) => {
         {/* Comments List */}
         <div
           ref={chatContainerRef}
-          className="h-96 overflow-y-auto p-4 space-y-4 bg-gray-50"
+          className="h-96 overflow-y-auto p-4 space-y-4 bg-gray-50 dark:bg-gray-800"
         >
           {comments.length === 0 ? (
             <div className="text-center py-12">
               <ChatBubbleLeftRightIcon className="h-12 w-12 mx-auto text-gray-300 mb-3" />
-              <p className="text-gray-500">No comments yet</p>
+              <p className="text-gray-500 dark:text-gray-400">No comments yet</p>
               <p className="text-sm text-gray-400">
                 Be the first to start the discussion
               </p>
@@ -268,19 +268,19 @@ const IssueChat: React.FC<IssueChatProps> = ({ issueId, onNewComment }) => {
                     </div>
                   </div>
                   <div className="flex-1">
-                    <div className="bg-white rounded-lg p-3 shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
+                    <div className="bg-white dark:bg-gray-900 rounded-lg p-3 shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow">
                       <div className="flex justify-between items-start mb-1">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-sm font-medium text-gray-900">
+                          <span className="text-sm font-medium text-gray-900 dark:text-white">
                             {comment.author.username}
                           </span>
-                          <span className="text-xs px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-600">
+                          <span className="text-xs px-1.5 py-0.5 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400">
                             {comment.author.role.replace("ROLE_", "")}
                           </span>
                         </div>
                         <button
                           onClick={() => copyToClipboard(comment.content)}
-                          className="opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-gray-600"
+                          className="opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-gray-600 dark:text-gray-400"
                           title="Copy comment"
                         >
                           <ClipboardDocumentIcon className="h-4 w-4" />
@@ -289,7 +289,7 @@ const IssueChat: React.FC<IssueChatProps> = ({ issueId, onNewComment }) => {
 
                       {/* Comment Content */}
                       <div
-                        className={`text-sm text-gray-700 whitespace-pre-wrap ${isLongComment ? "cursor-pointer hover:text-blue-600" : ""}`}
+                        className={`text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap ${isLongComment ? "cursor-pointer hover:text-blue-600" : ""}`}
                         onClick={(e) => handleCommentClick(e, comment)}
                       >
                         {displayText}
@@ -321,7 +321,7 @@ const IssueChat: React.FC<IssueChatProps> = ({ issueId, onNewComment }) => {
         </div>
 
         {/* Comment Input */}
-        <div className="p-4 border-t border-gray-200 bg-white">
+        <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
           <div className="flex gap-2">
             <textarea
               value={newComment}
@@ -329,7 +329,7 @@ const IssueChat: React.FC<IssueChatProps> = ({ issueId, onNewComment }) => {
               onKeyPress={handleKeyPress}
               placeholder="Add a comment... (Press Enter to send, Shift+Enter for new line)"
               rows={2}
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+              className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
             />
             <button
               onClick={sendComment}
@@ -361,10 +361,10 @@ const IssueChat: React.FC<IssueChatProps> = ({ issueId, onNewComment }) => {
           onClick={() => setExpandedComment(null)}
         >
           <div
-            className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-hidden"
+            className="bg-white dark:bg-gray-900 rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-white flex justify-between items-center">
+            <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-blue-50 to-white flex justify-between items-center">
               <div className="flex items-center gap-3">
                 <div
                   className={`w-10 h-10 rounded-full flex items-center justify-center ${getAuthorColor(expandedComment.author.role)}`}
@@ -372,10 +372,10 @@ const IssueChat: React.FC<IssueChatProps> = ({ issueId, onNewComment }) => {
                   <UserCircleIcon className="h-6 w-6" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-gray-900">
+                  <h3 className="font-semibold text-gray-900 dark:text-white">
                     {expandedComment.author.username}
                   </h3>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
                     {(() => {
                       const date = parseDate(expandedComment.createdAt);
                       return date
@@ -387,20 +387,20 @@ const IssueChat: React.FC<IssueChatProps> = ({ issueId, onNewComment }) => {
               </div>
               <button
                 onClick={() => setExpandedComment(null)}
-                className="text-gray-400 hover:text-gray-600 transition-colors"
+                className="text-gray-400 hover:text-gray-600 dark:text-gray-400 transition-colors"
               >
                 <XMarkIcon className="h-5 w-5" />
               </button>
             </div>
             <div className="p-6 overflow-y-auto max-h-[60vh]">
-              <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">
+              <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap leading-relaxed">
                 {expandedComment.content}
               </p>
             </div>
-            <div className="px-6 py-4 border-t border-gray-200 bg-gray-50 flex justify-end gap-2">
+            <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 flex justify-end gap-2">
               <button
                 onClick={() => copyToClipboard(expandedComment.content)}
-                className="px-3 py-1.5 text-sm border border-gray-300 rounded-md hover:bg-gray-100 transition-colors flex items-center gap-2"
+                className="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-100 dark:bg-gray-700 dark:hover:bg-gray-700 transition-colors flex items-center gap-2"
               >
                 <ClipboardDocumentIcon className="h-4 w-4" />
                 Copy

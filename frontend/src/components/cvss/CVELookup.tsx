@@ -76,7 +76,7 @@ const CVELookup: React.FC<CVELookupProps> = ({ onCVESelect }) => {
   return (
     <div className="space-y-4">
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
           CVE ID (Optional)
         </label>
         <div className="relative">
@@ -86,7 +86,7 @@ const CVELookup: React.FC<CVELookupProps> = ({ onCVESelect }) => {
             onChange={(e) => setCveId(e.target.value.toUpperCase())}
             onKeyPress={handleKeyPress}
             placeholder="e.g., CVE-2024-12345"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           <button
             onClick={fetchCVEDetails}
@@ -98,15 +98,15 @@ const CVELookup: React.FC<CVELookupProps> = ({ onCVESelect }) => {
           
           {/* Suggestions dropdown */}
           {suggestions.length > 0 && (
-            <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
+            <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-md shadow-lg max-h-60 overflow-auto">
               {suggestions.map((cve) => (
                 <button
                   key={cve.id}
                   onClick={() => selectSuggestion(cve)}
-                  className="w-full text-left px-4 py-2 hover:bg-gray-50 focus:outline-none focus:bg-gray-50"
+                  className="w-full text-left px-4 py-2 hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-800 focus:outline-none focus:bg-gray-50 dark:bg-gray-800"
                 >
                   <div className="font-medium text-sm">{cve.id}</div>
-                  <div className="text-xs text-gray-500 truncate">{cve.description}</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400 truncate">{cve.description}</div>
                 </button>
               ))}
             </div>
@@ -138,7 +138,7 @@ const CVELookup: React.FC<CVELookupProps> = ({ onCVESelect }) => {
                   <span className="text-sm font-medium">CWEs:</span>
                   <div className="flex gap-2 mt-1">
                     {selectedCVE.weaknesses.map((cwe) => (
-                      <span key={cwe.cweId} className="px-2 py-0.5 bg-gray-100 text-gray-700 text-xs rounded">
+                      <span key={cwe.cweId} className="px-2 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs rounded">
                         {cwe.cweId}
                       </span>
                     ))}

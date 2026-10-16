@@ -92,7 +92,7 @@ const CreateIssueForm: React.FC = () => {
       )}
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
           Title *
         </label>
         <input
@@ -100,7 +100,7 @@ const CreateIssueForm: React.FC = () => {
           required
           value={formData.title}
           onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           placeholder="Enter vulnerability title"
         />
       </div>
@@ -109,7 +109,7 @@ const CreateIssueForm: React.FC = () => {
       <CVELookup onCVESelect={handleCVESelect} />
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
           CWE ID (Optional)
         </label>
         <input
@@ -117,12 +117,12 @@ const CreateIssueForm: React.FC = () => {
           value={formData.cweId || ""}
           onChange={(e) => setFormData({ ...formData, cweId: e.target.value })}
           placeholder="e.g., CWE-89"
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
           Severity *
         </label>
         <select
@@ -131,7 +131,7 @@ const CreateIssueForm: React.FC = () => {
           onChange={(e) =>
             setFormData({ ...formData, severity: e.target.value as any })
           }
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           <option value="CRITICAL">Critical</option>
           <option value="HIGH">High</option>
@@ -144,7 +144,7 @@ const CreateIssueForm: React.FC = () => {
       <CVSSCalculator onVectorChange={handleCVSSChange} />
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
           Description
         </label>
         <MarkdownEditor
@@ -167,7 +167,7 @@ const CreateIssueForm: React.FC = () => {
         <button
           type="button"
           onClick={() => router.back()}
-          className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
+          className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-800"
         >
           Cancel
         </button>

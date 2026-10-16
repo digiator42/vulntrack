@@ -68,10 +68,10 @@ const IssuesPage: React.FC = () => {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
           {isDeveloper ? "My Assigned Issues" : "Vulnerability Issues"}
         </h1>
-        <p className="text-gray-600 mt-1">
+        <p className="text-gray-600 dark:text-gray-400 mt-1">
           {isDeveloper
             ? "Track and resolve vulnerabilities assigned to you"
             : "Track and manage security vulnerabilities"}
@@ -86,8 +86,8 @@ const IssuesPage: React.FC = () => {
       ) : (
         <>
           {issues.length === 0 && isDeveloper && (
-            <div className="text-center py-12 bg-white rounded-lg shadow">
-              <p className="text-gray-500">No issues assigned to you yet.</p>
+            <div className="text-center py-12 bg-white dark:bg-gray-900 rounded-lg shadow">
+              <p className="text-gray-500 dark:text-gray-400">No issues assigned to you yet.</p>
             </div>
           )}
 

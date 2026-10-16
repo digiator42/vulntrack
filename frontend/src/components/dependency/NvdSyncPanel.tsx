@@ -88,7 +88,7 @@ const NvdSyncPanel: React.FC = () => {
   };
 
   return (
-    <div className="mb-6 rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+    <div className="mb-6 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4 shadow-sm">
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           {running ? (
@@ -97,7 +97,7 @@ const NvdSyncPanel: React.FC = () => {
             <CheckCircleIcon className="h-6 w-6 text-green-600" />
           )}
           <div>
-            <p className="text-sm font-semibold text-gray-900">
+            <p className="text-sm font-semibold text-gray-900 dark:text-white">
               NVD CVE cache{" "}
               <span
                 className={`ml-1 rounded-full px-2 py-0.5 text-xs font-medium ${
@@ -117,7 +117,7 @@ const NvdSyncPanel: React.FC = () => {
                       : "ready"}
               </span>
             </p>
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-gray-500 dark:text-gray-400">
               {running
                 ? "A full sync is downloading CVEs in the background — scans keep working meanwhile."
                 : "Scans match against the local cache (daily delta 02:00, full refresh Sundays 02:00). Sync now after a fresh deploy."}

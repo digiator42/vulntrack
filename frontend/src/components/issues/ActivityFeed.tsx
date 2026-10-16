@@ -82,7 +82,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({ issueId }) => {
       RESOLVED: "bg-green-100 text-green-600",
       REOPENED: "bg-red-100 text-red-600",
     };
-    return colors[action as keyof typeof colors] || "bg-gray-100 text-gray-600";
+    return colors[action as keyof typeof colors] || "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400";
   };
 
   const getActivityText = (activity: Activity) => {
@@ -100,7 +100,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({ issueId }) => {
 
   if (loading) {
     return (
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+      <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
         <div className="flex justify-center items-center h-32">
           <div className="animate-pulse text-gray-400">Loading activity...</div>
         </div>
@@ -109,15 +109,15 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({ issueId }) => {
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-      <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
+    <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+      <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
         <div className="flex items-center gap-2">
-          <ClockIcon className="h-5 w-5 text-gray-600" />
-          <h3 className="text-lg font-semibold text-gray-900">
+          <ClockIcon className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
             Activity History
           </h3>
         </div>
-        <p className="text-sm text-gray-600 mt-1">
+        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
           Track all changes and updates to this issue
         </p>
       </div>
@@ -126,7 +126,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({ issueId }) => {
         {activities.length === 0 ? (
           <div className="text-center py-12">
             <ClockIcon className="h-12 w-12 mx-auto text-gray-300 mb-3" />
-            <p className="text-gray-500">No activity yet</p>
+            <p className="text-gray-500 dark:text-gray-400">No activity yet</p>
           </div>
         ) : (
           <div className="flow-root">
@@ -151,10 +151,10 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({ issueId }) => {
                       <div className="min-w-0 flex-1">
                         <div>
                           <div className="text-sm">
-                            <span className="font-medium text-gray-900">
+                            <span className="font-medium text-gray-900 dark:text-white">
                               {activity.performedBy.username}
                             </span>{" "}
-                            <span className="text-gray-500">
+                            <span className="text-gray-500 dark:text-gray-400">
                               {getActivityText(activity)}
                             </span>
                           </div>
@@ -163,14 +163,14 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({ issueId }) => {
                               addSuffix: true,
                             })} */}
                           </p>
-                          <span className="font-small text-gray-900">
+                          <span className="font-small text-gray-900 dark:text-white">
                             {activity.performedBy.role.replace("_", ": ").toLowerCase()}
                           </span>{" "}
                         </div>
                         {activity.oldValue &&
                           activity.newValue &&
                           activity.action !== "STATUS_CHANGE" && (
-                            <div className="mt-1 text-xs text-gray-500">
+                            <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                               From:{" "}
                               <span className="font-mono">
                                 {activity.oldValue}

@@ -120,7 +120,7 @@ const UsersPage: React.FC = () => {
       ROLE_SECURITY_ADMIN: "bg-blue-100 text-blue-800",
       ROLE_DEVELOPER: "bg-green-100 text-green-800",
     };
-    return badges[role as keyof typeof badges] || "bg-gray-100 text-gray-800";
+    return badges[role as keyof typeof badges] || "bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200";
   };
 
   const getRoleIcon = (role: string) => {
@@ -142,7 +142,7 @@ const UsersPage: React.FC = () => {
       LOW: "bg-blue-100 text-blue-800",
     };
     return (
-      badges[severity as keyof typeof badges] || "bg-gray-100 text-gray-800"
+      badges[severity as keyof typeof badges] || "bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200"
     );
   };
 
@@ -151,9 +151,9 @@ const UsersPage: React.FC = () => {
       OPEN: "bg-red-100 text-red-800",
       IN_PROGRESS: "bg-yellow-100 text-yellow-800",
       RESOLVED: "bg-green-100 text-green-800",
-      CLOSED: "bg-gray-100 text-gray-800",
+      CLOSED: "bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200",
     };
-    return badges[status as keyof typeof badges] || "bg-gray-100 text-gray-800";
+    return badges[status as keyof typeof badges] || "bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200";
   };
 
   if (loading) {
@@ -167,16 +167,16 @@ const UsersPage: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+      <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
         <div className="flex items-center gap-3">
           <div className="bg-blue-100 rounded-full p-2">
             <UserGroupIcon className="h-6 w-6 text-blue-600" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
               User Management
             </h1>
-            <p className="text-gray-600 mt-1">
+            <p className="text-gray-600 dark:text-gray-400 mt-1">
               Manage user roles and assign vulnerabilities to developers
             </p>
           </div>
@@ -184,36 +184,36 @@ const UsersPage: React.FC = () => {
       </div>
 
       {/* Users Table */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
-          <h2 className="text-lg font-semibold text-gray-900">System Users</h2>
-          <p className="text-sm text-gray-600">
+      <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">System Users</h2>
+          <p className="text-sm text-gray-600 dark:text-gray-400">
             Manage user roles and permissions
           </p>
         </div>
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+            <thead className="bg-gray-50 dark:bg-gray-800">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   User
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Email
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Role
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
               {users.map((user) => (
                 <tr
                   key={user.id}
-                  className="hover:bg-gray-50 transition-colors"
+                  className="hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-800 transition-colors"
                 >
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
@@ -223,14 +223,14 @@ const UsersPage: React.FC = () => {
                         </div>
                       </div>
                       <div className="ml-4">
-                        <div className="text-sm font-medium text-gray-900">
+                        <div className="text-sm font-medium text-gray-900 dark:text-white">
                           {user.username}
                         </div>
                       </div>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{user.email}</div>
+                    <div className="text-sm text-gray-900 dark:text-white">{user.email}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     {editingRole === user.id ? (
@@ -238,7 +238,7 @@ const UsersPage: React.FC = () => {
                         <select
                           value={selectedRole}
                           onChange={(e) => setSelectedRole(e.target.value)}
-                          className="px-2 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                         >
                           <option value="ROLE_ADMIN">Admin</option>
                           <option value="ROLE_SECURITY_ADMIN">
@@ -273,16 +273,16 @@ const UsersPage: React.FC = () => {
                             setEditingRole(user.id);
                             setSelectedRole(user.role);
                           }}
-                          className="text-gray-400 hover:text-gray-600"
+                          className="text-gray-400 hover:text-gray-600 dark:text-gray-400"
                         >
                           <PencilIcon className="h-4 w-4" />
                         </button>
                       </div>
                     )}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                     {user.role === "ROLE_DEVELOPER" && (
-                      <span className="text-xs text-gray-500">
+                      <span className="text-xs text-gray-500 dark:text-gray-400">
                         Can be assigned issues
                       </span>
                     )}
@@ -297,14 +297,14 @@ const UsersPage: React.FC = () => {
       {/* Issues Assignment Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Unassigned Issues */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-200 bg-yellow-50">
+        <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+          <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-yellow-50">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-lg font-semibold text-gray-900">
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
                   Unassigned Issues
                 </h2>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-gray-600 dark:text-gray-400">
                   Assign these to developers
                 </p>
               </div>
@@ -313,9 +313,9 @@ const UsersPage: React.FC = () => {
               </span>
             </div>
           </div>
-          <div className="divide-y divide-gray-200 max-h-96 overflow-y-auto">
+          <div className="divide-y divide-gray-200 dark:divide-gray-700 max-h-96 overflow-y-auto">
             {unassignedIssues.length === 0 ? (
-              <div className="p-8 text-center text-gray-500">
+              <div className="p-8 text-center text-gray-500 dark:text-gray-400">
                 <BriefcaseIcon className="h-12 w-12 mx-auto mb-3 text-gray-300" />
                 <p>All issues are assigned</p>
               </div>
@@ -323,12 +323,12 @@ const UsersPage: React.FC = () => {
               unassignedIssues.map((issue) => (
                 <div
                   key={issue.id}
-                  className="p-4 hover:bg-gray-50 transition-colors"
+                  className="p-4 hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-800 transition-colors"
                 >
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-2">
-                        <h3 className="text-sm font-medium text-gray-900">
+                        <h3 className="text-sm font-medium text-gray-900 dark:text-white">
                           #{issue.id}
                         </h3>
                         <span
@@ -342,7 +342,7 @@ const UsersPage: React.FC = () => {
                           {issue.status}
                         </span>
                       </div>
-                      <p className="text-sm text-gray-700">{issue.title}</p>
+                      <p className="text-sm text-gray-700 dark:text-gray-300">{issue.title}</p>
                     </div>
                     <button
                       onClick={() => {
@@ -361,23 +361,23 @@ const UsersPage: React.FC = () => {
         </div>
 
         {/* Assigned Issues by Developer */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-200 bg-green-50">
+        <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+          <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-green-50">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-lg font-semibold text-gray-900">
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
                   Assigned Issues
                 </h2>
-                <p className="text-sm text-gray-600">Grouped by developer</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Grouped by developer</p>
               </div>
               <span className="px-2 py-1 text-xs rounded-full bg-green-200 text-green-800">
                 {assignedIssues.length} assigned
               </span>
             </div>
           </div>
-          <div className="divide-y divide-gray-200 max-h-96 overflow-y-auto">
+          <div className="divide-y divide-gray-200 dark:divide-gray-700 max-h-96 overflow-y-auto">
             {assignedIssues.length === 0 ? (
-              <div className="p-8 text-center text-gray-500">
+              <div className="p-8 text-center text-gray-500 dark:text-gray-400">
                 <UserGroupIcon className="h-12 w-12 mx-auto mb-3 text-gray-300" />
                 <p>No issues assigned yet</p>
               </div>
@@ -393,10 +393,10 @@ const UsersPage: React.FC = () => {
                       <div className="bg-green-100 rounded-full p-1">
                         <CpuChipIcon className="h-4 w-4 text-green-600" />
                       </div>
-                      <span className="font-medium text-gray-900">
+                      <span className="font-medium text-gray-900 dark:text-white">
                         {dev.username}
                       </span>
-                      <span className="text-xs text-gray-500">
+                      <span className="text-xs text-gray-500 dark:text-gray-400">
                         ({devIssues.length} issues)
                       </span>
                     </div>
@@ -404,11 +404,11 @@ const UsersPage: React.FC = () => {
                       {devIssues.map((issue) => (
                         <div
                           key={issue.id}
-                          className="flex justify-between items-center p-2 bg-gray-50 rounded-lg"
+                          className="flex justify-between items-center p-2 bg-gray-50 dark:bg-gray-800 rounded-lg"
                         >
                           <div className="flex-1">
                             <div className="flex items-center gap-2">
-                              <span className="text-xs text-gray-500">
+                              <span className="text-xs text-gray-500 dark:text-gray-400">
                                 #{issue.id}
                               </span>
                               <span
@@ -416,7 +416,7 @@ const UsersPage: React.FC = () => {
                               >
                                 {issue.severity}
                               </span>
-                              <span className="text-sm text-gray-700 truncate">
+                              <span className="text-sm text-gray-700 dark:text-gray-300 truncate">
                                 {issue.title}
                               </span>
                             </div>
@@ -450,12 +450,12 @@ const UsersPage: React.FC = () => {
       {/* Assign Modal */}
       {showAssignModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-900">
+          <div className="bg-white dark:bg-gray-900 rounded-lg shadow-xl max-w-md w-full mx-4">
+            <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                 Assign Issue
               </h3>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-gray-600 dark:text-gray-400">
                 Select a developer to assign this issue
               </p>
             </div>
@@ -463,7 +463,7 @@ const UsersPage: React.FC = () => {
               <select
                 value={selectedAssignee || ""}
                 onChange={(e) => setSelectedAssignee(Number(e.target.value))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="">Select a developer...</option>
                 {developers.map((dev) => (
@@ -473,14 +473,14 @@ const UsersPage: React.FC = () => {
                 ))}
               </select>
             </div>
-            <div className="px-6 py-4 border-t border-gray-200 flex justify-end gap-3">
+            <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex justify-end gap-3">
               <button
                 onClick={() => {
                   setShowAssignModal(false);
                   setCurrentIssueId(null);
                   setSelectedAssignee(null);
                 }}
-                className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
+                className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-800"
               >
                 Cancel
               </button>

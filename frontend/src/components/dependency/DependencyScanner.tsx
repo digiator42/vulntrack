@@ -184,7 +184,7 @@ ${cve.versionEndExcluding ? `- Up to: ${cve.versionEndExcluding}` : ""}
       LOW: "bg-blue-100 text-blue-800 border-blue-200",
     };
     return (
-      colors[severity as keyof typeof colors] || "bg-gray-100 text-gray-800"
+      colors[severity as keyof typeof colors] || "bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200"
     );
   };
 
@@ -206,15 +206,15 @@ ${cve.versionEndExcluding ? `- Up to: ${cve.versionEndExcluding}` : ""}
   return (
     <div className="space-y-6">
       {/* Upload Area */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-white">
+      <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-blue-50 to-white">
           <div className="flex items-center gap-2">
             <DocumentMagnifyingGlassIcon className="h-5 w-5 text-blue-600" />
-            <h3 className="text-lg font-semibold text-gray-900">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
               Dependency Scanner
             </h3>
           </div>
-          <p className="text-sm text-gray-600 mt-1">
+          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
             Upload a manifest file (pom.xml, package.json, requirements.txt) to
             scan for vulnerabilities
           </p>
@@ -226,7 +226,7 @@ ${cve.versionEndExcluding ? `- Up to: ${cve.versionEndExcluding}` : ""}
             className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
               isDragActive
                 ? "border-blue-500 bg-blue-50"
-                : "border-gray-300 hover:border-blue-400 hover:bg-gray-50"
+                : "border-gray-300 dark:border-gray-600 hover:border-blue-400 hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-800"
             }`}
           >
             <input {...getInputProps()} />
@@ -234,7 +234,7 @@ ${cve.versionEndExcluding ? `- Up to: ${cve.versionEndExcluding}` : ""}
             {file ? (
               <div className="flex items-center justify-center gap-2">
                 <CheckCircleIcon className="h-5 w-5 text-green-500" />
-                <span className="text-sm text-gray-700">{file.name}</span>
+                <span className="text-sm text-gray-700 dark:text-gray-300">{file.name}</span>
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
@@ -248,7 +248,7 @@ ${cve.versionEndExcluding ? `- Up to: ${cve.versionEndExcluding}` : ""}
               </div>
             ) : (
               <>
-                <p className="text-gray-600">
+                <p className="text-gray-600 dark:text-gray-400">
                   Drag & drop a manifest file here, or click to select
                 </p>
                 <p className="text-sm text-gray-400 mt-1">
@@ -287,20 +287,20 @@ ${cve.versionEndExcluding ? `- Up to: ${cve.versionEndExcluding}` : ""}
         <div className="space-y-4">
           {/* Summary Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-              <p className="text-sm text-gray-500">Total Dependencies</p>
-              <p className="text-2xl font-bold text-gray-900">
+            <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4">
+              <p className="text-sm text-gray-500 dark:text-gray-400">Total Dependencies</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">
                 {result.totalDependencies}
               </p>
             </div>
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-              <p className="text-sm text-gray-500">Vulnerable Dependencies</p>
+            <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4">
+              <p className="text-sm text-gray-500 dark:text-gray-400">Vulnerable Dependencies</p>
               <p className="text-2xl font-bold text-red-600">
                 {result.vulnerableDependencies}
               </p>
             </div>
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-              <p className="text-sm text-gray-500">Total Vulnerabilities</p>
+            <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4">
+              <p className="text-sm text-gray-500 dark:text-gray-400">Total Vulnerabilities</p>
               <p className="text-2xl font-bold text-orange-600">
                 {result.vulnerabilities.reduce(
                   (sum, v) => sum + v.cves.length,
@@ -311,21 +311,21 @@ ${cve.versionEndExcluding ? `- Up to: ${cve.versionEndExcluding}` : ""}
           </div>
 
           {/* Vulnerable Dependencies List */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-            <div className="px-6 py-4 border-b border-gray-200 bg-red-50">
+          <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+            <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-red-50">
               <div className="flex items-center gap-2">
                 <ExclamationTriangleIcon className="h-5 w-5 text-red-600" />
-                <h3 className="text-lg font-semibold text-gray-900">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                   Vulnerable Dependencies
                 </h3>
               </div>
             </div>
 
-            <div className="divide-y divide-gray-200">
+            <div className="divide-y divide-gray-200 dark:divide-gray-700">
               {result.vulnerabilities.length === 0 ? (
                 <div className="p-8 text-center">
                   <CheckCircleIcon className="h-12 w-12 mx-auto text-green-500 mb-3" />
-                  <p className="text-gray-500">
+                  <p className="text-gray-500 dark:text-gray-400">
                     No vulnerabilities found! Your dependencies are secure.
                   </p>
                 </div>
@@ -333,7 +333,7 @@ ${cve.versionEndExcluding ? `- Up to: ${cve.versionEndExcluding}` : ""}
                 result.vulnerabilities.map((vuln, idx) => (
                   <div
                     key={idx}
-                    className="p-6 hover:bg-gray-50 transition-colors"
+                    className="p-6 hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-800 transition-colors"
                   >
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex-1">
@@ -341,22 +341,22 @@ ${cve.versionEndExcluding ? `- Up to: ${cve.versionEndExcluding}` : ""}
                           <span className="text-2xl">
                             {getEcosystemIcon(vuln.dependency.ecosystem)}
                           </span>
-                          <h4 className="text-lg font-semibold text-gray-900">
+                          <h4 className="text-lg font-semibold text-gray-900 dark:text-white">
                             {vuln.dependency.name}
                           </h4>
-                          <span className="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-600">
+                          <span className="px-2 py-1 text-xs rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400">
                             v{vuln.dependency.version}
                           </span>
                           <span className="text-xs text-gray-400">
                             {vuln.dependency.ecosystem}
                           </span>
                         </div>
-                        <p className="text-sm text-gray-500">
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
                           Manifest: {vuln.dependency.manifestFile}
                         </p>
                       </div>
                       <div className="text-right">
-                        <span className="text-sm font-medium text-gray-600">
+                        <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
                           {vuln.cves.length}{" "}
                           {vuln.cves.length === 1 ? "CVE" : "CVEs"}
                         </span>
@@ -386,7 +386,7 @@ ${cve.versionEndExcluding ? `- Up to: ${cve.versionEndExcluding}` : ""}
                                   {cve.id}
                                 </span>
                                 <span
-                                  className={`px-2 py-0.5 text-xs rounded-full bg-white bg-opacity-50`}
+                                  className={`px-2 py-0.5 text-xs rounded-full bg-white dark:bg-gray-900 bg-opacity-50`}
                                 >
                                   CVSS {cve.cvssScore}
                                 </span>
@@ -419,7 +419,7 @@ ${cve.versionEndExcluding ? `- Up to: ${cve.versionEndExcluding}` : ""}
                             </div>
 
                             {isExpanded && (
-                              <div className="px-4 py-3 bg-white border-t border-gray-200">
+                              <div className="px-4 py-3 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
                                 <MarkdownRenderer
                                   content={`### Description\n\n${cve.description}\n\n### Version Info\n\n${
                                     cve.versionStartIncluding
