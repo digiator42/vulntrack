@@ -60,13 +60,13 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
   return (
     <div className="space-y-2">
       {label && (
-        <label className="block text-sm font-medium text-gray-700">
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
           {label}
         </label>
       )}
 
       {/* Toolbar */}
-      <div className="flex justify-between items-center border-b border-gray-200 pb-2">
+      <div className="flex justify-between items-center border-b border-gray-200 dark:border-gray-700 pb-2">
         <div className="flex gap-2">
           <button
             type="button"
@@ -74,7 +74,7 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
             className={`px-3 py-1 text-sm rounded-md transition-colors ${
               mode === "edit"
                 ? "bg-blue-600 text-white"
-                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200"
             }`}
           >
             <PencilIcon className="h-4 w-4 inline mr-1" />
@@ -86,7 +86,7 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
             className={`px-3 py-1 text-sm rounded-md transition-colors ${
               mode === "preview"
                 ? "bg-blue-600 text-white"
-                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200"
             }`}
           >
             <EyeIcon className="h-4 w-4 inline mr-1" />
@@ -97,7 +97,7 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
         <button
           type="button"
           onClick={() => setShowHelp(!showHelp)}
-          className="text-gray-400 hover:text-gray-600"
+          className="text-gray-400 hover:text-gray-600 dark:text-gray-400"
         >
           <InformationCircleIcon className="h-5 w-5" />
         </button>
@@ -129,15 +129,15 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
           rows={rows}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"
+          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"
         />
       ) : (
-        <div className="min-h-[300px] max-h-[500px] overflow-y-auto border border-gray-300 rounded-md p-4 bg-gray-50">
+        <div className="min-h-[300px] max-h-[500px] overflow-y-auto border border-gray-300 dark:border-gray-600 rounded-md p-4 bg-gray-50 dark:bg-gray-800">
           <MarkdownRenderer content={value || "*No content*"} />
         </div>
       )}
 
-      {helpText && <p className="text-xs text-gray-500">{helpText}</p>}
+      {helpText && <p className="text-xs text-gray-500 dark:text-gray-400">{helpText}</p>}
     </div>
   );
 };

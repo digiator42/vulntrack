@@ -102,10 +102,10 @@ const NvdSyncPanel: React.FC = () => {
               <span
                 className={`ml-1 rounded-full px-2 py-0.5 text-xs font-medium ${
                   running
-                    ? "bg-amber-100 text-amber-800"
+                    ? "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300"
                     : interrupted
-                      ? "bg-red-100 text-red-800"
-                      : "bg-green-100 text-green-800"
+                      ? "bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300"
+                      : "bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300"
                 }`}
               >
                 {running
@@ -134,7 +134,7 @@ const NvdSyncPanel: React.FC = () => {
         </button>
       </div>
       {!running && (
-        <p className="mt-2 flex items-center gap-1 text-xs text-amber-700">
+        <p className="mt-2 flex items-center gap-1 text-xs text-amber-700 dark:text-amber-400">
           <ExclamationTriangleIcon className="h-4 w-4" />
           {interrupted
             ? "Sync stopped before finishing — press Sync now to resume from the saved position."
@@ -142,7 +142,7 @@ const NvdSyncPanel: React.FC = () => {
         </p>
       )}
       {!running && lastError && (
-        <p className="mt-1 rounded-md bg-red-50 px-2 py-1 font-mono text-[11px] text-red-800">
+        <p className="mt-1 rounded-md bg-red-50 dark:bg-red-900/30 px-2 py-1 font-mono text-[11px] text-red-800 dark:text-red-300">
           Last failure: {lastError}
         </p>
       )}

@@ -143,11 +143,11 @@ const CVSSCalculator: React.FC<CVSSCalculatorProps> = ({ onVectorChange, initial
   };
 
   const getSeverityColor = (score: number) => {
-    if (score >= 9) return 'text-red-700 bg-red-100';
-    if (score >= 7) return 'text-red-600 bg-red-50';
-    if (score >= 4) return 'text-orange-600 bg-orange-50';
-    if (score >= 0.1) return 'text-yellow-600 bg-yellow-50';
-    return 'text-gray-600 bg-gray-50';
+    if (score >= 9) return 'text-red-700 bg-red-100 dark:text-red-300 dark:bg-red-900/40';
+    if (score >= 7) return 'text-red-600 bg-red-50 dark:text-red-300 dark:bg-red-900/40';
+    if (score >= 4) return 'text-orange-600 bg-orange-50 dark:text-orange-300 dark:bg-orange-900/40';
+    if (score >= 0.1) return 'text-yellow-600 bg-yellow-50 dark:text-yellow-300 dark:bg-yellow-900/40';
+    return 'text-gray-600 bg-gray-50 dark:text-gray-300 dark:bg-gray-800';
   };
 
   const getSeverityLabel = (score: number) => {
@@ -159,9 +159,9 @@ const CVSSCalculator: React.FC<CVSSCalculatorProps> = ({ onVectorChange, initial
   };
 
   return (
-    <div className="p-6 bg-white rounded-xl shadow-sm border">
-      <h2 className="text-xl font-semibold mb-2">CVSS v3.1 Calculator</h2>
-      <p className="text-gray-500 mb-6 text-sm">Select metrics to calculate vulnerability severity score</p>
+    <div className="p-6 bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+      <h2 className="text-xl font-semibold mb-2 text-gray-900 dark:text-white">CVSS v3.1 Calculator</h2>
+      <p className="text-gray-500 dark:text-gray-400 mb-6 text-sm">Select metrics to calculate vulnerability severity score</p>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <CVSSMetricGroup
@@ -224,7 +224,7 @@ const CVSSCalculator: React.FC<CVSSCalculatorProps> = ({ onVectorChange, initial
 
         <div className="col-span-2">
           <div className="border-t pt-4 mt-2">
-            <h4 className="font-medium text-gray-900 mb-3">Impact Metrics</h4>
+            <h4 className="font-medium text-gray-900 dark:text-white mb-3">Impact Metrics</h4>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <CVSSMetricGroup
                 label="Confidentiality (C)"
@@ -263,13 +263,13 @@ const CVSSCalculator: React.FC<CVSSCalculatorProps> = ({ onVectorChange, initial
         </div>
       </div>
 
-      <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+      <div className="mt-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
         <div className="flex items-center justify-between">
           <div className="flex-1">
             <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">CVSS Vector String</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">CVSS Vector String</label>
               <div className="flex items-center gap-2">
-                <code className="flex-1 p-2 bg-gray-100 rounded text-sm font-mono break-all">
+                <code className="flex-1 p-2 bg-gray-100 dark:bg-gray-700 rounded text-sm font-mono break-all">
                   CVSS:3.1/AV:{metrics.AV}/AC:{metrics.AC}/PR:{metrics.PR}/UI:{metrics.UI}/S:{metrics.S}/C:{metrics.C}/I:{metrics.I}/A:{metrics.A}
                 </code>
               </div>

@@ -298,7 +298,7 @@ const UsersPage: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Unassigned Issues */}
         <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-yellow-50">
+          <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-yellow-50 dark:bg-yellow-900/30">
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
@@ -308,7 +308,7 @@ const UsersPage: React.FC = () => {
                   Assign these to developers
                 </p>
               </div>
-              <span className="px-2 py-1 text-xs rounded-full bg-yellow-200 text-yellow-800">
+              <span className="px-2 py-1 text-xs rounded-full bg-yellow-200 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-300">
                 {unassignedIssues.length} pending
               </span>
             </div>
@@ -316,7 +316,7 @@ const UsersPage: React.FC = () => {
           <div className="divide-y divide-gray-200 dark:divide-gray-700 max-h-96 overflow-y-auto">
             {unassignedIssues.length === 0 ? (
               <div className="p-8 text-center text-gray-500 dark:text-gray-400">
-                <BriefcaseIcon className="h-12 w-12 mx-auto mb-3 text-gray-300" />
+                <BriefcaseIcon className="h-12 w-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
                 <p>All issues are assigned</p>
               </div>
             ) : (
@@ -362,7 +362,7 @@ const UsersPage: React.FC = () => {
 
         {/* Assigned Issues by Developer */}
         <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-green-50">
+          <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-green-50 dark:bg-green-900/30">
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
@@ -370,7 +370,7 @@ const UsersPage: React.FC = () => {
                 </h2>
                 <p className="text-sm text-gray-600 dark:text-gray-400">Grouped by developer</p>
               </div>
-              <span className="px-2 py-1 text-xs rounded-full bg-green-200 text-green-800">
+              <span className="px-2 py-1 text-xs rounded-full bg-green-200 text-green-800 dark:bg-green-900/50 dark:text-green-300">
                 {assignedIssues.length} assigned
               </span>
             </div>
@@ -378,7 +378,7 @@ const UsersPage: React.FC = () => {
           <div className="divide-y divide-gray-200 dark:divide-gray-700 max-h-96 overflow-y-auto">
             {assignedIssues.length === 0 ? (
               <div className="p-8 text-center text-gray-500 dark:text-gray-400">
-                <UserGroupIcon className="h-12 w-12 mx-auto mb-3 text-gray-300" />
+                <UserGroupIcon className="h-12 w-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
                 <p>No issues assigned yet</p>
               </div>
             ) : (

@@ -22,7 +22,7 @@ const IssueList: React.FC<IssueListProps> = ({
       LOW: "bg-blue-100 text-blue-800",
     };
     return (
-      badges[severity as keyof typeof badges] || "bg-gray-100 text-gray-800"
+      badges[severity as keyof typeof badges] || "bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200"
     );
   };
 
@@ -31,33 +31,33 @@ const IssueList: React.FC<IssueListProps> = ({
       OPEN: "bg-red-100 text-red-800",
       IN_PROGRESS: "bg-yellow-100 text-yellow-800",
       RESOLVED: "bg-green-100 text-green-800",
-      CLOSED: "bg-gray-100 text-gray-800",
+      CLOSED: "bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200",
     };
-    return badges[status as keyof typeof badges] || "bg-gray-100 text-gray-800";
+    return badges[status as keyof typeof badges] || "bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200";
   };
 
   if (issues.length === 0) {
     return (
       <div className="text-center py-12">
-        <p className="text-gray-500">No issues found</p>
+        <p className="text-gray-500 dark:text-gray-400">No issues found</p>
       </div>
     );
   }
 
   return (
-    <div className="bg-white shadow overflow-hidden sm:rounded-md">
-      <ul className="divide-y divide-gray-200">
+    <div className="bg-white dark:bg-gray-900 shadow overflow-hidden sm:rounded-md">
+      <ul className="divide-y divide-gray-200 dark:divide-gray-700">
         {issues.map((issue) => (
           <li key={issue.id}>
             <Link href={`/issues/${issue.id}`}>
-              <div className="block hover:bg-gray-50 cursor-pointer">
+              <div className="block hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-800 cursor-pointer">
                 <div className="px-4 py-4 sm:px-6">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
                       <p className="text-sm font-medium text-blue-600 truncate">
                         #{issue.id}
                       </p>
-                      <p className="text-lg font-medium text-gray-900">
+                      <p className="text-lg font-medium text-gray-900 dark:text-white">
                         {issue.title}
                       </p>
                     </div>
@@ -77,19 +77,19 @@ const IssueList: React.FC<IssueListProps> = ({
                   <div className="mt-2 sm:flex sm:justify-between">
                     <div className="sm:flex">
                       {issue.cvssScore && (
-                        <p className="flex items-center text-sm text-gray-500">
+                        <p className="flex items-center text-sm text-gray-500 dark:text-gray-400">
                           <span className="mr-1">📊</span>
                           CVSS: {issue.cvssScore.toFixed(1)}
                         </p>
                       )}
                       {issue.cweId && (
-                        <p className="mt-2 flex items-center text-sm text-gray-500 sm:mt-0 sm:ml-6">
+                        <p className="mt-2 flex items-center text-sm text-gray-500 dark:text-gray-400 sm:mt-0 sm:ml-6">
                           <span className="mr-1">🔒</span>
                           {issue.cweId}
                         </p>
                       )}
                     </div>
-                    <div className="mt-2 flex items-center text-sm text-gray-500 sm:mt-0">
+                    <div className="mt-2 flex items-center text-sm text-gray-500 dark:text-gray-400 sm:mt-0">
                       {showAssignee && issue.assignedTo && (
                         <span className="mr-3">
                           👤 Assigned to: {issue.assignedTo.username}

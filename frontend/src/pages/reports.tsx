@@ -102,27 +102,27 @@ const ReportsPage: React.FC = () => {
       MEDIUM: "bg-yellow-500",
       LOW: "bg-blue-500",
     };
-    return colors[severity as keyof typeof colors] || "bg-gray-50 dark:bg-gray-8000";
+    return colors[severity as keyof typeof colors] || "bg-gray-500";
   };
 
   const getSeverityBgLight = (severity: string) => {
     const colors = {
-      CRITICAL: "bg-red-50 border-red-200",
-      HIGH: "bg-orange-50 border-orange-200",
-      MEDIUM: "bg-yellow-50 border-yellow-200",
-      LOW: "bg-blue-50 border-blue-200",
+      CRITICAL: "bg-red-50 border-red-200 dark:bg-red-900/30 dark:border-red-800",
+      HIGH: "bg-orange-50 border-orange-200 dark:bg-orange-900/30 dark:border-orange-800",
+      MEDIUM: "bg-yellow-50 border-yellow-200 dark:bg-yellow-900/30 dark:border-yellow-800",
+      LOW: "bg-blue-50 border-blue-200 dark:bg-blue-900/30 dark:border-blue-800",
     };
-    return colors[severity as keyof typeof colors] || "bg-gray-50 dark:bg-gray-800";
+    return colors[severity as keyof typeof colors] || "bg-gray-50 border-gray-200 dark:bg-gray-800 dark:border-gray-700";
   };
 
   const getCVSSRating = (score: number) => {
     if (score >= 9)
-      return { text: "Critical", color: "text-red-700", bg: "bg-red-100" };
+      return { text: "Critical", color: "text-red-700 dark:text-red-300", bg: "bg-red-100 dark:bg-red-900/40" };
     if (score >= 7)
-      return { text: "High", color: "text-orange-700", bg: "bg-orange-100" };
+      return { text: "High", color: "text-orange-700 dark:text-orange-300", bg: "bg-orange-100 dark:bg-orange-900/40" };
     if (score >= 4)
-      return { text: "Medium", color: "text-yellow-700", bg: "bg-yellow-100" };
-    return { text: "Low", color: "text-blue-700", bg: "bg-blue-100" };
+      return { text: "Medium", color: "text-yellow-700 dark:text-yellow-300", bg: "bg-yellow-100 dark:bg-yellow-900/40" };
+    return { text: "Low", color: "text-blue-700 dark:text-blue-300", bg: "bg-blue-100 dark:bg-blue-900/40" };
   };
 
   const severityRatings = [
@@ -194,7 +194,7 @@ const ReportsPage: React.FC = () => {
                 {data.totalIssues}
               </p>
             </div>
-            <div className="bg-blue-100 rounded-full p-3">
+            <div className="bg-blue-100 dark:bg-blue-900/40 rounded-full p-3">
               <ShieldCheckIcon className="h-6 w-6 text-blue-600" />
             </div>
           </div>
@@ -239,12 +239,12 @@ const ReportsPage: React.FC = () => {
                 {data.openIssues}
               </p>
             </div>
-            <div className="bg-orange-100 rounded-full p-3">
+            <div className="bg-orange-100 dark:bg-orange-900/40 rounded-full p-3">
               <ClockIcon className="h-6 w-6 text-orange-600" />
             </div>
           </div>
           <div className="mt-4">
-            <div className="w-full bg-gray-200 rounded-full h-2">
+            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
               <div
                 className="bg-orange-500 rounded-full h-2 transition-all"
                 style={{ width: `${openPercentage}%` }}
@@ -263,12 +263,12 @@ const ReportsPage: React.FC = () => {
                 {data.resolvedIssues}
               </p>
             </div>
-            <div className="bg-green-100 rounded-full p-3">
+            <div className="bg-green-100 dark:bg-green-900/40 rounded-full p-3">
               <CheckCircleIcon className="h-6 w-6 text-green-600" />
             </div>
           </div>
           <div className="mt-4">
-            <div className="w-full bg-gray-200 rounded-full h-2">
+            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
               <div
                 className="bg-green-500 rounded-full h-2 transition-all"
                 style={{ width: `${resolvedPercentage}%` }}
@@ -361,7 +361,7 @@ const ReportsPage: React.FC = () => {
                       {count}
                     </span>
                   </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
                     <div
                       className="bg-purple-500 rounded-full h-2 transition-all"
                       style={{ width: `${(count / totalIssues) * 100}%` }}

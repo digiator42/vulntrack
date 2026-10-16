@@ -207,7 +207,7 @@ ${cve.versionEndExcluding ? `- Up to: ${cve.versionEndExcluding}` : ""}
     <div className="space-y-6">
       {/* Upload Area */}
       <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-blue-50 to-white">
+        <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-blue-50 to-white dark:from-blue-950 dark:to-gray-900">
           <div className="flex items-center gap-2">
             <DocumentMagnifyingGlassIcon className="h-5 w-5 text-blue-600" />
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
@@ -312,7 +312,7 @@ ${cve.versionEndExcluding ? `- Up to: ${cve.versionEndExcluding}` : ""}
 
           {/* Vulnerable Dependencies List */}
           <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-            <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-red-50">
+            <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-red-50 dark:bg-red-900/30">
               <div className="flex items-center gap-2">
                 <ExclamationTriangleIcon className="h-5 w-5 text-red-600" />
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white">

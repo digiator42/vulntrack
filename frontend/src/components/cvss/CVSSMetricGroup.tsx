@@ -25,8 +25,8 @@ const CVSSMetricGroup: React.FC<CVSSMetricGroupProps> = ({
   return (
     <div className="space-y-2">
       <div>
-        <label className="block text-sm font-medium text-gray-700">{label}</label>
-        {description && <p className="text-xs text-gray-500 mt-1">{description}</p>}
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">{label}</label>
+        {description && <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{description}</p>}
       </div>
       <div className="flex flex-wrap gap-2">
         {options.map((option) => (
@@ -37,7 +37,7 @@ const CVSSMetricGroup: React.FC<CVSSMetricGroupProps> = ({
             className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
               value === option.value
                 ? 'bg-blue-600 text-white shadow-sm'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200'
             }`}
             title={option.description}
           >

@@ -55,7 +55,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
 
   return (
     <div
-      className={`prose prose-sm max-w-none prose-headings:text-gray-900 prose-headings:font-semibold prose-p:text-gray-700 prose-strong:text-gray-900 prose-table:border prose-table:border-gray-200 prose-th:bg-gray-50 prose-th:p-2 prose-td:p-2 prose-td:border prose-td:border-gray-200 prose-code:bg-gray-100 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:text-sm prose-code:font-mono prose-pre:bg-transparent prose-pre:p-0 ${className}`}
+      className={`prose prose-sm max-w-none prose-headings:text-gray-900 dark:text-white prose-headings:font-semibold prose-p:text-gray-700 dark:text-gray-300 prose-strong:text-gray-900 dark:text-white prose-table:border prose-table:border-gray-200 dark:border-gray-700 prose-th:bg-gray-50 dark:bg-gray-800 prose-th:p-2 prose-td:p-2 prose-td:border prose-td:border-gray-200 dark:border-gray-700 prose-code:bg-gray-100 dark:bg-gray-700 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:text-sm prose-code:font-mono prose-pre:bg-transparent prose-pre:p-0 ${className}`}
     >
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
@@ -70,7 +70,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
             if (inline) {
               return (
                 <code
-                  className="bg-gray-100 px-1.5 py-0.5 rounded text-sm font-mono text-red-600"
+                  className="bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded text-sm font-mono text-red-600"
                   {...props}
                 >
                   {children}
@@ -127,7 +127,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
           table({ children }) {
             return (
               <div className="overflow-x-auto my-4">
-                <table className="min-w-full border-collapse border border-gray-200">
+                <table className="min-w-full border-collapse border border-gray-200 dark:border-gray-700">
                   {children}
                 </table>
               </div>
@@ -136,7 +136,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
 
           th({ children }) {
             return (
-              <th className="bg-gray-50 px-3 py-2 text-left text-sm font-semibold text-gray-900 border border-gray-200">
+              <th className="bg-gray-50 dark:bg-gray-800 px-3 py-2 text-left text-sm font-semibold text-gray-900 dark:text-white border border-gray-200 dark:border-gray-700">
                 {children}
               </th>
             );
@@ -144,7 +144,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
 
           td({ children }) {
             return (
-              <td className="px-3 py-2 text-sm text-gray-700 border border-gray-200">
+              <td className="px-3 py-2 text-sm text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700">
                 {children}
               </td>
             );
@@ -167,7 +167,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
           // Headers
           h1({ children }) {
             return (
-              <h1 className="text-2xl font-bold mt-6 mb-4 pb-2 border-b border-gray-200">
+              <h1 className="text-2xl font-bold mt-6 mb-4 pb-2 border-b border-gray-200 dark:border-gray-700">
                 {children}
               </h1>
             );
@@ -175,7 +175,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
 
           h2({ children }) {
             return (
-              <h2 className="text-xl font-semibold mt-5 mb-3 pb-1 border-b border-gray-200">
+              <h2 className="text-xl font-semibold mt-5 mb-3 pb-1 border-b border-gray-200 dark:border-gray-700">
                 {children}
               </h2>
             );
@@ -207,7 +207,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
           },
 
           li({ children }) {
-            return <li className="text-gray-700">{children}</li>;
+            return <li className="text-gray-700 dark:text-gray-300">{children}</li>;
           },
 
           // Blockquotes
@@ -221,7 +221,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
 
           // Horizontal rule
           hr() {
-            return <hr className="my-6 border-gray-200" />;
+            return <hr className="my-6 border-gray-200 dark:border-gray-700" />;
           },
 
           // Images
