@@ -68,7 +68,9 @@ public class NvdSyncService {
 
     /**
      * NVD throttles/bans anonymous-looking datacenter clients aggressively.
-     * Identify ourselves on every call (NVD etiquette + fewer 403s).
+     * Identify ourselves on every call (NVD etiquette + fewer 403s). The API
+     * key MUST travel as a header: NVD 2.0 answers 404 to ?apiKey=, valid or
+     * not.
      */
     @PostConstruct
     public void initRestTemplate() {
@@ -77,6 +79,9 @@ public class NvdSyncService {
                 "User-Agent",
                 "VulnTrack/1.0 (local NVD cache sync; admin-triggered)"
             );
+            if (hasApiKey()) {
+                request.getHeaders().set("apiKey", nvdApiKey);
+            }
             return execution.execute(request, body);
         });
     }
@@ -438,9 +443,8 @@ public class NvdSyncService {
             .queryParam("resultsPerPage", PAGE_SIZE)
             .queryParam("startIndex", startIndex);
 
-        if (hasApiKey()) {
-            builder.queryParam("apiKey", nvdApiKey);
-        }
+        // NOTE: the API key is sent as a header (see initRestTemplate), never
+        // as ?apiKey= — NVD 2.0 rejects the query form with 404.
 
         if (lastModStartDate != null) {
             builder.queryParam(
