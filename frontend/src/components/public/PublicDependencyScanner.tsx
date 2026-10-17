@@ -87,6 +87,11 @@ const PublicDependencyScanner: React.FC = () => {
       "application/xml": [".xml"],
       "application/json": [".json"],
       "text/plain": [".txt"],
+      // Cargo.toml (IANA-registered application/toml)
+      "application/toml": [".toml"],
+      // Cargo.lock has no extension; the ".lock" token matches on filename
+      // suffix, and octet-stream is the honest type for an unknown file.
+      "application/octet-stream": [".lock"],
     },
     maxFiles: 1,
   });
