@@ -61,15 +61,22 @@ const PublicDependencyScanner: React.FC = () => {
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     const uploadedFile = acceptedFiles[0];
-    const allowedExtensions = [".xml", ".json", ".txt"];
-    const fileExtension = uploadedFile.name.split(".").pop()?.toLowerCase();
+    // Manifest names accepted. Cargo.lock has no extension, so it is matched
+    // by exact filename rather than by suffix.
+    const allowedNames = ["cargo.lock"];
+    const allowedExtensions = [".xml", ".json", ".txt", ".toml"];
+    const lowerName = uploadedFile.name.toLowerCase();
+    const fileExtension = lowerName.split(".").pop()?.toLowerCase();
 
-    if (allowedExtensions.includes(`.${fileExtension}`)) {
+    if (
+      allowedNames.includes(lowerName) ||
+      allowedExtensions.includes(`.${fileExtension}`)
+    ) {
       setFile(uploadedFile);
       setResult(null);
     } else {
       toast.error(
-        "Please upload a valid manifest file (pom.xml, package.json, requirements.txt)",
+        "Please upload a valid manifest file (pom.xml, package.json, requirements.txt, Cargo.toml, Cargo.lock)",
       );
     }
   }, []);
@@ -201,6 +208,10 @@ const PublicDependencyScanner: React.FC = () => {
           <div className="flex items-center gap-1">
             <CheckCircleIcon className="h-4 w-4 text-green-300" />
             <span>requirements.txt (Python)</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <CheckCircleIcon className="h-4 w-4 text-green-300" />
+            <span>Cargo.toml / Cargo.lock (Rust)</span>
           </div>
         </div>
       </div>
@@ -397,7 +408,7 @@ const PublicDependencyScanner: React.FC = () => {
                   Drag & drop or click to upload
                 </p>
                 <p className="text-xs text-gray-400 mt-1">
-                  pom.xml | package.json | requirements.txt
+                  pom.xml | package.json | requirements.txt | Cargo.toml | Cargo.lock
                 </p>
               </>
             )}

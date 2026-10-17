@@ -51,9 +51,113 @@ public class DependencyParserService {
             return parseBuildGradle(fileContent);
         } else if (lowerName.endsWith(".csproj")) {
             return parseCsProj(fileContent);
+        } else if (lowerName.endsWith("cargo.lock")) {
+            return parseCargoLock(fileContent);
+        } else if (lowerName.endsWith("cargo.toml")) {
+            return parseCargoToml(fileContent);
         } else {
             throw new IllegalArgumentException("Unsupported manifest file: " + fileName);
         }
+    }
+
+    // ------------------- Cargo.lock (Rust, resolved) -------------------
+    /**
+     * Cargo.lock is the authoritative source for Rust dependencies: it holds
+     * the exact resolved version of every crate in the dependency graph, with
+     * no semver ranges. Preferred over Cargo.toml whenever it is available.
+     */
+    private List<ParsedDependency> parseCargoLock(InputStream input) throws Exception {
+        JsonNode root = tomlMapper.readTree(input);
+        List<ParsedDependency> deps = new ArrayList<>();
+
+        JsonNode packages = root.get("package");
+        if (packages == null || !packages.isArray()) {
+            return deps;
+        }
+
+        for (JsonNode pkg : packages) {
+            String name = path(pkg, "name");
+            String version = path(pkg, "version");
+
+            // Workspace members and local path deps carry no "source"; they are
+            // not registry crates and have no OSV entry.
+            String source = path(pkg, "source");
+            if (name == null || version == null) {
+                continue;
+            }
+            if (source == null || !source.contains("crates.io")) {
+                continue;
+            }
+
+            deps.add(new ParsedDependency(name, version, "CARGO", ""));
+        }
+        return deps;
+    }
+
+    // ------------------- Cargo.toml (Rust, declared) -------------------
+    /**
+     * Reads the crate dependencies declared by a Rust package. Versions are
+     * semver requirements ("1", "1.2", "^1.2") rather than exact pins, so the
+     * OSV client normalizes them to the nearest concrete version.
+     */
+    private List<ParsedDependency> parseCargoToml(InputStream input) throws Exception {
+        JsonNode root = tomlMapper.readTree(input);
+        List<ParsedDependency> deps = new ArrayList<>();
+
+        extractCargoSection(root.get("dependencies"), deps);
+        extractCargoSection(root.get("dev-dependencies"), deps);
+        extractCargoSection(root.get("build-dependencies"), deps);
+
+        // [target.'cfg(unix)'.dependencies] style tables
+        JsonNode target = root.get("target");
+        if (target != null && target.isObject()) {
+            target.fields().forEachRemaining(entry -> {
+                JsonNode platform = entry.getValue();
+                if (platform != null && platform.isObject()) {
+                    extractCargoSection(platform.get("dependencies"), deps);
+                    extractCargoSection(platform.get("dev-dependencies"), deps);
+                }
+            });
+        }
+
+        return deps;
+    }
+
+    /**
+     * Handles both Cargo dependency forms:
+     * <pre>
+     *   serde = "1.0"                                  // string
+     *   tokio = { version = "1.28", features = [...] } // table
+     * </pre>
+     * Entries without a version (git/path/workspace-inherited) are skipped:
+     * there is nothing concrete to match a vulnerability against.
+     */
+    private void extractCargoSection(JsonNode section, List<ParsedDependency> out) {
+        if (section == null || !section.isObject()) {
+            return;
+        }
+        section.fields().forEachRemaining(entry -> {
+            String name = entry.getKey();
+            JsonNode value = entry.getValue();
+
+            String version = null;
+            if (value.isTextual()) {
+                version = value.asText();
+            } else if (value.isObject() && value.hasNonNull("version")) {
+                version = value.get("version").asText();
+            }
+
+            if (name != null && !name.isBlank()
+                && version != null && !version.isBlank()) {
+                out.add(new ParsedDependency(name, version, "CARGO", ""));
+            }
+        });
+    }
+
+    /** Reads a textual field, returning null when absent or non-textual. */
+    private static String path(JsonNode node, String field) {
+        JsonNode value = node.get(field);
+        return (value != null && value.isTextual()) ? value.asText() : null;
     }
 
     // ------------------- Maven pom.xml -------------------

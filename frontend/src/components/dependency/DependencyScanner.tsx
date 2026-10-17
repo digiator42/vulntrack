@@ -40,15 +40,22 @@ const DependencyScanner: React.FC<DependencyScannerProps> = ({
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     const uploadedFile = acceptedFiles[0];
-    const allowedExtensions = [".xml", ".json", ".txt"];
-    const fileExtension = uploadedFile.name.split(".").pop()?.toLowerCase();
+    // Manifest names accepted. Cargo.lock has no extension, so it is matched
+    // by exact filename rather than by suffix.
+    const allowedNames = ["cargo.lock"];
+    const allowedExtensions = [".xml", ".json", ".txt", ".toml"];
+    const lowerName = uploadedFile.name.toLowerCase();
+    const fileExtension = lowerName.split(".").pop()?.toLowerCase();
 
-    if (allowedExtensions.includes(`.${fileExtension}`)) {
+    if (
+      allowedNames.includes(lowerName) ||
+      allowedExtensions.includes(`.${fileExtension}`)
+    ) {
       setFile(uploadedFile);
       setResult(null);
     } else {
       toast.error(
-        "Please upload a valid manifest file (pom.xml, package.json, requirements.txt)",
+        "Please upload a valid manifest file (pom.xml, package.json, requirements.txt, Cargo.toml, Cargo.lock)",
       );
     }
   }, []);
@@ -216,8 +223,8 @@ ${cve.versionEndExcluding ? `- Up to: ${cve.versionEndExcluding}` : ""}
             </h3>
           </div>
           <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-            Upload a manifest file (pom.xml, package.json, requirements.txt) to
-            scan for vulnerabilities
+            Upload a manifest file (pom.xml, package.json, requirements.txt,
+            Cargo.toml, Cargo.lock) to scan for vulnerabilities
           </p>
         </div>
 
@@ -253,7 +260,7 @@ ${cve.versionEndExcluding ? `- Up to: ${cve.versionEndExcluding}` : ""}
                   Drag & drop a manifest file here, or click to select
                 </p>
                 <p className="text-sm text-gray-400 mt-1">
-                  Supports: pom.xml, package.json, requirements.txt
+                  Supports: pom.xml, package.json, requirements.txt, Cargo.toml, Cargo.lock
                 </p>
               </>
             )}
