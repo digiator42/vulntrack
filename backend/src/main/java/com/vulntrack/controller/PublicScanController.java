@@ -32,6 +32,7 @@ public class PublicScanController {
 
     private final DependencyParserService dependencyParserService;
     private final NvdClientService2 nvdClientService;
+    private final com.vulntrack.service.HybridVulnerabilityService hybridScanner;
     private final PackageCpeMappingRepository mappingRepository;
     private final NvdCpeClientService nvdCpeClient;
 
@@ -56,8 +57,8 @@ public class PublicScanController {
             String fileName = file.getOriginalFilename();
             List<ParsedDependency> deps = dependencyParserService
                 .parse(file.getInputStream(), fileName);
-            Map<ParsedDependency, List<CveVulnerability>> vulnerabilities = nvdClientService
-                .checkDependencies(deps, fileName);
+            Map<ParsedDependency, List<CveVulnerability>> vulnerabilities =
+                hybridScanner.scan(deps, fileName);
 
             Map<String, Object> response = new HashMap<>();
             response.put("manifestFileName", fileName);

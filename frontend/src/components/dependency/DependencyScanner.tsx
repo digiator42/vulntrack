@@ -21,6 +21,7 @@ import {
 } from "@/types/dependency";
 import { createIssue } from "@/services/api";
 import MarkdownRenderer from "@/components/common/MarkdownRenderer";
+import SourceBadge from "@/components/common/SourceBadge";
 
 interface DependencyScannerProps {
   onIssueCreated?: () => void;
@@ -391,6 +392,15 @@ ${cve.versionEndExcluding ? `- Up to: ${cve.versionEndExcluding}` : ""}
                                   CVSS {cve.cvssScore}
                                 </span>
                                 <span className="text-sm">{cve.severity}</span>
+                                <SourceBadge sources={cve.sources} />
+                                {cve.advisoryId && (
+                                  <span
+                                    title={`OSV advisory ${cve.advisoryId}`}
+                                    className="text-[10px] font-mono text-gray-500 dark:text-gray-400"
+                                  >
+                                    {cve.advisoryId}
+                                  </span>
+                                )}
                               </div>
                               <div className="flex items-center gap-2">
                                 {isCreated && (

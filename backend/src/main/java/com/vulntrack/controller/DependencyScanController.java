@@ -31,6 +31,7 @@ import lombok.extern.slf4j.Slf4j;
 public class DependencyScanController {
     private final DependencyParserService dependencyParserService;
     private final NvdClientService2 nvdClientService;
+    private final com.vulntrack.service.HybridVulnerabilityService hybridScanner;
     private final VulnerabilityIssueService vulnerabilityIssueService;
 
     @PostMapping("/parse")
@@ -60,9 +61,9 @@ public class DependencyScanController {
             List<ParsedDependency> deps = dependencyParserService
                 .parse(file.getInputStream(), fileName);
 
-            // Then check against NVD
-            Map<ParsedDependency, List<CveVulnerability>> vulnerabilities = nvdClientService
-                .checkDependencies(deps, fileName);
+            // Then check against OSV + NVD (merged)
+            Map<ParsedDependency, List<CveVulnerability>> vulnerabilities =
+                hybridScanner.scan(deps, fileName);
 
             Map<String, Object> response = new HashMap<>();
             response.put("totalDependencies", deps.size());
@@ -91,9 +92,9 @@ public class DependencyScanController {
             List<ParsedDependency> dependencies = dependencyParserService
                 .parse(file.getInputStream(), fileName);
 
-            // Check against NVD
-            Map<ParsedDependency, List<CveVulnerability>> vulnerabilities = nvdClientService
-                .checkDependencies(dependencies, fileName);
+            // Check against OSV + NVD (merged)
+            Map<ParsedDependency, List<CveVulnerability>> vulnerabilities =
+                hybridScanner.scan(dependencies, fileName);
 
             // Create issues for vulnerabilities
             DependencyScanResult result = DependencyScanResult.builder()

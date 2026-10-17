@@ -25,6 +25,7 @@ import {
 import { PublicScanResult } from "@/services/publicScanner";
 import { CveResult, fetchCvesByCpe } from "@/services/cveByCpe";
 import CveResults from "./CveResults";
+import SourceBadge from "@/components/common/SourceBadge";
 
 const PublicDependencyScanner: React.FC = () => {
   const [file, setFile] = useState<File | null>(null);
@@ -508,6 +509,7 @@ const PublicDependencyScanner: React.FC = () => {
                                 <span className="px-1 py-0.5 text-xs rounded-full bg-white dark:bg-gray-900 bg-opacity-50">
                                   CVSS {cve.cvssScore}
                                 </span>
+                                <SourceBadge sources={cve.sources} />
                               </div>
                               <InformationCircleIcon className="h-3 w-3" />
                             </div>

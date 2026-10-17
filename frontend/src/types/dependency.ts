@@ -2,7 +2,16 @@
 export interface ParsedDependency {
   name: string;
   version: string;
-  ecosystem: 'MAVEN' | 'NPM' | 'PYPI' | 'NUGET' | 'GRADLE';
+  ecosystem:
+    | 'MAVEN'
+    | 'NPM'
+    | 'PYPI'
+    | 'NUGET'
+    | 'GRADLE'
+    | 'CARGO'
+    | 'GO'
+    | 'RUBY'
+    | 'PACKAGIST';
   manifestFile: string;
 }
 
@@ -17,6 +26,14 @@ export interface CveVulnerability {
   versionStartExcluding?: string;
   versionEndIncluding?: string;
   versionEndExcluding?: string;
+  /** Which sources reported this finding. "OSV+NVD" means both agreed. */
+  sources?: string;
+  /** OSV advisory id (GHSA-*, PYSEC-*, ...), present for OSV findings. */
+  advisoryId?: string;
+  /** Alias ids from the OSV record; CVE ids live here. */
+  aliases?: string;
+  /** CWE identifiers from OSV. */
+  cweIds?: string;
 }
 
 export interface VulnerableDependency {
