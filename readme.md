@@ -4,6 +4,12 @@
 
 > From manual data entry to automated, enriched, and collaborative security management.
 
+**Highlights**
+- 🔀 [Hybrid OSV + NVD matching](#-hybrid-osv--nvd-matching-showcase) — two independent sources, merged on canonical CVE id
+- 🔄 Resumable [NVD cache sync](#-cve-cache-sync-showcase) with a database lease and stall watchdog
+- 🦀 Rust (`Cargo.toml` / `Cargo.lock`), Maven, NPM, PyPI manifest scanning
+- 📄 Role-scoped PDF posture reports, live issue chat, CVSS v3.1 calculator
+
 ---
 
 ## The Problem
@@ -75,9 +81,58 @@ graph LR
 ```
 ---
 
+## 🔀 Hybrid OSV + NVD Matching (showcase)
+
+A dependency scan doesn't ask one database — it asks **two independent ones**
+and merges the answers, because each covers the other's blind spot:
+
+| | [OSV](https://osv.dev/) | Local NVD CPE cache |
+| --- | --- | --- |
+| Keyed by | ecosystem + package + version (exact) | CPE vendor/product + version ranges |
+| Weakness | covers published package ecosystems only | needs CPE guessing (`spring` → `vmware:spring_framework`) |
+| Strength | no guessing, fresh advisories, CVSS-v4 + CWE | broad: OS packages, network gear, non-ecosystem software |
+
+Rather than forcing a user to pick (a checkbox) or dumping both result sets
+(a duplicated mess), findings are **merged on the canonical CVE id**. This
+matters because OSV reports advisory ids (`GHSA-*`, `PYSEC-*`) that *alias* a
+CVE, so the alias is what makes deduplication possible at all.
+
+Every finding carries its provenance, surfaced in the UI:
+
+| Badge | Meaning |
+| --- | --- |
+| `✓ OSV + NVD` | Two independent sources agree — highest confidence |
+| `OSV` | Ecosystem-native advisory database only |
+| `NVD` | Local CPE cache only |
+
+Measured on a real PyPI manifest, the hybrid pass returned **10 OSV hits
+against 5 NVD hits** for the same three dependencies — exactly the blind spot
+the CPE path has.
+
+```mermaid
+graph LR
+    A["Manifest upload"] --> B["OSV querybatch<br/>(ecosystem-native)"]
+    A --> C["NVD CPE cache<br/>(local, broad)"]
+    B --> D["Resolve aliases<br/>GHSA-* to CVE-*"]
+    D --> E{"Merge on<br/>canonical CVE id"}
+    C --> E
+    E --> F["Findings tagged<br/>OSV / NVD / both"]
+```
+
+Implementation notes:
+- **Batched, not N calls.** One `POST /v1/querybatch` per manifest (up to 1000
+  packages) instead of a request per dependency.
+- **Cached.** Advisory detail is stored in `osv_advisory` (24h TTL) so repeat
+  scans cost one table read; `dependency_vulnerability_cache` is pre-provisioned
+  for per-(package, version) short-circuiting.
+- **Degrades gracefully.** An OSV outage falls back to NVD-only rather than
+  failing the scan — and vice versa.
+
+---
+
 ## 📦 Local NVD Database
 
-Instead of making **live API calls** to NVD (slow, rate-limited, unreliable):
+Instead of making **live API calls** to NVD (slow, rate-limited, unreliable):
 
 - ✅ **300,000+ CVEs / 800k rows** pre-populated locally (A vendor could have multiple CVES)
     
@@ -146,12 +201,13 @@ curl -X POST "https://<backend>/api/admin/nvd/sync?from=23000" \
 - Live vector string generation
 - Auto-populates severity based on CVSS score
 
-### 3. **Dependency Scanner**
+### 3. **Dependency Scanner**
 
-- Upload `pom.xml` (Maven), `package.json` (NPM), `requirements.txt` (Python)
-- Auto-detects vulnerable dependencies
+- Upload `pom.xml` (Maven), `package.json` (NPM), `requirements.txt` (Python), `Cargo.toml` / `Cargo.lock` (Rust)
+- Auto-detects vulnerable dependencies against **two independent sources** (see [Hybrid OSV + NVD matching](#-hybrid-osv--nvd-matching-showcase))
 - Creates issues for each CVE automatically
 - Supports both public (no auth) and authenticated scans
+- Prefer `Cargo.lock` when available — it carries resolved versions, while `Cargo.toml` only declares semver requirements
 
 ### 4. **Role-Based Access Control (RBAC)**
 
