@@ -105,13 +105,13 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
 
       {/* Help Panel */}
       {showHelp && (
-        <div className="bg-blue-50 border border-blue-200 rounded-md p-4 text-sm">
+        <div className="bg-blue-50 dark:bg-blue-900/25 border border-blue-200 dark:border-blue-800 rounded-md p-4 text-sm">
           <div className="flex justify-between items-start mb-2">
-            <h4 className="font-semibold text-blue-900">Markdown Guide</h4>
+            <h4 className="font-semibold text-blue-900 dark:text-blue-200">Markdown Guide</h4>
             <button
               type="button"
               onClick={() => setShowHelp(false)}
-              className="text-blue-400 hover:text-blue-600"
+              className="text-blue-400 hover:text-blue-600 dark:text-blue-400"
             >
               ×
             </button>

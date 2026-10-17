@@ -16,10 +16,10 @@ const IssueDetail: React.FC<IssueDetailProps> = ({ issue, onUpdate, onDelete }) 
 
   const getSeverityColor = (severity: string) => {
     const colors = {
-      CRITICAL: 'text-red-700 bg-red-100',
-      HIGH: 'text-orange-700 bg-orange-100',
-      MEDIUM: 'text-yellow-700 bg-yellow-100',
-      LOW: 'text-blue-700 bg-blue-100'
+      CRITICAL: 'text-red-700 dark:text-red-300 bg-red-100 dark:bg-red-900/40',
+      HIGH: 'text-orange-700 dark:text-orange-300 bg-orange-100 dark:bg-orange-900/40',
+      MEDIUM: 'text-yellow-700 dark:text-yellow-300 bg-yellow-100 dark:bg-yellow-900/40',
+      LOW: 'text-blue-700 dark:text-blue-300 bg-blue-100 dark:bg-blue-900/40'
     };
     return colors[severity as keyof typeof colors] || 'text-gray-700 bg-gray-100';
   };
@@ -47,7 +47,7 @@ const IssueDetail: React.FC<IssueDetailProps> = ({ issue, onUpdate, onDelete }) 
                 </span>
               )}
               {issue.cweId && (
-                <Link href={`/cwe/${issue.cweId}`} className="text-sm text-blue-600 hover:underline">
+                <Link href={`/cwe/${issue.cweId}`} className="text-sm text-blue-600 dark:text-blue-400 hover:underline">
                   {issue.cweId}
                 </Link>
               )}
@@ -63,7 +63,7 @@ const IssueDetail: React.FC<IssueDetailProps> = ({ issue, onUpdate, onDelete }) 
             {onDelete && (
               <button
                 onClick={() => onDelete(issue.id)}
-                className="px-3 py-1 text-sm text-red-600 border border-red-300 rounded-md hover:bg-red-50"
+                className="px-3 py-1 text-sm text-red-600 dark:text-red-400 border border-red-300 dark:border-red-700 rounded-md hover:bg-red-50 dark:bg-red-900/25 dark:hover:bg-red-900/40"
               >
                 Delete
               </button>

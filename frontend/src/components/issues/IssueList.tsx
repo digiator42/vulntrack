@@ -16,10 +16,10 @@ const IssueList: React.FC<IssueListProps> = ({
   console.log("Rendering IssueList with issues:", issues);
   const getSeverityBadge = (severity: string) => {
     const badges = {
-      CRITICAL: "bg-red-100 text-red-800",
-      HIGH: "bg-orange-100 text-orange-800",
-      MEDIUM: "bg-yellow-100 text-yellow-800",
-      LOW: "bg-blue-100 text-blue-800",
+      CRITICAL: "bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-300",
+      HIGH: "bg-orange-100 dark:bg-orange-900/40 text-orange-800 dark:text-orange-300",
+      MEDIUM: "bg-yellow-100 dark:bg-yellow-900/40 text-yellow-800 dark:text-yellow-300",
+      LOW: "bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-300",
     };
     return (
       badges[severity as keyof typeof badges] || "bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200"
@@ -28,9 +28,9 @@ const IssueList: React.FC<IssueListProps> = ({
 
   const getStatusBadge = (status: string) => {
     const badges = {
-      OPEN: "bg-red-100 text-red-800",
-      IN_PROGRESS: "bg-yellow-100 text-yellow-800",
-      RESOLVED: "bg-green-100 text-green-800",
+      OPEN: "bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-300",
+      IN_PROGRESS: "bg-yellow-100 dark:bg-yellow-900/40 text-yellow-800 dark:text-yellow-300",
+      RESOLVED: "bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300",
       CLOSED: "bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200",
     };
     return badges[status as keyof typeof badges] || "bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200";
@@ -54,7 +54,7 @@ const IssueList: React.FC<IssueListProps> = ({
                 <div className="px-4 py-4 sm:px-6">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
-                      <p className="text-sm font-medium text-blue-600 truncate">
+                      <p className="text-sm font-medium text-blue-600 dark:text-blue-400 truncate">
                         #{issue.id}
                       </p>
                       <p className="text-lg font-medium text-gray-900 dark:text-white">

@@ -27,13 +27,13 @@ const CveResults: React.FC<CveResultsProps> = ({
 
   const getSeverityColor = (severity: string) => {
     const colors = {
-      CRITICAL: "bg-red-100 text-red-800 border-red-200",
-      HIGH: "bg-orange-100 text-orange-800 border-orange-200",
-      MEDIUM: "bg-yellow-100 text-yellow-800 border-yellow-200",
-      LOW: "bg-blue-100 text-blue-800 border-blue-200",
+      CRITICAL: "bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-300 border-red-200 dark:border-red-800",
+      HIGH: "bg-orange-100 dark:bg-orange-900/40 text-orange-800 dark:text-orange-300 border-orange-200 dark:border-orange-800",
+      MEDIUM: "bg-yellow-100 dark:bg-yellow-900/40 text-yellow-800 dark:text-yellow-300 border-yellow-200 dark:border-yellow-800",
+      LOW: "bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-300 border-blue-200 dark:border-blue-800",
     };
     return (
-      colors[severity as keyof typeof colors] || "bg-gray-100 text-gray-800"
+      colors[severity as keyof typeof colors] || "bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200"
     );
   };
 
@@ -54,12 +54,12 @@ const CveResults: React.FC<CveResultsProps> = ({
   if (loading) {
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[80vh] overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-white">
+        <div className="bg-white dark:bg-gray-900 rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[80vh] overflow-hidden">
+          <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-blue-50 to-white">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <ShieldCheckIcon className="h-5 w-5 text-blue-600" />
-                <h3 className="text-lg font-semibold text-gray-900">
+                <ShieldCheckIcon className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                   Loading CVEs...
                 </h3>
               </div>
@@ -67,7 +67,7 @@ const CveResults: React.FC<CveResultsProps> = ({
           </div>
           <div className="p-8 text-center">
             <ArrowPathIcon className="h-12 w-12 mx-auto text-blue-500 animate-spin mb-4" />
-            <p className="text-gray-600">
+            <p className="text-gray-600 dark:text-gray-400">
               Fetching vulnerabilities for {cpeName}
             </p>
           </div>
@@ -78,27 +78,27 @@ const CveResults: React.FC<CveResultsProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[80vh] overflow-hidden">
+      <div className="bg-white dark:bg-gray-900 rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[80vh] overflow-hidden">
         {/* Header */}
-        <div className="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-white">
+        <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-blue-50 to-white">
           <div className="flex items-center justify-between">
             <div>
               <div className="flex items-center gap-2">
-                <ShieldCheckIcon className="h-5 w-5 text-blue-600" />
-                <h3 className="text-lg font-semibold text-gray-900">
+                <ShieldCheckIcon className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                   CVEs for {cpeName}
                 </h3>
-                <span className="px-2 py-0.5 text-xs rounded-full bg-gray-200 text-gray-700">
+                <span className="px-2 py-0.5 text-xs rounded-full bg-gray-200 text-gray-700 dark:text-gray-300">
                   {cves.length} {cves.length === 1 ? "CVE" : "CVEs"}
                 </span>
               </div>
-              <p className="text-sm text-gray-600 mt-1">
+              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                 Known vulnerabilities associated with this CPE
               </p>
             </div>
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 transition-colors"
+              className="text-gray-400 hover:text-gray-600 dark:text-gray-400 transition-colors"
             >
               <svg
                 className="h-6 w-6"
@@ -118,17 +118,17 @@ const CveResults: React.FC<CveResultsProps> = ({
         </div>
 
         {/* Results Summary */}
-        <div className="px-6 py-3 bg-gray-50 border-b border-gray-200">
+        <div className="px-6 py-3 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center gap-4 text-sm">
             {cves.length > 0 ? (
               <>
-                <span className="text-red-600 font-medium flex items-center gap-1">
+                <span className="text-red-600 dark:text-red-400 font-medium flex items-center gap-1">
                   <BugAntIcon className="h-5 w-5" />
                   {cves.length} vulnerability{cves.length !== 1 ? "ies" : ""}{" "}
                   found
                 </span>
                 <span className="text-gray-400">|</span>
-                <span className="text-gray-600">
+                <span className="text-gray-600 dark:text-gray-400">
                   Latest:{" "}
                   {formatDistanceToNow(
                     new Date(cves[0]?.publishedDate || new Date()),
@@ -137,7 +137,7 @@ const CveResults: React.FC<CveResultsProps> = ({
                 </span>
               </>
             ) : (
-              <span className="text-green-600 font-medium">
+              <span className="text-green-600 dark:text-green-400 font-medium">
                 No known vulnerabilities found
               </span>
             )}
@@ -149,7 +149,7 @@ const CveResults: React.FC<CveResultsProps> = ({
           {cves.length === 0 ? (
             <div className="text-center py-12">
               <ShieldCheckIcon className="h-16 w-16 mx-auto text-green-500 mb-4" />
-              <p className="text-gray-500 text-lg">
+              <p className="text-gray-500 dark:text-gray-400 text-lg">
                 No CVEs found for this CPE
               </p>
               <p className="text-sm text-gray-400 mt-2">
@@ -185,7 +185,7 @@ const CveResults: React.FC<CveResultsProps> = ({
                           >
                             {cve.severity}
                           </span>
-                          <span className="text-sm text-gray-600">
+                          <span className="text-sm text-gray-600 dark:text-gray-400">
                             CVSS {cve.cvssScore}
                           </span>
                         </div>
@@ -201,21 +201,21 @@ const CveResults: React.FC<CveResultsProps> = ({
                     </div>
 
                     {isExpanded && (
-                      <div className="px-4 py-3 bg-white border-t border-gray-200">
+                      <div className="px-4 py-3 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
                         <div className="mb-3">
-                          <h5 className="text-sm font-semibold text-gray-700 mb-2">
+                          <h5 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                             Description
                           </h5>
-                          <p className="text-sm text-gray-600">
+                          <p className="text-sm text-gray-600 dark:text-gray-400">
                             {cve.description}
                           </p>
                         </div>
                         {cve.vectorString && (
                           <div className="mb-3">
-                            <h5 className="text-sm font-semibold text-gray-700 mb-2">
+                            <h5 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                               CVSS Vector
                             </h5>
-                            <code className="text-xs bg-gray-100 px-2 py-1 rounded block break-all">
+                            <code className="text-xs bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded block break-all">
                               {cve.vectorString}
                             </code>
                           </div>
@@ -225,7 +225,7 @@ const CveResults: React.FC<CveResultsProps> = ({
                             href={`https://nvd.nist.gov/vuln/detail/${cve.id}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-xs text-blue-600 hover:text-blue-800"
+                            className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:text-blue-300 dark:hover:text-blue-300"
                           >
                             View on NVD →
                           </a>
@@ -239,7 +239,7 @@ const CveResults: React.FC<CveResultsProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
+        <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
           <div className="flex justify-end">
             <button
               onClick={onClose}

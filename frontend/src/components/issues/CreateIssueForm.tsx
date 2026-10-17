@@ -86,7 +86,7 @@ const CreateIssueForm: React.FC = () => {
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {error && (
-        <div className="p-4 bg-red-50 border border-red-200 rounded-md text-red-700">
+        <div className="p-4 bg-red-50 dark:bg-red-900/25 border border-red-200 dark:border-red-800 rounded-md text-red-700 dark:text-red-300">
           {error}
         </div>
       )}

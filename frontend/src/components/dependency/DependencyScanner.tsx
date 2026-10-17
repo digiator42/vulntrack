@@ -178,10 +178,10 @@ ${cve.versionEndExcluding ? `- Up to: ${cve.versionEndExcluding}` : ""}
 
   const getSeverityColor = (severity: string) => {
     const colors = {
-      CRITICAL: "bg-red-100 text-red-800 border-red-200",
-      HIGH: "bg-orange-100 text-orange-800 border-orange-200",
-      MEDIUM: "bg-yellow-100 text-yellow-800 border-yellow-200",
-      LOW: "bg-blue-100 text-blue-800 border-blue-200",
+      CRITICAL: "bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-300 border-red-200 dark:border-red-800",
+      HIGH: "bg-orange-100 dark:bg-orange-900/40 text-orange-800 dark:text-orange-300 border-orange-200 dark:border-orange-800",
+      MEDIUM: "bg-yellow-100 dark:bg-yellow-900/40 text-yellow-800 dark:text-yellow-300 border-yellow-200 dark:border-yellow-800",
+      LOW: "bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-300 border-blue-200 dark:border-blue-800",
     };
     return (
       colors[severity as keyof typeof colors] || "bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200"
@@ -209,7 +209,7 @@ ${cve.versionEndExcluding ? `- Up to: ${cve.versionEndExcluding}` : ""}
       <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-blue-50 to-white dark:from-blue-950 dark:to-gray-900">
           <div className="flex items-center gap-2">
-            <DocumentMagnifyingGlassIcon className="h-5 w-5 text-blue-600" />
+            <DocumentMagnifyingGlassIcon className="h-5 w-5 text-blue-600 dark:text-blue-400" />
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
               Dependency Scanner
             </h3>
@@ -225,7 +225,7 @@ ${cve.versionEndExcluding ? `- Up to: ${cve.versionEndExcluding}` : ""}
             {...getRootProps()}
             className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
               isDragActive
-                ? "border-blue-500 bg-blue-50"
+                ? "border-blue-500 bg-blue-50 dark:bg-blue-900/25"
                 : "border-gray-300 dark:border-gray-600 hover:border-blue-400 hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-800"
             }`}
           >
@@ -241,7 +241,7 @@ ${cve.versionEndExcluding ? `- Up to: ${cve.versionEndExcluding}` : ""}
                     setFile(null);
                     setResult(null);
                   }}
-                  className="text-red-500 hover:text-red-700"
+                  className="text-red-500 hover:text-red-700 dark:text-red-300 dark:hover:text-red-300"
                 >
                   <XMarkIcon className="h-5 w-5" />
                 </button>
@@ -295,13 +295,13 @@ ${cve.versionEndExcluding ? `- Up to: ${cve.versionEndExcluding}` : ""}
             </div>
             <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4">
               <p className="text-sm text-gray-500 dark:text-gray-400">Vulnerable Dependencies</p>
-              <p className="text-2xl font-bold text-red-600">
+              <p className="text-2xl font-bold text-red-600 dark:text-red-400">
                 {result.vulnerableDependencies}
               </p>
             </div>
             <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4">
               <p className="text-sm text-gray-500 dark:text-gray-400">Total Vulnerabilities</p>
-              <p className="text-2xl font-bold text-orange-600">
+              <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">
                 {result.vulnerabilities.reduce(
                   (sum, v) => sum + v.cves.length,
                   0,
@@ -314,7 +314,7 @@ ${cve.versionEndExcluding ? `- Up to: ${cve.versionEndExcluding}` : ""}
           <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
             <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-red-50 dark:bg-red-900/30">
               <div className="flex items-center gap-2">
-                <ExclamationTriangleIcon className="h-5 w-5 text-red-600" />
+                <ExclamationTriangleIcon className="h-5 w-5 text-red-600 dark:text-red-400" />
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                   Vulnerable Dependencies
                 </h3>
@@ -394,7 +394,7 @@ ${cve.versionEndExcluding ? `- Up to: ${cve.versionEndExcluding}` : ""}
                               </div>
                               <div className="flex items-center gap-2">
                                 {isCreated && (
-                                  <span className="text-xs text-green-600 flex items-center gap-1">
+                                  <span className="text-xs text-green-600 dark:text-green-400 flex items-center gap-1">
                                     <CheckCircleIcon className="h-4 w-4" />
                                     Created
                                   </span>

@@ -116,9 +116,9 @@ const UsersPage: React.FC = () => {
 
   const getRoleBadge = (role: string) => {
     const badges = {
-      ROLE_ADMIN: "bg-purple-100 text-purple-800",
-      ROLE_SECURITY_ADMIN: "bg-blue-100 text-blue-800",
-      ROLE_DEVELOPER: "bg-green-100 text-green-800",
+      ROLE_ADMIN: "bg-purple-100 dark:bg-purple-900/40 text-purple-800 dark:text-purple-300",
+      ROLE_SECURITY_ADMIN: "bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-300",
+      ROLE_DEVELOPER: "bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300",
     };
     return badges[role as keyof typeof badges] || "bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200";
   };
@@ -136,10 +136,10 @@ const UsersPage: React.FC = () => {
 
   const getSeverityBadge = (severity: string) => {
     const badges = {
-      CRITICAL: "bg-red-100 text-red-800",
-      HIGH: "bg-orange-100 text-orange-800",
-      MEDIUM: "bg-yellow-100 text-yellow-800",
-      LOW: "bg-blue-100 text-blue-800",
+      CRITICAL: "bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-300",
+      HIGH: "bg-orange-100 dark:bg-orange-900/40 text-orange-800 dark:text-orange-300",
+      MEDIUM: "bg-yellow-100 dark:bg-yellow-900/40 text-yellow-800 dark:text-yellow-300",
+      LOW: "bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-300",
     };
     return (
       badges[severity as keyof typeof badges] || "bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200"
@@ -148,9 +148,9 @@ const UsersPage: React.FC = () => {
 
   const getStatusBadge = (status: string) => {
     const badges = {
-      OPEN: "bg-red-100 text-red-800",
-      IN_PROGRESS: "bg-yellow-100 text-yellow-800",
-      RESOLVED: "bg-green-100 text-green-800",
+      OPEN: "bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-300",
+      IN_PROGRESS: "bg-yellow-100 dark:bg-yellow-900/40 text-yellow-800 dark:text-yellow-300",
+      RESOLVED: "bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300",
       CLOSED: "bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200",
     };
     return badges[status as keyof typeof badges] || "bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200";
@@ -169,8 +169,8 @@ const UsersPage: React.FC = () => {
       {/* Header */}
       <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
         <div className="flex items-center gap-3">
-          <div className="bg-blue-100 rounded-full p-2">
-            <UserGroupIcon className="h-6 w-6 text-blue-600" />
+          <div className="bg-blue-100 dark:bg-blue-900/40 rounded-full p-2">
+            <UserGroupIcon className="h-6 w-6 text-blue-600 dark:text-blue-400" />
           </div>
           <div>
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
@@ -250,13 +250,13 @@ const UsersPage: React.FC = () => {
                           onClick={() =>
                             handleRoleUpdate(user.id, {'newRole': selectedRole})
                           }
-                          className="text-green-600 hover:text-green-700"
+                          className="text-green-600 dark:text-green-400 hover:text-green-700 dark:text-green-300 dark:hover:text-green-300"
                         >
                           <CheckIcon className="h-4 w-4" />
                         </button>
                         <button
                           onClick={() => setEditingRole(null)}
-                          className="text-red-600 hover:text-red-700"
+                          className="text-red-600 dark:text-red-400 hover:text-red-700 dark:text-red-300 dark:hover:text-red-300"
                         >
                           <XMarkIcon className="h-4 w-4" />
                         </button>
@@ -390,8 +390,8 @@ const UsersPage: React.FC = () => {
                 return (
                   <div key={dev.id} className="p-4">
                     <div className="flex items-center gap-2 mb-3">
-                      <div className="bg-green-100 rounded-full p-1">
-                        <CpuChipIcon className="h-4 w-4 text-green-600" />
+                      <div className="bg-green-100 dark:bg-green-900/40 rounded-full p-1">
+                        <CpuChipIcon className="h-4 w-4 text-green-600 dark:text-green-400" />
                       </div>
                       <span className="font-medium text-gray-900 dark:text-white">
                         {dev.username}
@@ -432,7 +432,7 @@ const UsersPage: React.FC = () => {
                               }
                             }}
                             disabled={unassigning === issue.id}
-                            className="ml-2 text-xs text-red-600 hover:text-red-700"
+                            className="ml-2 text-xs text-red-600 dark:text-red-400 hover:text-red-700 dark:text-red-300 dark:hover:text-red-300"
                           >
                             Unassign
                           </button>

@@ -97,10 +97,10 @@ const ReportsPage: React.FC = () => {
 
   const getSeverityColor = (severity: string) => {
     const colors = {
-      CRITICAL: "bg-red-500",
-      HIGH: "bg-orange-500",
-      MEDIUM: "bg-yellow-500",
-      LOW: "bg-blue-500",
+      CRITICAL: "bg-red-50 dark:bg-red-900/250",
+      HIGH: "bg-orange-50 dark:bg-orange-900/250",
+      MEDIUM: "bg-yellow-50 dark:bg-yellow-900/250",
+      LOW: "bg-blue-50 dark:bg-blue-900/250",
     };
     return colors[severity as keyof typeof colors] || "bg-gray-500";
   };
@@ -129,22 +129,22 @@ const ReportsPage: React.FC = () => {
     {
       name: "CRITICAL",
       count: data.severityBreakdown?.CRITICAL || 0,
-      color: "bg-red-500",
+      color: "bg-red-50 dark:bg-red-900/250",
     },
     {
       name: "HIGH",
       count: data.severityBreakdown?.HIGH || 0,
-      color: "bg-orange-500",
+      color: "bg-orange-50 dark:bg-orange-900/250",
     },
     {
       name: "MEDIUM",
       count: data.severityBreakdown?.MEDIUM || 0,
-      color: "bg-yellow-500",
+      color: "bg-yellow-50 dark:bg-yellow-900/250",
     },
     {
       name: "LOW",
       count: data.severityBreakdown?.LOW || 0,
-      color: "bg-blue-500",
+      color: "bg-blue-50 dark:bg-blue-900/250",
     },
   ];
 
@@ -195,7 +195,7 @@ const ReportsPage: React.FC = () => {
               </p>
             </div>
             <div className="bg-blue-100 dark:bg-blue-900/40 rounded-full p-3">
-              <ShieldCheckIcon className="h-6 w-6 text-blue-600" />
+              <ShieldCheckIcon className="h-6 w-6 text-blue-600 dark:text-blue-400" />
             </div>
           </div>
           <div className="mt-4 flex items-center gap-2">
@@ -235,18 +235,18 @@ const ReportsPage: React.FC = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">Open Issues</p>
-              <p className="text-3xl font-bold text-orange-600 mt-1">
+              <p className="text-3xl font-bold text-orange-600 dark:text-orange-400 mt-1">
                 {data.openIssues}
               </p>
             </div>
             <div className="bg-orange-100 dark:bg-orange-900/40 rounded-full p-3">
-              <ClockIcon className="h-6 w-6 text-orange-600" />
+              <ClockIcon className="h-6 w-6 text-orange-600 dark:text-orange-400" />
             </div>
           </div>
           <div className="mt-4">
             <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
               <div
-                className="bg-orange-500 rounded-full h-2 transition-all"
+                className="bg-orange-50 dark:bg-orange-900/250 rounded-full h-2 transition-all"
                 style={{ width: `${openPercentage}%` }}
               />
             </div>
@@ -259,18 +259,18 @@ const ReportsPage: React.FC = () => {
               <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">
                 Resolved Issues
               </p>
-              <p className="text-3xl font-bold text-green-600 mt-1">
+              <p className="text-3xl font-bold text-green-600 dark:text-green-400 mt-1">
                 {data.resolvedIssues}
               </p>
             </div>
             <div className="bg-green-100 dark:bg-green-900/40 rounded-full p-3">
-              <CheckCircleIcon className="h-6 w-6 text-green-600" />
+              <CheckCircleIcon className="h-6 w-6 text-green-600 dark:text-green-400" />
             </div>
           </div>
           <div className="mt-4">
             <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
               <div
-                className="bg-green-500 rounded-full h-2 transition-all"
+                className="bg-green-50 dark:bg-green-900/250 rounded-full h-2 transition-all"
                 style={{ width: `${resolvedPercentage}%` }}
               />
             </div>
@@ -363,7 +363,7 @@ const ReportsPage: React.FC = () => {
                   </div>
                   <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
                     <div
-                      className="bg-purple-500 rounded-full h-2 transition-all"
+                      className="bg-purple-50 dark:bg-purple-900/250 rounded-full h-2 transition-all"
                       style={{ width: `${(count / totalIssues) * 100}%` }}
                     />
                   </div>
@@ -405,7 +405,7 @@ const ReportsPage: React.FC = () => {
                 onClick={() =>
                   (window.location.href = `/issues?severity=${severity.name}`)
                 }
-                className="mt-4 text-sm font-medium text-blue-600 hover:text-blue-700"
+                className="mt-4 text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:text-blue-300 dark:hover:text-blue-300"
               >
                 View Details →
               </button>

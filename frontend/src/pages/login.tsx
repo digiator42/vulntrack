@@ -42,7 +42,7 @@ const LoginPage: React.FC = () => {
         
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           {error && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-md text-red-700 text-sm">
+            <div className="p-3 bg-red-50 dark:bg-red-900/25 border border-red-200 dark:border-red-800 rounded-md text-red-700 dark:text-red-300 text-sm">
               {error}
             </div>
           )}

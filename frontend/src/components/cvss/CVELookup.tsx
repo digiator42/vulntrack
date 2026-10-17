@@ -116,18 +116,18 @@ const CVELookup: React.FC<CVELookupProps> = ({ onCVESelect }) => {
 
       {/* Display fetched CVE details */}
       {selectedCVE && (
-        <div className="p-4 bg-green-50 border border-green-200 rounded-md">
+        <div className="p-4 bg-green-50 dark:bg-green-900/25 border border-green-200 dark:border-green-800 rounded-md">
           <div className="flex justify-between items-start">
             <div className="flex-1">
-              <h4 className="font-medium text-green-900">{selectedCVE.id}</h4>
-              <p className="text-sm text-green-700 mt-1">{selectedCVE.description}</p>
+              <h4 className="font-medium text-green-900 dark:text-green-200">{selectedCVE.id}</h4>
+              <p className="text-sm text-green-700 dark:text-green-300 mt-1">{selectedCVE.description}</p>
               {selectedCVE.cvssScore && (
                 <div className="mt-2 flex items-center gap-4">
                   <span className="text-sm font-medium">CVSS Score:</span>
                   <span className={`px-2 py-1 rounded text-xs font-semibold ${
-                    selectedCVE.cvssScore >= 7 ? 'bg-red-100 text-red-700' :
-                    selectedCVE.cvssScore >= 4 ? 'bg-yellow-100 text-yellow-700' :
-                    'bg-green-100 text-green-700'
+                    selectedCVE.cvssScore >= 7 ? 'bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300' :
+                    selectedCVE.cvssScore >= 4 ? 'bg-yellow-100 dark:bg-yellow-900/40 text-yellow-700 dark:text-yellow-300' :
+                    'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300'
                   }`}>
                     {selectedCVE.cvssScore}
                   </span>
@@ -148,7 +148,7 @@ const CVELookup: React.FC<CVELookupProps> = ({ onCVESelect }) => {
             </div>
             <button
               onClick={() => setSelectedCVE(null)}
-              className="text-green-600 hover:text-green-800"
+              className="text-green-600 dark:text-green-400 hover:text-green-800 dark:text-green-300 dark:hover:text-green-300"
             >
               ×
             </button>
@@ -157,7 +157,7 @@ const CVELookup: React.FC<CVELookupProps> = ({ onCVESelect }) => {
       )}
 
       {error && (
-        <div className="p-3 bg-red-50 border border-red-200 rounded-md text-red-700 text-sm">
+        <div className="p-3 bg-red-50 dark:bg-red-900/25 border border-red-200 dark:border-red-800 rounded-md text-red-700 dark:text-red-300 text-sm">
           {error}
         </div>
       )}

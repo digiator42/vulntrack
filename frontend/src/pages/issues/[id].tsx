@@ -147,10 +147,10 @@ const IssueDetailPage: React.FC = () => {
 
   const getSeverityColor = (severity: string) => {
     const colors = {
-      CRITICAL: "bg-red-100 text-red-800",
-      HIGH: "bg-orange-100 text-orange-800",
-      MEDIUM: "bg-yellow-100 text-yellow-800",
-      LOW: "bg-blue-100 text-blue-800",
+      CRITICAL: "bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-300",
+      HIGH: "bg-orange-100 dark:bg-orange-900/40 text-orange-800 dark:text-orange-300",
+      MEDIUM: "bg-yellow-100 dark:bg-yellow-900/40 text-yellow-800 dark:text-yellow-300",
+      LOW: "bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-300",
     };
     return (
       colors[severity as keyof typeof colors] || "bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200"
@@ -159,9 +159,9 @@ const IssueDetailPage: React.FC = () => {
 
   const getStatusColor = (status: string) => {
     const colors = {
-      OPEN: "bg-red-100 text-red-800",
-      IN_PROGRESS: "bg-yellow-100 text-yellow-800",
-      RESOLVED: "bg-green-100 text-green-800",
+      OPEN: "bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-300",
+      IN_PROGRESS: "bg-yellow-100 dark:bg-yellow-900/40 text-yellow-800 dark:text-yellow-300",
+      RESOLVED: "bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300",
       CLOSED: "bg-gray-400 text-gray-800 dark:text-gray-200",
     };
     return colors[status as keyof typeof colors] || "bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200";
@@ -301,7 +301,7 @@ const IssueDetailPage: React.FC = () => {
                 <button
                   onClick={handleDelete}
                   disabled={isDeleting}
-                  className="px-3 py-1.5 text-sm text-red-600 border border-red-300 rounded-md hover:bg-red-50 disabled:opacity-50"
+                  className="px-3 py-1.5 text-sm text-red-600 dark:text-red-400 border border-red-300 dark:border-red-700 rounded-md hover:bg-red-50 dark:bg-red-900/25 dark:hover:bg-red-900/40 disabled:opacity-50"
                 >
                   {isDeleting ? "Deleting..." : "Delete"}
                 </button>

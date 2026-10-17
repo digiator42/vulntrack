@@ -157,7 +157,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
                 href={href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-blue-600 hover:text-blue-800 underline"
+                className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:text-blue-300 dark:hover:text-blue-300 underline"
               >
                 {children}
               </a>
@@ -213,7 +213,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
           // Blockquotes
           blockquote({ children }) {
             return (
-              <blockquote className="border-l-4 border-blue-400 pl-4 py-2 my-4 bg-blue-50 rounded-r-md">
+              <blockquote className="border-l-4 border-blue-400 pl-4 py-2 my-4 bg-blue-50 dark:bg-blue-900/25 rounded-r-md">
                 {children}
               </blockquote>
             );
